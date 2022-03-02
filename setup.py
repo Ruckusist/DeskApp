@@ -3,9 +3,9 @@ from distutils.core import setup
 
 setup(
     name='DeskApp',
-    version='0.0.1',
+    version='0.0.2',
     author='Ruckusist',
-    author_email='ruckusist@alphagriffin.com',
+    author_email='ruckusist@outlook.com',
     url='https://github.com/ruckusist/deskapp',
     packages=setuptools.find_packages(),
     description="A terminal basesd program manager.",
@@ -18,5 +18,10 @@ setup(
     #########
     entry_points = {
         'console_scripts': ['deskapp=deskapp.cli:main']
+    },
+    ########
+    include_package_data=True,
+    package_data = {
+        '': ['deskapp/mods/templates/*.j2']
     }
 )

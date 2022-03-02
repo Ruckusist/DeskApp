@@ -1,4 +1,5 @@
-import deskapp
+from deskapp import App
 
 def main() -> None:
-    print('this is working')
+    app = App()
+    app.start()
