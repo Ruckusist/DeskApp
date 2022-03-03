@@ -7,9 +7,9 @@ tmux send "python -m venv test" ENTER;
 tmux send "source test/bin/activate" ENTER;
 tmux send "echo 'Now in the Test Enviroment.'" ENTER;
 tmux send '. install.sh' ENTER;
-tmux send 'deskapp' ENTER;
+tmux send 'python examples/ex_3.py' ENTER;
 # tmux split-window;
-clear;
+# clear;
 tmux a -t deskapp_test;
 deactivate
 rm -rf test
