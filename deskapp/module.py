@@ -4,6 +4,8 @@ from deskapp.keys import Keys
 import functools, random, os, pkg_resources
 from jinja2 import Environment, FileSystemLoader
 
+
+classID = lambda x: random.random()
 class Module:
     """This is the Module Factory"""
 
@@ -44,6 +46,7 @@ class Module:
             TEMPLATE_PATH, followlinks=True))
         
         # add module to the active list.
+        self.classID = classID
         self.register_module()
 
     def page(self, panel=None):

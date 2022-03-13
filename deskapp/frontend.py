@@ -137,7 +137,7 @@ class Window(object):
 
     def make_panel(self, dims, label, scroll=False, box=True, banner=True):
         """Panel factory."""
-        options = 0
+        options = {'dims': dims}
         win = curses.newwin(dims[0], dims[1], dims[2], dims[3])
         win.scrollok(scroll)
         panel = curses.panel.new_panel(win)
