@@ -19,6 +19,7 @@ class Fire(Module):
         self.start_flag = 0
         self.background_process = True
         self.classID = classID
+        self.register_module()
         
     def get_dims(self):
         self.context['w'] = int(self.app.frontend.winright_dims[1] - 2)

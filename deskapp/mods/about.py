@@ -10,6 +10,7 @@ class About(Module):
     def __init__(self, app):
         self.classID = aboutID
         super().__init__(app)
+        self.register_module()
         
 
     def page(self, panel=None):

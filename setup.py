@@ -3,7 +3,7 @@ from distutils.core import setup
 
 setup(
     name='DeskApp',
-    version='0.0.3',
+    version='0.0.5',
     author='Ruckusist',
     author_email='ruckusist@outlook.com',
     url='https://github.com/ruckusist/deskapp',

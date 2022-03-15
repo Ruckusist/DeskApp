@@ -46,6 +46,7 @@ class Logic:
             panel = self.available_panels[mod_name][1]
             
             message(mod.name)
+            # panel[0].clear()
             rendered_page = mod.page(panel[0])
             
             if index == self.cur:
@@ -69,7 +70,7 @@ class Logic:
     def redraw_footer(self):
         # TODO: THIS NEEDS TO BE ANOTHER THING...
         if self.engine.frontend.screen_mode:
-            options = ["|q| to quit   |Tab| switch Mode   |enter| to start service", "|pgUp| change menu |pgDn| change menu"]
+            options = ["|q| to quit   |Tab| to enter Text  |enter| to start service", "|pgUp| change menu |pgDn| change menu"]
         else:
             options = [" Cool stuff goes here...", "|enter| submit   |'stop'| to kill service"]
         self.engine.frontend.redraw_window(self.engine.frontend.debug)
@@ -203,6 +204,7 @@ class App:
         self.modules = modules
         self.modules.append(About)
         self.modules.append(Fire)
+        self.appdata = {}
 
         # SETUP
         for mod in self.modules:
@@ -220,7 +222,6 @@ class App:
     def menu(self, mod_list: list) -> None:
         self._menu = mod_list
 
-
     def header(self):
         return "This is working!"
 
@@ -229,7 +230,24 @@ class App:
         self.frontend.main_screen("|~  Deskapp  ~|")
         self.logic.setup_panels()
         self.backend.start()
+
+    def close(self) -> bool:
+        self.backend.running = False
+        return True
     
+    """
+    NEW FUNCTIONALITY!! so you want the app itself to carry some data
+    between some modules?? we should be able to handle that!
+    """
+
+    @property
+    def data(self):
+        return self.appdata
+
+    @data.setter
+    def data(self, k, v):
+        self.appdata[k] = v
+
     """
     Key Press callback functions.
     ## ID=1  MEANS THIS IS THE CORE APP SENDING THE SIGNAL

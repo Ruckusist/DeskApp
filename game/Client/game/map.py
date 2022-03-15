@@ -1,5 +1,8 @@
+import random, threading
 import deskapp
 
+
+ClassID = random.random()
 class Game_Map(deskapp.Module):
     name = "The Game Map"
     def __init__(self, app):
@@ -7,6 +10,8 @@ class Game_Map(deskapp.Module):
 
         self.elements = ['Global', 'Region', 'Local']
         self.index = 1  # Verticle Print Position
+        # LAST THING!
+        self.register_module()
 
     def page(self, panel):
         panel.addstr(1,1,"Game Map")

@@ -22,16 +22,15 @@ class Module:
         # depricated -->
         self.context = {
             "text_input": "",
-             "text_output": "",
+            "text_output": "",
         }
         self.callbacks = []
         self.cur_el = 0
         self.elements = []
+        self.scroll_elements = []
         self.scroll = 0
         self.classID = 0
         self.visible = True
-        # last thing
-        self.__setup__()
 
     def register_module(self):
         # DEPRICATING THIS!
@@ -46,7 +45,7 @@ class Module:
             TEMPLATE_PATH, followlinks=True))
         
         # add module to the active list.
-        self.classID = classID
+        # self.classID = classID
         self.register_module()
 
     def page(self, panel=None):
@@ -67,12 +66,24 @@ class Module:
     @callback(0, keypress=Keys.UP)
     def on_up(self, *args, **kwargs): 
         """scroll up"""
-        self.scroll -= 1
+        if self.scroll > 0:
+            self.scroll -= 1
+        else: self.scroll = len(self.scroll_elements)-1
+
+        # if self.scroll < len(self.elements)-1:
+        #     self.scroll += 1
+        # else: self.scroll = 0
 
     @callback(0, keypress=Keys.DOWN)
     def on_down(self, *args, **kwargs): 
         """scroll down"""
-        self.scroll += 1
+        if self.scroll < len(self.scroll_elements)-1:
+            self.scroll += 1
+        else: self.scroll = 0
+
+        # if self.scroll > 0:
+        #     self.scroll -= 1
+        # else: self.scroll = len(self.elements)-1
 
     @callback(0, keypress=Keys.RIGHT)
     def on_left(self, *args, **kwargs): 
