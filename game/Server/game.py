@@ -1,27 +1,68 @@
+import os, time, sys, datetime
+import selectors, socket, threading
+from types import SimpleNamespace
 from timeit import default_timer as timer
-import socket
-import threading
+
+
+class Message(SimpleNamespace):
+    def __init__(self, message):
+        super().__init__(message)
+
+
+
+class Client_Session:
+    def __init__(self, server, client, client_addr):
+        self.server = server
+        self.login_timer = timer()
+        self.client = client
+        self.client_addr = client_addr
+        self.should_logout = False
+
+    def logout(self):
+        self.should_logout = True
+
+    def send(self, message):
+        self.client.send( message.encode() )
+
+    def main_loop(self):
+        while not self.should_logout:
+            try:
+                # get a message!
+                message = self.client.recv(1024).decode()
+                print(f"[{self.client_addr}]: {message}")
+            except: 
+                self.logout()
+
+            if not message or message == '': continue
+
+            try:
+                # broadcast that message!
+                self.server.broadcast(message)
+            except Exception as e:
+                print(e)
+
 
 class Server:
     def __init__(self):
-        self.stream = None
-        self.clients = []
-        self.username_lookup = {}
-        self.client_lookup = {}
-        self.users = {}
-        self.start_server()
+        # SOCKET SYSTEM
+        self.host = 'localhost'
+        self.port = 42068
 
-    def start_server(self):
+        # self.selector = selectors.DefaultSelector()
         self.stream = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        
-        # host = socket.gethostbyname(socket.gethostname())
-        host = 'localhost'
-        port = 42069
+        self.stream.bind((self.host, self.port))
+        self.stream.listen()
+        print(f"Listening: {self.host}:{self.port} ")
+        # self.stream.setblocking(False)
+        # self.selector.register(self.stream, selectors.EVENT_READ, data=None)
 
-        self.stream.bind((host, port))
-        self.stream.listen(100)  # ?? why do we listen for 100 right off the bat?
+        # LOGIN SYSTEM
+        self.clients = []  # this is (Client Session, Client Thread)
+        self.username_lookup = {}  # this is dict by Socket Client to find username? seems wrong...
+        self.users = {}  # this is the User Database
 
     def accept_login(self, client, host_addr, username, password):
+        # Add new User to Users Dict
         if username not in self.users:
             self.users[username] = {
                 'password': password,
@@ -30,57 +71,82 @@ class Server:
                 'online': True
             }
 
-        else:  # if username in self.users:
+        else:  # if username in Users Dict and The Password is no good
             if password != self.users[username]['password']:
                 return False
+            # if the user name is Good and the Password is good
+            # user comes back online...
             self.users[username]['online'] = True
-        self.username_lookup[username] = client
-        self.client_lookup[client] = username
-        self.clients.append(client)
-        print("Users Online:")
-        print("-"*25)
-        for i in self.users:
-            if self.users[i]['online'] == True:
-                print(f"\t{i}") 
+            self.users[username]['client'] = client
+            self.users[username]['host_addr'] = host_addr
+            
+        # cross refrence the username and the client
+        self.username_lookup[client] = username
         return True
 
-    def log_out(self, client): 
-        username = self.client_lookup[client]
-        self.users[username]['online'] = False
+    def run_server(self):
+        """
+        Run Server Takes a New Incoming Connection, Verifies the User, 
+        Then Creates a User Session and Sends them away.
+        """
+        print("Starting Ruckus Server.")
         try:
-            client.shutdown(socket.SHUT_RDWR)
+            while True:
+
+                # new incoming Connection:
+                client, client_addr = self.stream.accept()
+                result = client.recv(1024).decode()
+                username, password = result.split(':')
+                print(f"Recieveing Login Request from: {username}")
+
+                # verify user credentials
+                if self.accept_login(client, client_addr, username, password):
+                    
+                    # Create a user session
+                    client.send('Good: Username'.encode())
+                    print('New connection. Username: '+str(username))
+
+                    client_session = Client_Session(self, client, client_addr)
+                
+                    client_thread = threading.Thread(target=client_session.main_loop)
+                    client_thread.start()
+
+                    self.clients.append((client_session, client_thread))
+
+                else:
+                    client.send('Err: Username'.encode())
+                    print(f"This Guy failed to login properly?!?! --> {client_addr}")
+        except KeyboardInterrupt:
+            pass
         except Exception as e:
             print(e)
-        self.clients.remove(client)
-        self.broadcast(f'! {username} logged out.')
-        print(f'! {username} logged out.')
+        finally:
+            self.end_safely()
 
-    def run_server(self):
-        print("Starting Server.")
-        while True:
-            client, client_addr = self.stream.accept()
-            result = client.recv(1024).decode()  # username is first 1024 of bitstream?
-            username, password = result.split(':')
-            print(f"recieveing: {username}  --  {password}")
-            if self.accept_login(client, client_addr, username, password):
-                client.send('Good: Username'.encode())
-                print('New connection. Username: '+str(username))
-                self.broadcast(f'LGN| {username} - New User joined. - ')
-             
-                threading.Thread(
-                    target=self.handle_client,
-                    args=(client, client_addr,)).start()
-            else:
-                client.send('Err: Username'.encode())
-                print(f"This Guy failed to login properly?!?! --> {client_addr}")
+    def logged_out(self, client):
+        username = self.username_lookup[client]
+        user = self.users[username]
+        user['online'] = False
+        try:
+            user['client'].shutdown(socket.SHUT_RDWR)
+        except: pass
+        return True
 
-    def broadcast(self, msg, msg_type='msg'):
-        broadcast = f"{msg_type}|{msg}".encode()
+    def broadcast(self, msg):
         for connection in self.clients:
+            client = connection[0]
             try:
-                connection.send(broadcast)
-            except:
+                client.send(msg.encode())
+                print(f"SENT->[{client.client_addr}]: {msg}")
+            except Exception as e:
                 self.clients.remove(connection)
+                print(f"FAIL->[{client.client_addr}]: {msg} \n{msg}")
+
+    def end_safely(self):
+        for client, thread in self.clients:
+            client.should_logout = True
+            thread.join()
+        print("Closed Ruckus Server Properly.")
 
     def handle_client(self,client, client_addr):
         start_time = timer()

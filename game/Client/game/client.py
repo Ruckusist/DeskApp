@@ -6,7 +6,7 @@ class Client:
     def __init__(self, parent):
         self.parent = parent
         self.host_addr = 'localhost'
-        self.host_port = 42069
+        self.host_port = 42068
         self.username = None
         self.logged_in = False
         self.should_logout = False
