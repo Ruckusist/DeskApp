@@ -9,3 +9,8 @@ Install using the install script or via 'pip install deskapp'.
 'deskapp' from the console will invoke the app.
 
 -ruckusist.com (2022)
+
+TODO LIST(shit list):
+*(--)...
+-- Chat Interface Stuff
+    * 

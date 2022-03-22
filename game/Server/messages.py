@@ -38,7 +38,7 @@ class Message(SimpleNamespace):
 
         msg_type = mess[0]
         if not msg_type or msg_type == '': return False
-        # print(f"found message type: {msg_type}")
+
         if msg_type == 'chat':
             return Chat_Message(self, self.username)
         elif msg_type == 'game':
@@ -70,7 +70,6 @@ class Chat_Message(Message):
         super().__init__(message, username)
 
     def parse(self) -> None:
-        # print("parsing message!")
         try:
             _, reciever, message = self.message.split('|')
         except:
@@ -78,7 +77,7 @@ class Chat_Message(Message):
         
         self.text = str(message)
 
-        print(f"{get_time()} {self.username}@{reciever}: {message}")
+        # print(f"{get_time()} {self.username}@{reciever}: {message}")
         if reciever == 'open':
             self.broadcast = True
         else:
@@ -95,3 +94,12 @@ class System_Message(Message):
     type = 'sys'
     def __init__(self, message, username):
         super().__init__(message, username)
+
+    def parse(self) -> None:
+        try:
+            message = self.message.split('|')
+        except:
+            self.command = message
+
+        message.pop(0)
+        self.command = ''.join(message)

@@ -45,16 +45,6 @@ class Client:
                 self.parent.app.data.pop('client')
                 self.end_safely()
                 break
-            # try:
-            #     # incoming = incoming.split('|')
-            #     try:
-            #         msg = tuple(incoming[-1].split(' - '))
-            #     except:
-            #         msg = ('wrk', incoming[-1])
-                # incoming = incoming.split('|')
-                # msg_type = incoming.pop(0)
-                # if msg_type == 'msg':
-                #     self.parent.app.data['messages'].append((incoming[0].split(' - ')))
             try:
                 data = incoming.split('|')
             except:
@@ -72,20 +62,25 @@ class Client:
         self.logged_in = False
 
     def send(self, message, msg_type='chat'):
-        reciever = 'open'
+        if msg_type == 'chat':
+            reciever = 'open'
 
-        # DIRECT MESSAGING!
-        if message.startswith('@'):
-            message = message.split(' ')
-            reciever = message.pop(0)[1:]
-            message = ' '.join(message)
+            # DIRECT MESSAGING!
+            if message.startswith('@'):
+                message = message.split(' ')
+                reciever = message.pop(0)[1:]
+                message = ' '.join(message)
 
-        if self.logged_in:
-            broadcast = f"{msg_type}|{reciever}|{message}".encode()
+            if self.logged_in:
+                broadcast = f"{msg_type}|{reciever}|{message}".encode()
+                self.stream.send(broadcast)
+        
+        elif msg_type == 'sys':
+            broadcast = f"{msg_type}|{message}".encode()
             self.stream.send(broadcast)
 
     def end_safely(self):
         if self.logged_in:
-            self.send('logging out!', 'LGOUT')
+            self.send('LGOUT', 'sys')
             self.should_logout = True
             self.stream.shutdown(socket.SHUT_RDWR)

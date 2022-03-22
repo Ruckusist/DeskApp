@@ -1,5 +1,5 @@
 import os, time, sys, datetime
-import selectors, socket, threading
+import socket, threading
 from timeit import default_timer as timer
 import messages
 from termcolor import colored
@@ -23,9 +23,45 @@ class Client_Session:
 
     def logout(self):
         self.should_logout = True
+        self.server.logged_out(self.client)
 
     def send(self, message):
         self.client.send( message.encode() )
+
+    def handle_chat(self, message):
+        message.parse()
+
+        if message.broadcast:
+            self.server.broadcast(self.username, message)
+
+        # DIRECT MESSAGING!
+        if message.reciever:
+            if message.reciever in self.server.users:
+                reciever = self.server.users[message.reciever]
+                # self.server.users[message.reciever]['client'].send(f'DM->{self.username}: {message.text}'.encode())
+                if reciever['online']:
+                    mesg = f'chat|{self.username}|DM-> {message.text}'.encode()
+                    reciever['client'].send(mesg)
+                else:
+                    self.send('chat|sys|DM FAILED: user offline.'.encode())
+
+    def handle_sys(self, message):
+        message.parse()
+        if message.command == 'LGOUT':
+            # LOG THIS PERSON OUT!
+            print(f"{get_time()} USER LOGOUT - {self.username}")
+            self.server.logged_out(self.client)
+        else:
+            print(f"{get_time()} Bad Command: @{self.username} | {message.command}")
+    
+    def handle_message(self, message):
+        if message.type == 'chat':
+            return self.handle_chat(message)
+        elif message.type == 'sys':
+            return self.handle_sys(message)
+            pass
+        else:
+            print(f"{get_time()} got message type: {message.type} -- disregarding.")
 
     def main_loop(self):
         print(f"{get_time()} Starting Client Session: {self.username}")
@@ -42,29 +78,12 @@ class Client_Session:
 
             if not message: continue
 
-            if not message.type == 'chat': 
-                print(f"{get_time()} got message type: {message.type} -- disregarding.")
-                continue
-
-            message.parse()
-
-            if message.broadcast:
-                self.server.broadcast(self.username, message)
-
-            # DIRECT MESSAGING!
-            if message.reciever:
-                if message.reciever in self.server.users:
-                    reciever = self.server.users[message.reciever]
-                    # self.server.users[message.reciever]['client'].send(f'DM->{self.username}: {message.text}'.encode())
-                    if reciever['online']:
-                        mesg = f'chat|{self.username}|DM-> {message.text}'.encode()
-                        reciever['client'].send(mesg)
-                    else:
-                        self.send('chat|sys|DM FAILED: user offline.'.encode())
+            self.handle_message(message)
+        self.server.logged_out(self.client)
 
 
 class Server:
-    version = '0.0.1'
+    version = '0.0.2'
 
     def __init__(self):
         # SOCKET SYSTEM
@@ -82,6 +101,13 @@ class Server:
         self.username_lookup = {}  # this is dict by Socket Client to find username? seems wrong...
         self.users = {}  # this is the User Database
         self.print_startup()
+
+    @property
+    def is_online(self) -> int:
+        counter = 0
+        for user in self.users:
+            if self.users[user]['online']: counter += 1
+        return counter
 
     def print_startup(self):
         logo = """
@@ -177,14 +203,19 @@ class Server:
         return True
 
     def broadcast(self, username, message):
+        bad_connections = []
         if message.type == 'chat':
-            print(f"{get_time()} cast@{len(self.clients)}: {message.text}")
+            print(f"{get_time()} cast@{self.is_online}: {message.text}")
             for connection in self.clients:
                 client = connection[0]
                 try:
                     client.send(f"chat|{username}|{message.text}")
                 except Exception as e:
-                    self.clients.remove(connection)
+                    bad_connections.append(connection)
+        
+        if bad_connections:
+            for connection in bad_connections:
+                self.clients.remove(connection)
 
     def end_safely(self):
         for client, thread in self.clients:
