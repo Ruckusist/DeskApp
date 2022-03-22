@@ -9,3 +9,7 @@ data/
 # These are generated folders
 Test_Client/
 Test_Server/
+
+# Junk stuff
+*.ipynb
+r.txt

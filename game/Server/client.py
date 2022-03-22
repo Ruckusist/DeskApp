@@ -1,27 +1,29 @@
 import time
 import socket
 
-
 host = 'localhost'
-port = 42068
-user = 'test'
+# host = 'ruckusist.com'
+port = 42069
+user = 'RUCKUS NATION'
 passwd = 'test'
-message = 'msg|test - LOGGING IN!!'
+message = f'chat|open|LOGGING IN!!'
 
-with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as stream:
-    stream.connect((host, port))
-    print(f"Connected to {host}:{port}")
-    stream.send(f"{user}:{passwd}".encode())
-    print(f"Sent Login Request {user}:{passwd}")
-    stream.send("msg|test - test".encode())
-    print(f"Sent:msg|test - test")
+stream = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+stream.connect((host, port))
+print(f"Connected to {host}:{port}")
+stream.send(f"{user}:{passwd}".encode())
+print(f"Sent Login Request {user}:{passwd}")
+data = stream.recv(1024).decode()
+print(data)
+time.sleep(1)
+stream.send(message.encode())
+print(f"Sent: {message}")
 
-    time.sleep(0.01)
+time.sleep(0.01)
 
-    data = stream.recv(1024).decode()
+data = stream.recv(1024).decode()
 
-    if data:
-        print(data)
+if data:
+    print(data)
 
 print(f"Concluded Test of Ruckus Server [{host}:{port}] {user}:{passwd}")
-

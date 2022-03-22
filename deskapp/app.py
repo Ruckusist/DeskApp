@@ -28,20 +28,27 @@ class Logic:
                     True)
         self.available_panels[mod.name] = [mod,panel]
 
-    def setup_panels(self):
-        for mod in self.app.menu:
+    def setup_panels(self, mod=None):
+        if not mod:
+            for mod in self.app.menu:
+                self.setup_panel(mod)
+        else:
             self.setup_panel(mod)
             
         self.all_page_update()
         self.redraw_header()
 
     def all_page_update(self):
+        """
+        This is run every round and rebuilds the windows.
+        """
         self.app.frontend.redraw_window(self.app.frontend.winleft)
 
         for index, mod_name in enumerate(list(self.available_panels)):
-            color = self.app.frontend.color_rw if index == self.cur else self.app.frontend.color_cb
-            message = lambda x: self.app.frontend.winleft[0].addstr(index+1, 1, x, color)
-            mod = self.available_panels[mod_name][0]
+            color    = self.app.frontend.color_rw if index == self.cur else self.app.frontend.color_cb
+            message  = lambda x: self.app.frontend.winleft[0].addstr(index+1, 1, x, color)
+            mod      = self.available_panels[mod_name][0]
+
             if not mod.visible: continue
             panel = self.available_panels[mod_name][1]
             
@@ -59,13 +66,14 @@ class Logic:
             
         # and update the footer.
         self.redraw_footer()
+        time.sleep(.001)
 
     def redraw_header(self):
         # and update the header.
         head_text = self.app.header()
         head_panel = self.app.frontend.header
         # if not self.app.error_timeout:
-        #     head_panel[0].addstr(1,1,head_text, self.engine.frontend.palette[3])
+        head_panel[0].addstr(1,1,head_text, self.engine.frontend.palette[3])
 
     def redraw_footer(self):
         # TODO: THIS NEEDS TO BE ANOTHER THING...
@@ -116,7 +124,7 @@ class Backend:
     def __init__(self, parent):
         self.app = parent
         self.running = True
-        self.error_log = []
+        self.error_log = self.app.error_log
         
 
     def logger(self, message:list, message_type:str):
@@ -195,6 +203,7 @@ class App:
     name = "Deskapp"
 
     def __init__(self, modules:list = []) -> None:
+        self.error_log = []
         self.frontend = Window()
         self.logic = Logic(self)
         self.backend = Backend(self)
@@ -211,7 +220,6 @@ class App:
             mod(self)
 
         self.callbacks = callbacks
-        self.error_log = []
         self.ERROR = lambda x: self.backend.logger([x], "ERROR")
 
     @property

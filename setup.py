@@ -3,7 +3,7 @@ from distutils.core import setup
 
 setup(
     name='DeskApp',
-    version='0.0.5',
+    version='0.0.6',
     author='Ruckusist',
     author_email='ruckusist@outlook.com',
     url='https://github.com/ruckusist/deskapp',
@@ -17,7 +17,7 @@ setup(
     ],
     #########
     entry_points = {
-        'console_scripts': ['deskapp=deskapp.game_client:main']
+        'console_scripts': ['deskapp=deskapp.cli:main']
     },
     ########
     include_package_data=True,
