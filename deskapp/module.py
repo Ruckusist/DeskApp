@@ -17,8 +17,6 @@ class Module:
         self.logic = app.logic
         self.frontend = app.frontend
         self.menu = app.menu
-        # self.max_h = self.frontend.winright_dims[0]-4
-        # self.max_w = self.frontend.winright_dims[1]-2
         # depricated -->
         self.context = {
             "text_input": "",
@@ -45,7 +43,6 @@ class Module:
             TEMPLATE_PATH, followlinks=True))
         
         # add module to the active list.
-        # self.classID = classID
         self.register_module()
 
     def page(self, panel=None):
@@ -70,20 +67,12 @@ class Module:
             self.scroll -= 1
         else: self.scroll = len(self.scroll_elements)-1
 
-        # if self.scroll < len(self.elements)-1:
-        #     self.scroll += 1
-        # else: self.scroll = 0
-
     @callback(0, keypress=Keys.DOWN)
     def on_down(self, *args, **kwargs): 
         """scroll down"""
         if self.scroll < len(self.scroll_elements)-1:
             self.scroll += 1
         else: self.scroll = 0
-
-        # if self.scroll > 0:
-        #     self.scroll -= 1
-        # else: self.scroll = len(self.elements)-1
 
     @callback(0, keypress=Keys.RIGHT)
     def on_left(self, *args, **kwargs): 

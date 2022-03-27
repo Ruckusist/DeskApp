@@ -3,6 +3,8 @@ import deskapp
 
 from .client import Client
 
+from .map import Game_Map
+
 ClassID = random.random()
 class Login(deskapp.Module):
     name = "Login"
@@ -61,18 +63,24 @@ class Login(deskapp.Module):
             self.context['text_output'] += "Password is No Good."
             flag = True
         if flag: return False
-        # self.client.send(f"{self.username}, {self.password}")
         self.context['text_output'] = "Sending Login Request Now."
         try:
             if self.client.try_login(self.username, self.password):
+                # THIS IS A GOOD LOGIN!
                 self.app.data['client'] = {
                     'client': self.client,
                     'username': self.username
                 }
                 self.context['text_output'] = "log in Successful."
+
+                # LETS TRY TO AUTO LOGIN TO THE GAME!!
+                self.app.logic.setup_panel(Game_Map(self.app))
+
+                # lets TRY TO SPLIT THE MAIN SCREEN!!!
+                self.app.frontend.dual_main_screen()
                 return True
-        except:
-            self.context['text_output'] = "log in Failed..."
+        except Exception as e:
+            self.context['text_output'] = f"log in Failed... {e}"
         return False
 
     def end_safely(self):

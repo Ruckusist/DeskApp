@@ -135,6 +135,32 @@ class Window(object):
         self.header[0].addstr(1, 1, msg, self.color_gb)
         self.screen.refresh()
 
+    def dual_main_screen(self, msg='Message Center'):
+        n_dims = self.winright_dims
+        split = int(n_dims[0]/6)-1
+        new_winright_upper_dims = [split, n_dims[1], n_dims[2], n_dims[3]]
+        new_winright_upper = self.make_panel(new_winright_upper_dims, "screen", True, box=True)
+        
+        new_winright_lower_dims = [n_dims[0]-split, n_dims[1], n_dims[2]-split+1, n_dims[3]]
+        new_winright_lower = self.make_panel(new_winright_lower_dims, "lower", True, box=True)
+
+        self.winright = new_winright_upper
+        self.winlower = new_winright_lower
+
+    def dual_main_screen(self, msg='Message Center'):
+        h = self.screen_h
+        w = self.screen_w
+        
+        h_split = int(w / 6) - 1
+        v_split = int((h-3-4-3)/6)
+
+        winright_upper_dims = [v_split, w - h_split-1, h-7-v_split, h_split + 1]
+        self.winright = self.make_panel(winright_upper_dims, "Panel 3")
+
+        winright_lower_dims = [(h-3-4-3)-v_split, w - h_split-1, 3, h_split + 1]
+        self.winlower = self.make_panel(winright_lower_dims, "Panel 4")
+        
+
     def make_panel(self, dims, label, scroll=False, box=True, banner=True):
         """Panel factory."""
         options = {'dims': dims}
@@ -213,6 +239,39 @@ class Window(object):
         # time.sleep(2.5)
         return True
 
+    def new_main(self):
+        h = self.screen_h
+        w = self.screen_w
+
+        # HEADER
+        header_dims = [3, w, 0, 0]
+        header = self.make_panel(header_dims, "Panel 1")
+
+        
+        h_split = int(w / 6) - 1
+        winleft_dims = [h-3-4-3, h_split, 3, 0]
+        winleft = self.make_panel(winleft_dims, "Panel 2")
+
+        v_split = int((h-3-4-3)/6)
+
+        winright_upper_dims = [v_split, w - h_split-1, h-7-v_split, h_split + 1]
+        winrightupper = self.make_panel(winright_upper_dims, "Panel 3")
+
+        winright_lower_dims = [(h-3-4-3)-v_split, w - h_split-1, 3, h_split + 1]
+        winrightlower = self.make_panel(winright_lower_dims, "Panel 4")
+
+        footer_dims = [3, w, h-3, 0]
+        winfooter = self.make_panel(footer_dims, "Panel 5")
+
+        debug_dims = [4, w, h-7, 0]
+        windebug = self.make_panel(debug_dims, "Panel 6")
+
+
+        curses.panel.update_panels()
+        self.screen.refresh()
+        time.sleep(3)
+
+
     def warning(self, label, text, callback):
         self.screen.refresh()
         self.dialog_box(label)
@@ -282,16 +341,26 @@ class Window(object):
         time.sleep(2.5)
         self.end_safely()
 
-
-if __name__ == '__main__':
+def new_main():
     os.system('clear')
     app = Window()
     try:
-        app.spash_screen()
-        app.main_test()
-        app.error('ERROR',['this', 'that', 'other'], 15)
-        app.warning('Warning', 'confirm save?', app.end_safely)
-        app.error('ERROR',['this', 'that', 'other'], 5)
+        app.main_screen()
+        time.sleep(5)
+    except KeyboardInterrupt:
+        pass
+    finally:
+        app.end_safely()
+
+def main():
+    os.system('clear')
+    app = Window()
+    try:
+        # app.spash_screen()
+        # app.main_test()
+        app.error('ERROR',['this', 'that', 'other'], 3)
+        # app.warning('Warning', 'confirm save?', app.end_safely)
+        app.error('ERROR',['geez', 'dude', 'guy'], 3)
         app.end_safely()
         #os.system('clear')
         print("Everything checks out. | Alphagriffin.com")
@@ -300,3 +369,7 @@ if __name__ == '__main__':
         app.end_safely()
         os.system('clear')
         sys.exit("AlphaGriffin.com")
+
+
+if __name__ == '__main__':
+    new_main()

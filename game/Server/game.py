@@ -1,228 +1,316 @@
-import os, time, sys, datetime
-import socket, threading
+import time, threading, random
 from timeit import default_timer as timer
-import messages
-from termcolor import colored
+from collections import namedtuple
+"""
+MAP STRUCTURE!
+
+a map is a 2d grid of Chunks, that become revealed as they are discovered.
+a chunk is a 2d grid of Tiles.
+a tile can be walkable
+"""
+
+class Names:
+    PLACES = ['Tower', 'Dunes', 'Plains', 'Astral Plains', 'Lost Temple', 'Forgotten Lands', 'Mountain',
+        'Test Module', 'Hallway', 'Zone', 'Land', 'Waste', 'Area', 'Belt', 'Sector', 'Ground', 'Region', 
+        'Section', 'Chunk', 'Realm']
+
+    FIRST = ['A', 'Ag', 'Ar', 'Ara', 'Anu', 'Bal', 'Bil', 'Boro', 'Bern', 'Bra', 'Cas', 'Cere', 'Co', 'Con',
+        'Cor', 'Dag', 'Doo', 'Elen', 'El', 'En', 'Eo', 'Faf', 'Fan', 'Fara', 'Fre', 'Fro', 'Ga', 'Gala', 'Has', 
+        'He', 'Heim', 'Ho', 'Isil', 'In', 'Ini', 'Is', 'Ka', 'Kuo', 'Lance', 'Lo', 'Ma', 'Mag', 'Mi', 'Mo', 
+        'Moon', 'Mor', 'Mora', 'Nin', 'O', 'Obi', 'Og', 'Pelli', 'Por', 'Ran', 'Rud', 'Sam',  'She', 'Sheel', 
+        'Shin', 'Shog', 'Son', 'Sur', 'Theo', 'Tho', 'Tris', 'U', 'Uh', 'Ul', 'Vap', 'Vish', 'Ya', 'Yo', 'Yyr']
+ 
+    SECOND = ['ba', 'bis', 'bo', 'bus', 'da', 'dal', 'dagz', 'den', 'di', 'dil', 'din', 'do', 'dor', 'dra', 
+        'dur', 'gi', 'gauble', 'gen', 'glum', 'go', 'gorn', 'goth', 'had', 'hard', 'is', 'ki', 'koon', 'ku', 
+        'lad', 'ler', 'li', 'lot', 'ma', 'man', 'mir', 'mus', 'nan', 'ni', 'nor', 'nu', 'pian', 'ra', 'rak', 
+        'ric', 'rin', 'rum', 'rus', 'rut', 'sek', 'sha', 'thos', 'thur', 'toa', 'tu', 'tur', 'tred', 'varl',
+        'wain', 'wan', 'win', 'wise', 'ya']
+
+    WAYS = ['Lost', 'Deserted', 'Consumed', 'Abandoned', 'Occupied', 'Forsaken', 'Clandestine', 'Forgiven']
+
+    TASTE = ['Calamity', 'Doom', 'Tragedy', 'Ruin', 'Condemnation', 'Downfall', 'Grace', 'Pliancy', 'Consideration']
+ 
+    def first_name():
+        return random.choice(Names.FIRST) + random.choice(Names.SECOND)
+
+    def last_name():
+        return Names.first_name()
+
+    def house_name():
+        return Names.first_name()
+
+    def _places_name():
+        return random.choice(Names.PLACES)
+
+    def zone_name():
+        return random.choice(Names.ZONE)
+
+    def ways_name():
+        return random.choice(Names.WAYS)
+
+    def taste_name():
+        return random.choice(Names.TASTE)
+
+    def place_name():
+        return f"The {Names.ways_name()} {Names._places_name()} of {Names.taste_name()}"
+
+    def player_name():
+        return f"{Names.first_name()} {Names.last_name()} the {Names.ways_name()} of House {Names.house_name()}"
+
+    def crazy():
+        return f"{Names.player_name()}\nfrom the land of {Names._place_name()}"
 
 
-def get_time():
-    block_l = colored('[', 'red')
-    block_r = colored(']', 'red')
-    timed = colored(f'{int(time.time())}', 'blue') 
-    return f'{block_l}{timed}{block_r}'
+class Player:
 
-class Client_Session:
-    def __init__(self, server, client, client_addr, username):
-        self.server = server
-        self.client = client
-        self.client_addr = client_addr
-        self.username = username
+    sight_range = 2
 
-        self.login_timer = timer()
-        self.should_logout = False
+    def __init__(self, name=Names.player_name()):
+        self.name = name
+        self.location = {
+            'chunk_name': '',
+            'coords': (50, 50)
+        }
 
-    def logout(self):
-        self.should_logout = True
-        self.server.logged_out(self.client)
-
-    def send(self, message):
-        self.client.send( message.encode() )
-
-    def handle_chat(self, message):
-        message.parse()
-
-        if message.broadcast:
-            self.server.broadcast(self.username, message)
-
-        # DIRECT MESSAGING!
-        if message.reciever:
-            if message.reciever in self.server.users:
-                reciever = self.server.users[message.reciever]
-                # self.server.users[message.reciever]['client'].send(f'DM->{self.username}: {message.text}'.encode())
-                if reciever['online']:
-                    mesg = f'chat|{self.username}|DM-> {message.text}'.encode()
-                    reciever['client'].send(mesg)
-                else:
-                    self.send('chat|sys|DM FAILED: user offline.'.encode())
-
-    def handle_sys(self, message):
-        message.parse()
-        if message.command == 'LGOUT':
-            # LOG THIS PERSON OUT!
-            print(f"{get_time()} USER LOGOUT - {self.username}")
-            self.server.logged_out(self.client)
-        else:
-            print(f"{get_time()} Bad Command: @{self.username} | {message.command}")
-    
-    def handle_message(self, message):
-        if message.type == 'chat':
-            return self.handle_chat(message)
-        elif message.type == 'sys':
-            return self.handle_sys(message)
-            pass
-        else:
-            print(f"{get_time()} got message type: {message.type} -- disregarding.")
-
-    def main_loop(self):
-        print(f"{get_time()} Starting Client Session: {self.username}")
-        while not self.should_logout:
-            try:
-                # get a message!
-                message = messages.Message(self.client.recv(1024), self.username).check()
-            except Exception as e:
-                print(f"{get_time()} OH NO! bad message error! {e}")
-                self.logout()
-                self.send("OH NO! bad message error!")
-                # break
-                continue
-
-            if not message: continue
-
-            self.handle_message(message)
-        self.server.logged_out(self.client)
+    def __repr__(self):
+        return self.name
 
 
-class Server:
-    version = '0.0.2'
+class Tile:
+    elevation = 0
+    walkable = True
+    water = False
+    resources = {}
+    items = {}
+    occupied = []
 
-    def __init__(self):
-        # SOCKET SYSTEM
-        self.host = '0.0.0.0'
-        self.port = 42069
-
-        # self.selector = selectors.DefaultSelector()
-        self.stream = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.stream.bind((self.host, self.port))
-        self.stream.listen()
-        
-
-        # LOGIN SYSTEM
-        self.clients = []  # this is (Client Session, Client Thread)
-        self.username_lookup = {}  # this is dict by Socket Client to find username? seems wrong...
-        self.users = {}  # this is the User Database
-        self.print_startup()
+    def __init__(self, chunk_name, location):
+        self.chunk_name = chunk_name
+        coords = namedtuple('coord', 'x y')
+        self.location = coords(location[0], location[1])
 
     @property
-    def is_online(self) -> int:
+    def available(self):
+        return False if self.occupied else True
+
+    def __str__(self):
+        if not self.occupied: return '.'
+        else: return 'X'
+
+    def __repr__(self):
+        string = ''
+        for k, v in self.__dict__.items():
+            string += f'{k}: {v}' + '\n'
+        return string
+
+
+class Chunk:
+    def __init__(self, chunk_name='Noob Zone', chunk_size=[10, 10]):
+        print(f"making new chunk! {chunk_name} | ({chunk_size[0]}, {chunk_size[1]})")
+        self.chunk_size = chunk_size
+        self.name = chunk_name
+        self.grid = [[Tile(self.name, (x,y)) for x in range(self.chunk_size[0])] for y in range(self.chunk_size[1])]
+        self.start_coords = [5, 5]
+        self.players = []
+        self.npcs = []
+
+        self.startup_time = timer()
+        self._shutdown = False
+        self.tick = 0
+
+    def __str__(self):
+        x = '\n'.join( ' '.join(str(z) for z in self.grid[x]) for x in range(len(self.grid)) )
+        return x
+
+    def __repr__(self):
+        x = '\n'.join( ' '.join(str(z) for z in self.grid[x]) for x in range(len(self.grid)) )
+        return f'{self.name}\n'+x
+
+    @property
+    def should_shutdown(self):
+        return self._shutdown
+    @should_shutdown.setter
+    def should_shutdown(self, *args, **kwargs):
+        if not self._shutdown:
+            self._shutdown = True
+
+    @property
+    def num_players(self):
+        return len(self.players)
+
+    @property
+    def num_npcs(self):
+        return len(self.npcs)
+
+    def get(self, coords):
+        print(f"trying to get coords: ({coords[0]}, {coords[1]})")
+        return self.grid[coords[0]][coords[1]]
+
+    def place(self, coords):
+        print(f"grid len: {len(self.grid)}")
+        tile = self.grid[coords[0]][coords[1]]
+        if tile.available:
+            return tile
+        else:
+            tile = self.grid[self.start_coords[0]][self.start_coords[1]]
+            if tile.available:
+                return tile
+            else:
+                # THE STARTING ZONE IS FULL FIND A NEARBY SPOT.
+                # maybe the tile should be available if the tile only has
+                # players in it. and not monsters or items. or stuff.
+
+                # returning starting area anyway for now.
+                return tile
+
+    def tick_report(self):
+        line = f"T:{self.tick} | {self.name} | P: {self.num_players} | N: {self.num_npcs}"
+        print(line)
+        self.tick += 1
+
+    def main_loop(self):
+        while not self.should_shutdown:
+            self.tick_report()
+            time.sleep(.5)
+
+
+class Map:
+    """
+    MAP NEEDS:
+    *--0| know which new zone to add when needed.
+    *--0| should the map know where the players are?
+    """
+
+    def __init__(self, map_config={}):
+        print(map_config)
+        self.config = map_config
+        self.chunk_size = self.config['chunk_size']
+        # the Grid of Chunks should be 3d and the zones 
+        # could have stairs up and stairs down, as well as 
+        # side tunnels.
+        self.map = [
+            [None, Chunk(Names.place_name(), self.chunk_size), None],
+            [Chunk(Names.place_name(), self.chunk_size), Chunk('Noob Zone', self.chunk_size), Chunk(Names.place_name(), self.chunk_size)],
+            [None, Chunk(Names.place_name(), self.chunk_size), None]
+        ]
+
+        self.chunks = {}
+        self.get_chunks()
+
+    def __repr__(self) -> str:
+        return '\n'.join(x for x in self.chunks)
+
+    def get_chunks(self):
+        for i in self.map:
+            for zone in i:
+                if zone:
+                    self.chunks[zone.name] = zone
+    
+    @property
+    def num_chunks(self):
         counter = 0
-        for user in self.users:
-            if self.users[user]['online']: counter += 1
+        for x in range(len(self.map)):
+            for y in range(len(self.map[0])):
+                if self.map[x][y]:
+                    counter += 1
         return counter
 
-    def print_startup(self):
-        logo = """
-    ---------------------------------
-        __________
-       |   ____   |
-       |  |   /  /
-       |  |  /  /
-       |  | /  /
-       |  |/  / uckusist.com
-       |      \     (c) 2022
-       |       \          __  _____
-       |   |\   \        / / |     |
-       |   | \   \      / /  |  0  |
-       |   |  \   \    / /   |  0  |
-       |   |   \   \  /_/    |_____|
-       |___|    \___\        
-    ---------------------------------
-        """
-        print(logo)
-        print(f"{get_time()} Connected to {self.host}:{self.port}")
-        print(f"{get_time()} Starting Ruckus Server v. {self.version}")
+    @property
+    def chunk_names(self):
+        list_of_names = []
+        for row in self.map:
+            for chunk in row:
+                if chunk: list_of_names.append(chunk.name)
+        return list_of_names
 
-    def accept_login(self, client, host_addr, username, password):
-        # Add new User to Users Dict
-        if username not in self.users:
-            self.users[username] = {
-                'password': password,
-                'host_addr': host_addr,
-                'client': client,
-                'online': True
-            }
+    def place_player(self, player):
+        player_location = player.location
+        print(f"Trying to place player in zone({player_location['chunk_name']}). {player_location['coords']}")
+        if player_location['chunk_name'] in self.chunk_names:
+            chunk = self.chunks[ player_location['chunk_name'] ]
+        else:
+            chunk = self.chunks['Noob Zone']
+        print(f"Chunk Size: {chunk.chunk_size}")
+        player_coords = player_location['coords']
+        place = chunk.place(player_coords)
+        print("a little about this tile:")
+        print(place.__repr__())
+        place.occupied.append(player)
+        chunk.players.append(player)
+        player.location['chunk_name'] = chunk.name
+        player.location['coords'] = place.location
 
-        else:  # if username in Users Dict and The Password is no good
-            if password != self.users[username]['password']:
-                return False
-            # if the user name is Good and the Password is good
-            # user comes back online...
-            self.users[username]['online'] = True
-            self.users[username]['client'] = client
-            self.users[username]['host_addr'] = host_addr
-            
-        # cross refrence the username and the client
-        self.username_lookup[client] = username
-        return True
 
-    def run_server(self):
-        """
-        Run Server Takes a New Incoming Connection, Verifies the User, 
-        Then Creates a User Session and Sends them away.
-        """
+class Game:
+    def __init__(self, config={}):
+        self.config = {
+            'map': {
+                'chunk_size': [100, 100],
+                'mapsave_filename': 'test.map'
+            },
+            'gamesave_filename': 'test.game',
+        }
+        self.map = Map(self.config['map'])
+        self.map_threads = []
+
+        # PLAYERS
+        self.players = {}
+
+        # RUNTIME
+        self.should_shutdown = False
+
+    def startup(self):
+        for chunk_name in self.map.chunks:
+            chunk = self.map.chunks[chunk_name]
+            thread = threading.Thread(target=chunk.main_loop, args=())
+            thread.start()
+            self.map_threads.append(thread)
+
+    def test(self):
+        print(f"Zones on the Map({self.map.num_chunks}):")
+        print(self.map)
+        self.player_login()
+        self.game_loop()
+
+    def player_login(self, player_name='test'):
+        
+        # GET THE PLAYER CHARACTER
+        if player_name not in self.players:
+            new_player = Player(player_name)
+            self.players[player_name] = new_player
+        
+        player = self.players[player_name]
+        print(f"Player: {player} is joining the game!")
+
+        # PLACE THE PLAYER BACK IN THE GAME
+        # EITHER AT THEIR LAST POSITION OR
+        # AT THE STARTING AREA.
+        self.map.place_player(player)
+
+    def broadcast(self, msg):
+        self.server.broadcast(msg)
+
+    def game_loop(self):
+        self.startup()
         try:
             while True:
-
-                # new incoming Connection:
-                client, client_addr = self.stream.accept()
-                result = client.recv(1024).decode()
-                username, password = result.split(':')
-                print(f"{get_time()} Recieveing Login Request from User: {username}")
-
-                # verify user credentials
-                if self.accept_login(client, client_addr, username, password):
-                    
-                    # Create a user session
-                    client.send('Good: Username'.encode())
-                    # print('New connection. Username: '+str(username))
-
-                    client_session = Client_Session(self, client, client_addr, username)
-                
-                    client_thread = threading.Thread(target=client_session.main_loop)
-                    client_thread.start()
-
-                    self.clients.append((client_session, client_thread))
-
-                else:
-                    client.send('Err: Username'.encode())
-                    print(f"{get_time()} This Guy failed to login properly?!?! --> {client_addr}")
-
+                if self.should_shutdown == True: break
         except KeyboardInterrupt:
             pass
         except Exception as e:
+            print("Error!!")
             print(e)
-        finally:
-            self.end_safely()
-
-    def logged_out(self, client):
-        username = self.username_lookup[client]
-        user = self.users[username]
-        user['online'] = False
-        try:
-            user['client'].shutdown(socket.SHUT_RDWR)
-        except: pass
-        return True
-
-    def broadcast(self, username, message):
-        bad_connections = []
-        if message.type == 'chat':
-            print(f"{get_time()} cast@{self.is_online}: {message.text}")
-            for connection in self.clients:
-                client = connection[0]
-                try:
-                    client.send(f"chat|{username}|{message.text}")
-                except Exception as e:
-                    bad_connections.append(connection)
-        
-        if bad_connections:
-            for connection in bad_connections:
-                self.clients.remove(connection)
+            
+        self.end_safely()
 
     def end_safely(self):
-        for client, thread in self.clients:
-            client.should_logout = True
+        for chunk_name in self.map.chunks:
+            chunk = self.map.chunks[chunk_name]
+            chunk.should_shutdown = True
+        for thread in self.map_threads:
             thread.join()
-        print("Closed Ruckus Server Properly.")
+        print("ended Safely")
 
 
-server = Server()
-server.run_server()
+x = Game()
+x.test()

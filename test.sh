@@ -2,13 +2,6 @@
 # Start a Tmux Session, run the tests.
 # Delete all tests when leaving Tmux.
 
-# SERVER START UP
-tmux new-session -d -s Game_Server;
-tmux send -t Game_Server "python -m venv Test_Server" ENTER;
-tmux send -t Game_Server "source Test_Server/bin/activate" ENTER;
-tmux send -t Game_Server "echo 'Now in the Server Test Enviroment.'" ENTER;
-tmux send -t Game_Server "python game/Server/game.py" ENTER;
-
 # CLIENT START UP
 tmux new-session -d -s Game_Client;
 tmux send -t Game_Client "python -m venv Test_Client" ENTER;
@@ -28,12 +21,5 @@ tmux send -t Game_Client 'cd ..' ENTER;
 tmux send -t Game_Client 'rm -rf Test_Client' ENTER;
 tmux send -t Game_Client 'exit' ENTER;
 # tmux send-keys -t Game_Client C-d;
-
-# tmux a -t Game_Server;
-tmux send-keys -t Game_Server C-c;
-tmux send -t Game_Server 'deactivate' ENTER;
-tmux send -t Game_Server 'rm -rf Test_Server' ENTER;
-tmux send -t Game_Server 'exit' ENTER;
-# tmux send-keys -t Game_Server C-d;
 
 echo "Concluded test run. Removed Test Enviroment.";

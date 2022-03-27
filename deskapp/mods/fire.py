@@ -103,7 +103,7 @@ class Fire(Module):
                 if max_h <=1: break
                 # panel.addstr(max_h, 1, f"{''.join(line)[:max_w]}")
                 for index_y, char in enumerate(line):
-                    panel.addstr(max_h, index_y, char, 
+                    panel.addstr(max_h, index_y+1, char, 
                     self.app.frontend.curses.color_pair(4) if char == '@' else (self.app.frontend.curses.color_pair(2) if char in ["^", "~", "*", "|"] else self.app.frontend.curses.color_pair(5)))
                 max_h -= 1
         else:
