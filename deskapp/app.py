@@ -1,3 +1,14 @@
+"""
+deskapp/app.py
+
+last updated: 3-29-2022
+lasted updated by: Ruckusist.
+current version: 6
+
+changelog:
+
+"""
+
 # STOCK IMPORTS
 import os, time, getpass, socket, asyncio, sys, inspect
 from termcolor import colored
@@ -12,12 +23,10 @@ from deskapp.mods import About
 from deskapp.mods import Fire
 
 
-
 class Logic:
     def __init__(self, engine):
         self.engine = engine  # access to the kill switch.
-        self.app = engine  # Trying to rebrand this...
-        # self.working_panels = []       # the list of pointers
+        self.app = engine  # Trying to rebrand TO: self.app...
         self.cur = 0                   # the current working panel
         self.available_panels = {}     # V.2 of this idea.
 
@@ -25,8 +34,10 @@ class Logic:
         panel = self.app.frontend.make_panel(
                     self.app.frontend.winright_dims,
                     mod.name,  # Item is a Title String.
-                    True)
-        self.available_panels[mod.name] = [mod,panel]
+                    True)      # is boxed.
+
+        # can this be changed to a named tuple?
+        self.available_panels[mod.name] = [mod, panel]
 
     def setup_panels(self):
         for mod in self.app.menu:
@@ -42,16 +53,27 @@ class Logic:
             color = self.app.frontend.color_rw if index == self.cur else self.app.frontend.color_cb
             message = lambda x: self.app.frontend.winleft[0].addstr(index+1, 1, x, color)
             mod = self.available_panels[mod_name][0]
+            
             if not mod.visible: continue
             panel = self.available_panels[mod_name][1]
             
             message(mod.name)
-            rendered_page = mod.page(panel[0])
-            
+
+            # THIS IS A GOOD IDEA THAT DOES NOT WORK! come up with something
+            # BETTER Than this... the page does need to clear every refresh.
+            # panel[0].clear()
+
+            # put the page we are looking at on top of the stack.
             if index == self.cur:
                 panel[1].top()
+            
+            # The mod page could return jinja2 in which case we need to deal
+            # with that here.
+            rendered_page = mod.page(panel[0])
 
-            if rendered_page:  # or did the page render itself??
+            # this writes the page out from the jinja file and stops at the 
+            # max_w here, so the returned page could be bigger than the screen
+            if rendered_page:
                 for index, line in enumerate(rendered_page.split('\n')):
                     if index > self.engine.frontend.winright_dims[0]-2: break
                     panel[0].addstr(index+1, 1, line[:self.engine.frontend.winright_dims[1]-2])
@@ -59,12 +81,18 @@ class Logic:
         # and update the footer.
         self.redraw_footer()
 
+        # added 3/29/22 -- ruckusist
+        time.sleep(.001)  # this is helping buffer the fire from running too fast.
+                          # but it introduces other problems.
+        pass
+
     def redraw_header(self):
         # and update the header.
         head_text = self.app.header()
         head_panel = self.app.frontend.header
         # if not self.app.error_timeout:
-        #     head_panel[0].addstr(1,1,head_text, self.engine.frontend.palette[3])
+        # allow the self.app.header to return a new header text.
+        head_panel[0].addstr(1,1,head_text, self.engine.frontend.palette[3])
 
     def redraw_footer(self):
         # TODO: THIS NEEDS TO BE ANOTHER THING...
@@ -115,7 +143,7 @@ class Backend:
     def __init__(self, parent):
         self.app = parent
         self.running = True
-        self.error_log = []
+        self.error_log = self.app.error_log
         
 
     def logger(self, message:list, message_type:str):
@@ -182,6 +210,8 @@ class Backend:
                 outer_err, 
                 offender
             )
+            # The error isnt working because its not printing.
+            # print(error)
 
         finally:
             self.exit_program()
@@ -194,6 +224,7 @@ class App:
     name = "Deskapp"
 
     def __init__(self, modules:list = []) -> None:
+        self.error_log = []
         self.frontend = Window()
         self.logic = Logic(self)
         self.backend = Backend(self)
@@ -209,7 +240,7 @@ class App:
             mod(self)
 
         self.callbacks = callbacks
-        self.error_log = []
+        
         self.ERROR = lambda x: self.backend.logger([x], "ERROR")
 
     @property
@@ -220,15 +251,18 @@ class App:
     def menu(self, mod_list: list) -> None:
         self._menu = mod_list
 
-
     def header(self):
-        return "This is working!"
+        return "Deskapp"
 
     def start(self) -> None:
         # self.frontend.spash_screen()
         self.frontend.main_screen("|~  Deskapp  ~|")
         self.logic.setup_panels()
         self.backend.start()
+
+    def close(self) -> bool:
+        self.backend.running = False
+        return True
     
     """
     Key Press callback functions.
@@ -236,22 +270,22 @@ class App:
     ## ANOTHER MOD MIGHT OVERRIDE THIS ID WHEN TAKING A 
     ## CALLBACK TO ENSURE ERROR CODES REPORT ACCURATELY.
     """
-    @callback(ID=1, keypress=Keys.TAB)  # tab
+    @callback(ID=1, keypress=Keys.TAB)
     def on_tab(self, *args, **kwargs):
         self.frontend.screen_mode = False
     
-    @callback(ID=1, keypress=Keys.Q)  # q
+    @callback(ID=1, keypress=Keys.Q)
     def on_q(self, *args, **kwargs):
         self.backend.running = False
     
-    @callback(ID=1, keypress=Keys.PG_DOWN)  # pg_down
+    @callback(ID=1, keypress=Keys.PG_DOWN)
     def on_pg_down(self, *args, **kwargs):
         if self.logic.cur < len(self.menu)-1:
             self.logic.cur += 1
         else:
             self.logic.cur = 0
     
-    @callback(ID=1, keypress=Keys.PG_UP)  # pg_up
+    @callback(ID=1, keypress=Keys.PG_UP)
     def on_pg_up(self, *args, **kwargs):
         if self.logic.cur > 0:
             self.logic.cur -= 1

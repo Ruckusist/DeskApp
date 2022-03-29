@@ -20,13 +20,16 @@ class About(Module):
    __ <  |   | (      <  |   |\__ \ |\__ \ |  
   _| \_\\__,_|\___|_|\_\\__,_|____/_|____/\__|
 * Created by Ruckusist @ Ruckusist.com
-* Clone  @ Ruckusist.com/ruckusTUI.git
-    or   @ github.com/ruckusist/ruckusTUI.git
+* Clone  @ Ruckusist.com/deskapp.git
+    or   @ github.com/ruckusist/deskapp.git
 
-TUI in python is still harder than it should be.
-Hopefully this helps someone get their data on
-their screen faster than doing this all over from
-scratch everytime.
+Deskapp is a Curses Based UX for easily implementing
+a new python app without a desktop. Stream Data on a
+Raspberrypi, build a log viewer, capture and display
+stock/crypto prices... Build a math game for kids.
+Originally concieved to display tensorflow training
+statistics while training. intended to run in a tmux
+window in the background for long sessions.
         """
         # template = self.templates_stock.get_template("about.j2")
         template = Environment().from_string(page)

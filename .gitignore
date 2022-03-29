@@ -1,5 +1,11 @@
+# Dev folders.
 build/
 dist/
 *.egg-info/
-deskapp/__pycache__/
+
+# I Think im going to want the scripts folder back in.
 scripts/
+
+# these pycache folders are all over the place.
+*/__pycache__/
+*/*/__pycache__/
