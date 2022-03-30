@@ -4,6 +4,8 @@ from deskapp.keys import Keys
 import functools, random, os, pkg_resources
 from jinja2 import Environment, FileSystemLoader
 
+
+classID = lambda x: random.random()
 class Module:
     """This is the Module Factory"""
 
@@ -15,21 +17,18 @@ class Module:
         self.logic = app.logic
         self.frontend = app.frontend
         self.menu = app.menu
-        # self.max_h = self.frontend.winright_dims[0]-4
-        # self.max_w = self.frontend.winright_dims[1]-2
         # depricated -->
         self.context = {
             "text_input": "",
-             "text_output": "",
+            "text_output": "",
         }
         self.callbacks = []
         self.cur_el = 0
         self.elements = []
+        self.scroll_elements = []
         self.scroll = 0
         self.classID = 0
         self.visible = True
-        # last thing
-        self.__setup__()
 
     def register_module(self):
         # DEPRICATING THIS!
@@ -64,12 +63,16 @@ class Module:
     @callback(0, keypress=Keys.UP)
     def on_up(self, *args, **kwargs): 
         """scroll up"""
-        self.scroll -= 1
+        if self.scroll > 0:
+            self.scroll -= 1
+        else: self.scroll = len(self.scroll_elements)-1
 
     @callback(0, keypress=Keys.DOWN)
     def on_down(self, *args, **kwargs): 
         """scroll down"""
-        self.scroll += 1
+        if self.scroll < len(self.scroll_elements)-1:
+            self.scroll += 1
+        else: self.scroll = 0
 
     @callback(0, keypress=Keys.RIGHT)
     def on_left(self, *args, **kwargs): 

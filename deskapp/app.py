@@ -1,14 +1,3 @@
-"""
-deskapp/app.py
-
-last updated: 3-29-2022
-lasted updated by: Ruckusist.
-current version: 6
-
-changelog:
-
-"""
-
 # STOCK IMPORTS
 import os, time, getpass, socket, asyncio, sys, inspect
 from termcolor import colored
@@ -23,10 +12,12 @@ from deskapp.mods import About
 from deskapp.mods import Fire
 
 
+
 class Logic:
     def __init__(self, engine):
         self.engine = engine  # access to the kill switch.
-        self.app = engine  # Trying to rebrand TO: self.app...
+        self.app = engine  # Trying to rebrand this...
+        # self.working_panels = []       # the list of pointers
         self.cur = 0                   # the current working panel
         self.available_panels = {}     # V.2 of this idea.
 
@@ -34,70 +25,60 @@ class Logic:
         panel = self.app.frontend.make_panel(
                     self.app.frontend.winright_dims,
                     mod.name,  # Item is a Title String.
-                    True)      # is boxed.
+                    True)
+        self.available_panels[mod.name] = [mod,panel]
 
-        # can this be changed to a named tuple?
-        self.available_panels[mod.name] = [mod, panel]
-
-    def setup_panels(self):
-        for mod in self.app.menu:
+    def setup_panels(self, mod=None):
+        if not mod:
+            for mod in self.app.menu:
+                self.setup_panel(mod)
+        else:
             self.setup_panel(mod)
             
         self.all_page_update()
         self.redraw_header()
 
     def all_page_update(self):
+        """
+        This is run every round and rebuilds the windows.
+        """
         self.app.frontend.redraw_window(self.app.frontend.winleft)
 
         for index, mod_name in enumerate(list(self.available_panels)):
-            color = self.app.frontend.color_rw if index == self.cur else self.app.frontend.color_cb
-            message = lambda x: self.app.frontend.winleft[0].addstr(index+1, 1, x, color)
-            mod = self.available_panels[mod_name][0]
-            
+            color    = self.app.frontend.color_rw if index == self.cur else self.app.frontend.color_cb
+            message  = lambda x: self.app.frontend.winleft[0].addstr(index+1, 1, x, color)
+            mod      = self.available_panels[mod_name][0]
+
             if not mod.visible: continue
             panel = self.available_panels[mod_name][1]
             
             message(mod.name)
-
-            # THIS IS A GOOD IDEA THAT DOES NOT WORK! come up with something
-            # BETTER Than this... the page does need to clear every refresh.
             # panel[0].clear()
-
-            # put the page we are looking at on top of the stack.
+            rendered_page = mod.page(panel[0])
+            
             if index == self.cur:
                 panel[1].top()
-            
-            # The mod page could return jinja2 in which case we need to deal
-            # with that here.
-            rendered_page = mod.page(panel[0])
 
-            # this writes the page out from the jinja file and stops at the 
-            # max_w here, so the returned page could be bigger than the screen
-            if rendered_page:
+            if rendered_page:  # or did the page render itself??
                 for index, line in enumerate(rendered_page.split('\n')):
                     if index > self.engine.frontend.winright_dims[0]-2: break
                     panel[0].addstr(index+1, 1, line[:self.engine.frontend.winright_dims[1]-2])
             
         # and update the footer.
         self.redraw_footer()
-
-        # added 3/29/22 -- ruckusist
-        time.sleep(.001)  # this is helping buffer the fire from running too fast.
-                          # but it introduces other problems.
-        pass
+        time.sleep(.001)
 
     def redraw_header(self):
         # and update the header.
         head_text = self.app.header()
         head_panel = self.app.frontend.header
         # if not self.app.error_timeout:
-        # allow the self.app.header to return a new header text.
         head_panel[0].addstr(1,1,head_text, self.engine.frontend.palette[3])
 
     def redraw_footer(self):
         # TODO: THIS NEEDS TO BE ANOTHER THING...
         if self.engine.frontend.screen_mode:
-            options = ["|q| to quit   |Tab| switch Mode   |enter| to start service", "|pgUp| change menu |pgDn| change menu"]
+            options = ["|q| to quit   |Tab| to enter Text  |enter| to start service", "|pgUp| change menu |pgDn| change menu"]
         else:
             options = [" Cool stuff goes here...", "|enter| submit   |'stop'| to kill service"]
         self.engine.frontend.redraw_window(self.engine.frontend.debug)
@@ -145,9 +126,7 @@ class Backend:
         self.running = True
         self.error_log = self.app.error_log
         
-
-    def logger(self, message:list, message_type:str):
-        
+    def logger(self, message:list, message_type:str):       
         # for line in message:
         #     print(f"[{message_type}]\t{line}")
         #  TODO
@@ -211,7 +190,7 @@ class Backend:
                 offender
             )
             # The error isnt working because its not printing.
-            # print(error)
+            print(error)
 
         finally:
             self.exit_program()
@@ -234,13 +213,13 @@ class App:
         self.modules = modules
         self.modules.append(About)
         self.modules.append(Fire)
+        self.appdata = {}
 
         # SETUP
         for mod in self.modules:
             mod(self)
 
         self.callbacks = callbacks
-        
         self.ERROR = lambda x: self.backend.logger([x], "ERROR")
 
     @property
@@ -252,7 +231,7 @@ class App:
         self._menu = mod_list
 
     def header(self):
-        return "Deskapp"
+        return "This is working!"
 
     def start(self) -> None:
         # self.frontend.spash_screen()
@@ -265,27 +244,40 @@ class App:
         return True
     
     """
+    NEW FUNCTIONALITY!! so you want the app itself to carry some data
+    between some modules?? we should be able to handle that!
+    """
+
+    @property
+    def data(self):
+        return self.appdata
+
+    @data.setter
+    def data(self, k, v):
+        self.appdata[k] = v
+
+    """
     Key Press callback functions.
     ## ID=1  MEANS THIS IS THE CORE APP SENDING THE SIGNAL
     ## ANOTHER MOD MIGHT OVERRIDE THIS ID WHEN TAKING A 
     ## CALLBACK TO ENSURE ERROR CODES REPORT ACCURATELY.
     """
-    @callback(ID=1, keypress=Keys.TAB)
+    @callback(ID=1, keypress=Keys.TAB)  # tab
     def on_tab(self, *args, **kwargs):
         self.frontend.screen_mode = False
     
-    @callback(ID=1, keypress=Keys.Q)
+    @callback(ID=1, keypress=Keys.Q)  # q
     def on_q(self, *args, **kwargs):
         self.backend.running = False
     
-    @callback(ID=1, keypress=Keys.PG_DOWN)
+    @callback(ID=1, keypress=Keys.PG_DOWN)  # pg_down
     def on_pg_down(self, *args, **kwargs):
         if self.logic.cur < len(self.menu)-1:
             self.logic.cur += 1
         else:
             self.logic.cur = 0
     
-    @callback(ID=1, keypress=Keys.PG_UP)
+    @callback(ID=1, keypress=Keys.PG_UP)  # pg_up
     def on_pg_up(self, *args, **kwargs):
         if self.logic.cur > 0:
             self.logic.cur -= 1

@@ -10,8 +10,6 @@ class Fire_:
         self.size = self.w * self.h
         self.og_chars = [" ", ".", ":", "^", "*", "x", "s", "S", "#", "$"]
         self.chars = [" ", ",", "^", "~", "*", "|", "H", "$", "#", "@"]
-        
-        # what is the difference here?
         # self.b = [0 for x in range(self.size + self.w + 1)]
         self.b = []
         for x in range(self.size + self.w * 2 + 2):
