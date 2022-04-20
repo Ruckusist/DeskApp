@@ -9,3 +9,5 @@ scripts/
 # these pycache folders are all over the place.
 */__pycache__/
 */*/__pycache__/
+
+junk/

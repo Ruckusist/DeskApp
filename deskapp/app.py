@@ -3,13 +3,13 @@ import os, time, getpass, socket, asyncio, sys, inspect
 from termcolor import colored
 
 # IMPORT CORE UITLS
-from f import Frontend
+from deskapp.frontend import Frontend
 from deskapp.callback import callback, callbacks
 from deskapp.keys import Keys
 
 # IMPORT MODS
 from deskapp.mods import About
-from mods.fire import Fire
+from deskapp.mods import Fire
 
 
 

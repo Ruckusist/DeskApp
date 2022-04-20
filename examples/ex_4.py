@@ -56,8 +56,8 @@ class Math_Game(deskapp.Module):
             panel.box()
             panel.addstr(0, 1, "| Math Game |")
             self.screen_flag = False
-        max_h = self.app.frontend.winright_dims[0]
-        max_w = self.app.frontend.winright_dims[1]
+        max_h = self.app.frontend.winright_upper_dims[0]
+        max_w = self.app.frontend.winright_upper_dims[1]
         v_line = 1
         
         upperlaneMath = max_w - (9 + len(self.username) + 2)
