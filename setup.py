@@ -3,7 +3,7 @@ from distutils.core import setup
 
 setup(
     name='deskapp',
-	version = "0.0.2",
+	version = "0.0.3",
     author='Ruckusist',
     author_email='ruckusist@outlook.com',
     url='https://github.com/ruckusist/deskapp',

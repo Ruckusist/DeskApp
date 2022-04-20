@@ -8,6 +8,8 @@ class Ex1(deskapp.Module):
         super().__init__(app)
         self.classID = classIDEx1
 
+        self.register_module()
+
     def page(self, panel):
         panel.addstr(1,1,"Example One.")
         return False

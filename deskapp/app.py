@@ -3,13 +3,13 @@ import os, time, getpass, socket, asyncio, sys, inspect
 from termcolor import colored
 
 # IMPORT CORE UITLS
-from deskapp.frontend import Window
+from f import Frontend
 from deskapp.callback import callback, callbacks
 from deskapp.keys import Keys
 
 # IMPORT MODS
 from deskapp.mods import About
-from deskapp.mods import Fire
+from mods.fire import Fire
 
 
 
@@ -22,8 +22,9 @@ class Logic:
         self.available_panels = {}     # V.2 of this idea.
 
     def setup_panel(self, mod):
+        # Panel object is a named tuple (win, panel, label, dims)
         panel = self.app.frontend.make_panel(
-                    self.app.frontend.winright_dims,
+                    self.app.frontend.winright_upper_dims,
                     mod.name,  # Item is a Title String.
                     True)
         self.available_panels[mod.name] = [mod,panel]
@@ -47,22 +48,22 @@ class Logic:
         for index, mod_name in enumerate(list(self.available_panels)):
             color    = self.app.frontend.color_rw if index == self.cur else self.app.frontend.color_cb
             message  = lambda x: self.app.frontend.winleft[0].addstr(index+1, 1, x, color)
-            mod      = self.available_panels[mod_name][0]
+            mod, panel      = self.available_panels[mod_name]
 
             if not mod.visible: continue
-            panel = self.available_panels[mod_name][1]
+            # panel = self.available_panels[mod_name][1]
             
             message(mod.name)
             # panel[0].clear()
             rendered_page = mod.page(panel[0])
             
             if index == self.cur:
-                panel[1].top()
+                panel.panel.top()
 
             if rendered_page:  # or did the page render itself??
                 for index, line in enumerate(rendered_page.split('\n')):
-                    if index > self.engine.frontend.winright_dims[0]-2: break
-                    panel[0].addstr(index+1, 1, line[:self.engine.frontend.winright_dims[1]-2])
+                    if index > self.engine.frontend.winright_upper_dims[0]-2: break
+                    panel.win.addstr(index+1, 1, line[:self.engine.frontend.winright_upper_dims[1]-2])
             
         # and update the footer.
         self.redraw_footer()
@@ -202,17 +203,18 @@ class Backend:
 class App:
     name = "Deskapp"
 
-    def __init__(self, modules:list = []) -> None:
+    def __init__(self, modules:list = [], demo_mode=True) -> None:
         self.error_log = []
-        self.frontend = Window()
+        self.frontend = Frontend()
         self.logic = Logic(self)
         self.backend = Backend(self)
 
         # APP
         self._menu = []
         self.modules = modules
-        self.modules.append(About)
-        self.modules.append(Fire)
+        if demo_mode:
+            self.modules.append(About)
+            self.modules.append(Fire)
         self.appdata = {}
 
         # SETUP

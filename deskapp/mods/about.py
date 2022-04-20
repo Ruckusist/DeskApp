@@ -1,6 +1,6 @@
 import random
-from ..module import Module
-from ..callback import callback
+from deskapp.module import Module
+from deskapp.callback import callback
 
 from jinja2 import Environment
 

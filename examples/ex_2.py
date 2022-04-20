@@ -11,6 +11,8 @@ class Ex2(deskapp.Module):
         self.elements = ['this', 'that', 'other']
         self.index = 1  # Verticle Print Position
 
+        self.register_module()
+
     def page(self, panel):
         panel.addstr(1,1,"Example Two.")
         self.index = 3  # reset this to the top of the box every round

@@ -13,6 +13,8 @@ class Ex3(deskapp.Module):
 
         self.should_loop = False  # <-- this is example 3
 
+        self.register_module()
+
     def loop(self):
         while True:
             if not self.should_loop: break
@@ -53,8 +55,7 @@ class Ex3(deskapp.Module):
         if self.should_loop: self.should_loop = False
         else:
             self.should_loop = True
-            x = threading.Thread(target=self.loop)
-            x.start()
+            threading.Thread(target=self.loop).start()
 
 if __name__ == "__main__":
     app = deskapp.App([Ex3])

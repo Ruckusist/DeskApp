@@ -75,8 +75,8 @@ class Fire(Module):
     def on_enter(self, *args, **kwargs):
         if not self.fire:
             self.fire = Fire_((
-            int(self.app.frontend.winright_dims[1] - 2),
-            int(self.app.frontend.winright_dims[0] - 2)
+            int(self.app.frontend.winright_upper_dims[1] - 2),
+            int(self.app.frontend.winright_upper_dims[0] - 2)
         ))
 
         # TURN OFF
@@ -94,8 +94,8 @@ class Fire(Module):
             self.fire.breaker = True
 
     def page(self, panel) -> None:
-        max_w = int(self.app.frontend.winright_dims[1] - 2)
-        max_h = int(self.app.frontend.winright_dims[0] - 2)
+        max_w = int(self.app.frontend.winright_upper_dims[1] - 2)
+        max_h = int(self.app.frontend.winright_upper_dims[0] - 2)
 
         if self.fire:
             for index, line in enumerate(reversed(self.fire.gameboard)):
