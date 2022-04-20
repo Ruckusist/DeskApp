@@ -10,4 +10,7 @@ scripts/
 */__pycache__/
 */*/__pycache__/
 
+# vim temp buffers:
+*.swp
+
 junk/
