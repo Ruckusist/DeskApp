@@ -28,8 +28,9 @@ class Logic:
         self.cur = 0                   # the current working panel
         self.available_panels = {}     # V.2 of this idea.
 
-        self.last_update = 0
+        self.last_update = timer()
         self.message_update = timer()
+        self.message_log = []
 
     def setup_panel(self, mod):
         # Panel object is a named tuple (win, panel, label, dims)
@@ -63,15 +64,16 @@ class Logic:
 
         for index, mod_name in enumerate(list(self.available_panels)):
             color    = self.app.frontend.color_rw if index == self.cur else self.app.frontend.color_cb
-            message  = lambda x: self.app.frontend.winleft[0].addstr(index+1, 1, x, color)
+            message  = lambda x: self.app.frontend.winleft.win.addstr(index+1, 1, x, color)
             mod, panel      = self.available_panels[mod_name]
 
             if not mod.visible: continue
             # panel = self.available_panels[mod_name][1]
             
-            message(mod.name)
+            # message(mod.name)
             # panel[0].clear()
-            self.app.frontend.redraw_window(self.app.frontend.winleft)
+            self.app.frontend.winleft.win.addstr(index+1, 1, mod.name, color)
+            # self.app.frontend.redraw_window(self.app.frontend.winleft)
             rendered_page = mod.page(panel[0])
             
             if index == self.cur:
@@ -88,23 +90,26 @@ class Logic:
         time.sleep(.001)
 
     def redraw_messages(self):
-        if self.message_update + 3 > timer(): return
-        self.message_update = timer()
+        if False:
+            if self.message_update + 3 > timer(): return
+            self.message_update = timer()
+            self.app.appdata['message_log'].append(f"{time.ctime()} Testing a rolling message...")
         panel = self.app.frontend.winrightlower
         h = panel.dims[0]
         w = panel.dims[1]
         log = self.app.appdata['message_log'][-(h-2):]
-        panel.win.clear()
-        panel.win.box()
-        panel.win.addstr(0, 1, "| Global Chat |")
-        for row in range(h):
-            try:
-                message = log[row][:w-2]
-            except:
-                break
-            panel.win.addstr(row+1,1,message)
-        self.app.appdata['message_log'].append(f"{time.ctime()} Testing a rolling message...")
-
+        if log != self.message_update:
+            self.message_update = log
+            panel.win.clear()
+            panel.win.box()
+            panel.win.addstr(0, 1, "| Global Chat |")
+            for row in range(h):
+                try:
+                    message = log[row][:w-2]
+                except:
+                    break
+                panel.win.addstr(row+1,1,message)
+        
     def redraw_header(self):
         # and update the header.
         head_text = self.app.header()
@@ -242,7 +247,7 @@ class App:
     def __init__(self, 
             modules:list = [], 
             demo_mode=True,
-            splash_screen=True,
+            splash_screen=False,
         ) -> None:
         self.error_log = []
         self.splash_screen = splash_screen
