@@ -12,6 +12,13 @@ from deskapp.mods import About
 from deskapp.mods import Fire
 
 
+def log_print(msg):
+    with open('log.txt', 'a') as log:
+        log.write(str(msg))
+        log.write('\n')
+
+print = log_print
+
 
 class Logic:
     def __init__(self, engine):
