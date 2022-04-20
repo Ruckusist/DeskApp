@@ -1,7 +1,7 @@
 # STOCK IMPORTS
 import os, time, getpass, socket, asyncio, sys, inspect
 from termcolor import colored
-
+from timeit import default_timer as timer
 # IMPORT CORE UITLS
 from deskapp.frontend import Frontend
 from deskapp.callback import callback, callbacks
@@ -28,6 +28,9 @@ class Logic:
         self.cur = 0                   # the current working panel
         self.available_panels = {}     # V.2 of this idea.
 
+        self.last_update = 0
+        self.message_update = timer()
+
     def setup_panel(self, mod):
         # Panel object is a named tuple (win, panel, label, dims)
         panel = self.app.frontend.make_panel(
@@ -50,6 +53,12 @@ class Logic:
         """
         This is run every round and rebuilds the windows.
         """
+        
+
+        # AT LAST ! A SCREEN TIMER!
+        if self.last_update + 0.03 > timer(): return
+        self.last_update = timer()
+        #############################
         self.app.frontend.redraw_window(self.app.frontend.winleft)
 
         for index, mod_name in enumerate(list(self.available_panels)):
@@ -62,6 +71,7 @@ class Logic:
             
             message(mod.name)
             # panel[0].clear()
+            self.app.frontend.redraw_window(self.app.frontend.winleft)
             rendered_page = mod.page(panel[0])
             
             if index == self.cur:
@@ -74,7 +84,26 @@ class Logic:
             
         # and update the footer.
         self.redraw_footer()
+        self.redraw_messages()
         time.sleep(.001)
+
+    def redraw_messages(self):
+        if self.message_update + 3 > timer(): return
+        self.message_update = timer()
+        panel = self.app.frontend.winrightlower
+        h = panel.dims[0]
+        w = panel.dims[1]
+        log = self.app.appdata['message_log'][-(h-2):]
+        panel.win.clear()
+        panel.win.box()
+        panel.win.addstr(0, 1, "| Global Chat |")
+        for row in range(h):
+            try:
+                message = log[row][:w-2]
+            except:
+                break
+            panel.win.addstr(row+1,1,message)
+        self.app.appdata['message_log'].append(f"{time.ctime()} Testing a rolling message...")
 
     def redraw_header(self):
         # and update the header.
@@ -210,8 +239,13 @@ class Backend:
 class App:
     name = "Deskapp"
 
-    def __init__(self, modules:list = [], demo_mode=True) -> None:
+    def __init__(self, 
+            modules:list = [], 
+            demo_mode=True,
+            splash_screen=True,
+        ) -> None:
         self.error_log = []
+        self.splash_screen = splash_screen
         self.frontend = Frontend()
         self.logic = Logic(self)
         self.backend = Backend(self)
@@ -231,6 +265,17 @@ class App:
         self.callbacks = callbacks
         self.ERROR = lambda x: self.backend.logger([x], "ERROR")
 
+        self.appdata['message_log'] = [
+            '1 this is working', 
+            '2 for sure', 
+            '3 is it though?',
+            '4 test',
+            '5 this that other',
+            '6 this is working',
+            '7 cmon now...',
+            '8 lets go... this is an ultra super duper long string of doom that you will never print on to your terminal.'
+            ]
+
     @property
     def menu(self):
         return self._menu
@@ -243,9 +288,15 @@ class App:
         return "This is working!"
 
     def start(self) -> None:
-        # self.frontend.spash_screen()
+        if self.splash_screen:
+            self.frontend.splash_screen()
         self.frontend.main_screen("|~  Deskapp  ~|")
         self.logic.setup_panels()
+
+        # NEW THING!
+        # LETS HAVE A MESSAGE PANEL OWNED BY THE APP
+        self.message_panel = self.frontend.winrightlower
+
         self.backend.start()
 
     def close(self) -> bool:

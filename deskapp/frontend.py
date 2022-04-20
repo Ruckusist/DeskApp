@@ -25,7 +25,7 @@ from collections import namedtuple
 
 class Cursing:
     def __init__(self):
-        print("[i] Starting Cursing Frontend.")
+        # print("[i] Starting Cursing Frontend.")
         self.curses = curses
         # curses.filter()
         self.screen = curses.initscr()
@@ -219,8 +219,8 @@ class Frontend(Cursing):
         self.recalc_winsizes()
         self.header = self.make_panel(self.header_dims, header)
         self.winleft = self.make_panel(self.winleft_dims, "Menu")
-        self.winrightlower = self.make_panel(self.winright_upper_dims, "Panel 3")
-        self.winrightupper = self.make_panel(self.winright_lower_dims, "Messages")      
+        self.winrightupper = self.make_panel(self.winright_upper_dims, "Panel 3")
+        self.winrightlower = self.make_panel(self.winright_lower_dims, "Messages")      
         self.footer = self.make_panel(self.footer_dims, "Input")      
         self.debug = self.make_panel(self.debug_dims, "Meta")
         curses.panel.update_panels()
