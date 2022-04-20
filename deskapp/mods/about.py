@@ -25,11 +25,11 @@ class About(Module):
     or   @ github.com/ruckusist/deskapp.git
 
 Deskapp is a Curses Based UX for easily implementing
-a new python app without a desktop. Stream Data on a
+a new Python app without a desktop. Stream data on a
 Raspberrypi, build a log viewer, capture and display
 stock/crypto prices... Build a math game for kids.
-Originally concieved to display tensorflow training
-statistics while training. intended to run in a tmux
+Originally conceived to display Tensorflow training
+statistics while training. Intended to run in a tmux
 window in the background for long sessions.
         """
         # template = self.templates_stock.get_template("about.j2")
