@@ -14,7 +14,12 @@ from deskapp.mods import Fire
 
 def log_print(msg):
     with open('log.txt', 'a') as log:
-        log.write(str(msg))
+        if type(msg) == type([]):
+            for line in msg:
+                log.write(str(line))
+        else:
+            log.write(str(msg))
+
         log.write('\n')
 
 print = log_print

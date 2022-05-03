@@ -34,6 +34,7 @@ class Cursing:
         self.setup_color()
         curses.noecho()
         curses.cbreak()
+        # curses.init_color(0, 0, 0, 0)
         curses.curs_set(0) # 0: invisible, 1: visible, 2: bright
         self.screen.keypad(1)
         self.screen.nodelay(1)
