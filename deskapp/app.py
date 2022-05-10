@@ -196,7 +196,7 @@ class Backend:
             error_msg.append(f"║ [ERR] {exception[0]}: {exception[1]}")
             error_msg.append(f"╚══════════════════════════>>")
             msg = "\n".join(error_msg)
-            # print(msg)
+            log_print(msg)
             # return msg
             return (error_msg, "ERROR")
         except: print("There has been Immeasureable damage. Good day.")
