@@ -253,10 +253,11 @@ class App:
             modules:list = [], 
             demo_mode=True,
             splash_screen=False,
+            h_split=0.16
         ) -> None:
         self.error_log = []
         self.splash_screen = splash_screen
-        self.frontend = Frontend()
+        self.frontend = Frontend(split_pct=h_split)
         self.logic = Logic(self)
         self.backend = Backend(self)
 
@@ -275,16 +276,14 @@ class App:
         self.callbacks = callbacks
         self.ERROR = lambda x: self.backend.logger([x], "ERROR")
 
-        self.appdata['message_log'] = [
-            '1 this is working', 
-            '2 for sure', 
-            '3 is it though?',
-            '4 test',
-            '5 this that other',
-            '6 this is working',
-            '7 cmon now...',
-            '8 lets go... this is an ultra super duper long string of doom that you will never print on to your terminal.'
-            ]
+        self.appdata['message_log'] = []
+        
+    def print(self, message):
+        """This will output to the chat console."""
+        # format the message
+        t = time.strftime("%b %d, %Y|%I:%M%p", time.localtime())
+        mesg = f"[{t}] {message}"
+        self.appdata['message_log'].append(mesg)
 
     @property
     def menu(self):
@@ -300,7 +299,7 @@ class App:
     def start(self) -> None:
         if self.splash_screen:
             self.frontend.splash_screen()
-        self.frontend.main_screen("|~  Deskapp  ~|")
+        self.frontend.main_screen("~  Deskapp  ~")
         self.logic.setup_panels()
 
         # NEW THING!

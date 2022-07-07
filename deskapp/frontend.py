@@ -6,7 +6,7 @@ __author__ = "Eric Petersen @Ruckusist"
 __copyright__ = "Copyright 2022, The Alpha Griffin Project"
 __credits__ = ["Eric Petersen", "Shawn Wilson", "@alphagriffin"]
 __license__ = "***"
-__version__ = "0.0.6"
+__version__ = "0.0.7"
 __maintainer__ = "Eric Petersen"
 __email__ = "ruckusist@alphagriffin.com"
 __status__ = "Prototype"
@@ -24,9 +24,10 @@ from collections import namedtuple
 
 
 class Cursing:
-    def __init__(self):
+    def __init__(self, split_pct=.16):
         # print("[i] Starting Cursing Frontend.")
         self.curses = curses
+        self.split_pct = split_pct
         # curses.filter()
         self.screen = curses.initscr()
         self.palette = []
@@ -179,7 +180,7 @@ class Frontend(Cursing):
         self.h_split = int(w / 6) - 1
         self.winleft_dims = [h-3-4-3, self.h_split, 3, 0]
         # WINRIGHT
-        self.v_split = int((h-3-4-3)/6)
+        self.v_split = int((h-3-4-3)*self.split_pct)
         self.winright_lower_dims = [self.v_split, w - self.h_split-1, h-7-self.v_split, self.h_split + 1]
         #WINRIGHT AGAIN
         self.winright_upper_dims = [(h-3-4-3)-self.v_split, w - self.h_split-1, 3, self.h_split + 1]
