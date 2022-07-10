@@ -253,11 +253,11 @@ class App:
             modules:list = [], 
             demo_mode=True,
             splash_screen=False,
-            h_split=0.16
+            v_split=0.16
         ) -> None:
         self.error_log = []
         self.splash_screen = splash_screen
-        self.frontend = Frontend(split_pct=h_split)
+        self.frontend = Frontend(split_pct=v_split)
         self.logic = Logic(self)
         self.backend = Backend(self)
 
