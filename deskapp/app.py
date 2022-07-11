@@ -248,12 +248,12 @@ class Backend:
 
 class App:
     def __init__(self,
+            modules:list = [], 
+            splash_screen=False,
+            demo_mode=True,
             name: str = "Deskapp",
             title: str = "Deskapp",
             header: str = "This is working.",
-            modules:list = [], 
-            demo_mode=True,
-            splash_screen=False,
             v_split=0.16
         ) -> None:
         
