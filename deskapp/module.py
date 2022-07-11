@@ -22,6 +22,9 @@ class Module:
             "text_input": "",
             "text_output": "",
         }
+        # RESIZE WILL BREAK THIS.
+        self.max_h = self.app.frontend.winright_upper_dims[0]
+        self.max_w = self.app.frontend.winright_upper_dims[1]
         self.callbacks = []
         self.cur_el = 0
         self.elements = []

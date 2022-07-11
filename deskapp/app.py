@@ -266,11 +266,14 @@ class App:
         """This is the main entry point. This Constructor should hold as
             many possible configuration options as possible.
         """
+        
         self.error_log = []
         self.splash_screen = splash_screen
         self.frontend = Frontend(split_pct=v_split, title=title)
+        self.frontend.main_screen(title)
         self.logic = Logic(self)
         self.backend = Backend(self)
+        
 
         # APP
         self.name = name
@@ -323,7 +326,7 @@ class App:
     def start(self) -> None:
         if self.splash_screen:
             self.frontend.splash_screen()
-        self.frontend.main_screen(self.title_string)
+        # self.frontend.main_screen(self.title_string)
         self.logic.setup_panels()
 
         # NEW THING!
