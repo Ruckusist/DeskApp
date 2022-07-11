@@ -107,7 +107,7 @@ class Logic:
             self.message_update = log
             panel.win.clear()
             panel.win.box()
-            panel.win.addstr(0, 1, "| Global Chat |")
+            panel.win.addstr(0, 1, "| Message Center |")
             for row in range(h):
                 try:
                     message = log[row][:w-2]
@@ -117,7 +117,7 @@ class Logic:
         
     def redraw_header(self):
         # and update the header.
-        head_text = self.app.header()
+        head_text = self.app.get_header()
         head_panel = self.app.frontend.header
         # if not self.app.error_timeout:
         head_panel[0].addstr(1,1,head_text, self.engine.frontend.palette[3])
@@ -247,21 +247,26 @@ class Backend:
 
 
 class App:
-    name = "Deskapp"
-
-    def __init__(self, 
+    def __init__(self,
+            name: str = "Deskapp",
+            title: str = "Deskapp",
+            header: str = "This is working.",
             modules:list = [], 
             demo_mode=True,
             splash_screen=False,
             v_split=0.16
         ) -> None:
+        
         self.error_log = []
         self.splash_screen = splash_screen
-        self.frontend = Frontend(split_pct=v_split)
+        self.frontend = Frontend(split_pct=v_split, title=title)
         self.logic = Logic(self)
         self.backend = Backend(self)
 
         # APP
+        self.name = name
+        self.header_string = header
+        self.title_string = title
         self._menu = []
         self.modules = modules
         if demo_mode:
@@ -293,13 +298,22 @@ class App:
     def menu(self, mod_list: list) -> None:
         self._menu = mod_list
 
-    def header(self):
-        return "This is working!"
+    def set_header(self, title_string: str):
+        self.header_string = title_string
+
+    def get_header(self):
+        return self.header_string
+
+    def set_title(self, title_string: str):
+        self.title_string = title_string
+        
+    def get_title(self):
+        return self.title_string
 
     def start(self) -> None:
         if self.splash_screen:
             self.frontend.splash_screen()
-        self.frontend.main_screen("~  Deskapp  ~")
+        self.frontend.main_screen(self.title_string)
         self.logic.setup_panels()
 
         # NEW THING!

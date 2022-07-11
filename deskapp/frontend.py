@@ -24,9 +24,9 @@ from collections import namedtuple
 
 
 class Cursing:
-    def __init__(self, split_pct=.16):
-        # print("[i] Starting Cursing Frontend.")
+    def __init__(self, split_pct=.16, title="Deskapp"):
         self.curses = curses
+        self.title = title
         self.split_pct = split_pct
         # curses.filter()
         self.screen = curses.initscr()
@@ -228,9 +228,9 @@ class Frontend(Cursing):
         curses.panel.update_panels()
         self.screen.refresh()
 
-    def __call__(self) -> None:
+    def __call__(self, header='Deskapp') -> None:
         self.splash_screen()
-        self.main_screen()
+        self.main_screen(header)
         time.sleep(10)
         self.end_safely()
 
