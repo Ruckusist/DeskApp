@@ -89,6 +89,8 @@ class Logic:
                     if index > self.engine.frontend.winright_upper_dims[0]-2: break
                     panel.win.addstr(index+1, 1, line[:self.engine.frontend.winright_upper_dims[1]-2])
             
+        # UPDATE THE HEADER
+        self.redraw_header()
         # and update the footer.
         self.redraw_footer()
         self.redraw_messages()
@@ -115,9 +117,10 @@ class Logic:
                     break
                 panel.win.addstr(row+1,1,message)
         
-    def redraw_header(self):
+    def redraw_header(self, head_text=None):
         # and update the header.
-        head_text = self.app.get_header()
+        if not head_text:
+            head_text = self.app.get_header()
         head_panel = self.app.frontend.header
         # if not self.app.error_timeout:
         head_panel[0].addstr(1,1,head_text, self.engine.frontend.palette[3])
@@ -247,16 +250,22 @@ class Backend:
 
 
 class App:
+    """
+    DESKAPP Entry point. This Constructor should build the application
+    entirely. further calls to the App should be avoided.
+    """
     def __init__(self,
-            modules:list = [], 
-            splash_screen=False,
-            demo_mode=True,
-            name: str = "Deskapp",
-            title: str = "Deskapp",
-            header: str = "This is working.",
-            v_split=0.16
+            modules:       list = [], 
+            splash_screen: bool = False,
+            demo_mode:     bool = True,
+            name:           str = "Deskapp",
+            title:          str = "Deskapp",
+            header:         str = "This is working.",
+            v_split:      float = 0.16
         ) -> None:
-        
+        """This is the main entry point. This Constructor should hold as
+            many possible configuration options as possible.
+        """
         self.error_log = []
         self.splash_screen = splash_screen
         self.frontend = Frontend(split_pct=v_split, title=title)
@@ -300,6 +309,7 @@ class App:
 
     def set_header(self, title_string: str):
         self.header_string = title_string
+        self.logic.redraw_header(title_string)
 
     def get_header(self):
         return self.header_string

@@ -41,3 +41,6 @@ but poorly labelled and nearly unusable.
     the About and Fire functionality. This gives me the idea to put more demo 
     stuff there. I want to copy cmatrix, dropping snowflakes, video player, other 
     stuff.
+
+[Bad_Behavior]
+2 modules with the same name break the paging system.
