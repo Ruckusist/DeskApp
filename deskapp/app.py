@@ -54,6 +54,13 @@ class Logic:
             
         self.all_page_update()
         self.redraw_header()
+        
+    def repanel(self):
+        self.app.frontend.recalc_winsizes()
+        self.available_panels = {}
+        for mod in self.app.menu:
+            self.setup_panel(mod)
+        self.app.frontend.redraw_message_panel()
 
     def all_page_update(self):
         """
