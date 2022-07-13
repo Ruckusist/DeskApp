@@ -219,8 +219,8 @@ class Backend:
             self.app.frontend.refresh()
             keypress = 0
             keypress = self.app.frontend.get_input()
-            if keypress:
-                self.app.logic.decider(keypress)
+            # if keypress:
+            self.app.logic.decider(keypress)
             self.app.logic.all_page_update()
   
     def start(self):
@@ -289,16 +289,23 @@ class App:
         self.appdata['message_log'] = []
 
         # SETUP
-        if demo_mode:
-            self.modules.append(About)
-            self.modules.append(Fire)
-            
+        self.demo_mode = demo_mode
+        self.autostart = autostart
+        self.is_setup = False
         if autostart:
-            for mod in self.modules:
-                mod(self)
-
+            self.setup()
+        
         self.callbacks = callbacks
         self.ERROR = lambda x: self.backend.logger([x], "ERROR")
+
+    def setup(self):
+        """Run the init on eac of the modules."""
+        if self.demo_mode:
+            self.modules.append(About)
+            self.modules.append(Fire)
+        for mod in self.modules:
+                mod(self)
+        self.is_setup = True
 
     def print(self, message, cr=False, clear=False):
         """Prints Text to the message output screen.
@@ -335,6 +342,8 @@ class App:
         return self.title_string
 
     def start(self) -> None:
+        if not self.is_setup:
+            self.setup()
         if self.splash_screen:
             self.frontend.splash_screen()
         # self.frontend.main_screen(self.title_string)
