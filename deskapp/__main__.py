@@ -7,6 +7,7 @@ def main() -> None:
         demo_mode = True,
         splash_screen = True,
         v_split = .5,
+        h_split = .3,
     )
     app.start()
 

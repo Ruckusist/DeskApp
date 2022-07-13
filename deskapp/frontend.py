@@ -24,10 +24,11 @@ from collections import namedtuple
 
 
 class Cursing:
-    def __init__(self, split_pct=.16, title="Deskapp"):
+    def __init__(self, h_split=.16, v_split=.16, title="Deskapp"):
         self.curses = curses
         self.title = title
-        self.split_pct = split_pct
+        self.h_split_pct = h_split
+        self.v_split_pct = v_split
         # curses.filter()
         self.screen = curses.initscr()
         self.palette = []
@@ -177,10 +178,10 @@ class Frontend(Cursing):
         # HEADER
         self.header_dims = [3, w, 0, 0]
         # WINLEFT
-        self.h_split = int(w / 6) - 1
+        self.h_split = int(w *self.h_split_pct) - 1
         self.winleft_dims = [h-3-4-3, self.h_split, 3, 0]
         # WINRIGHT
-        self.v_split = int((h-3-4-3)*self.split_pct)
+        self.v_split = int((h-3-4-3)*self.v_split_pct)
         self.winright_lower_dims = [self.v_split, w - self.h_split-1, h-7-self.v_split, self.h_split + 1]
         #WINRIGHT AGAIN
         self.winright_upper_dims = [(h-3-4-3)-self.v_split, w - self.h_split-1, 3, self.h_split + 1]

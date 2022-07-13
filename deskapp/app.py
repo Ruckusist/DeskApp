@@ -261,45 +261,56 @@ class App:
             name:           str = "Deskapp",
             title:          str = "Deskapp",
             header:         str = "This is working.",
-            v_split:      float = 0.16
+            v_split:      float = 0.16,
+            h_split:      float = 0.16,
+            autostart:     bool = True,
         ) -> None:
         """This is the main entry point. This Constructor should hold as
             many possible configuration options as possible.
         """
-        
         self.error_log = []
         self.splash_screen = splash_screen
-        self.frontend = Frontend(split_pct=v_split, title=title)
+        self.frontend = Frontend(
+            h_split=h_split,
+            v_split=v_split, 
+            title=title
+            )
         self.frontend.main_screen(title)
         self.logic = Logic(self)
         self.backend = Backend(self)
         
-
         # APP
         self.name = name
         self.header_string = header
         self.title_string = title
         self._menu = []
         self.modules = modules
+        self.appdata = {}
+        self.appdata['message_log'] = []
+
+        # SETUP
         if demo_mode:
             self.modules.append(About)
             self.modules.append(Fire)
-        self.appdata = {}
-
-        # SETUP
-        for mod in self.modules:
-            mod(self)
+            
+        if autostart:
+            for mod in self.modules:
+                mod(self)
 
         self.callbacks = callbacks
         self.ERROR = lambda x: self.backend.logger([x], "ERROR")
 
-        self.appdata['message_log'] = []
-        
-    def print(self, message):
-        """This will output to the chat console."""
+    def print(self, message, cr=False, clear=False):
+        """Prints Text to the message output screen.
+        params: cr=False | removes previous message,
+                clear=False | removes all previous messages
+        """
         # format the message
-        t = time.strftime("%b %d, %Y|%I:%M%p", time.localtime())
+        # t = time.strftime("%b %d, %Y|%I:%M%p", time.localtime())
+        t = time.strftime("%b %d|%I:%M", time.localtime())
         mesg = f"[{t}] {message}"
+        if cr:  # carrage return
+            self.appdata['message_log'].pop(-1)
         self.appdata['message_log'].append(mesg)
 
     @property
