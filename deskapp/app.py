@@ -182,26 +182,26 @@ class Backend:
         #  TODO
         self.error_log.append((message, message_type))
 
-    def get_user(self): return colored(f"{getpass.getuser()}@{socket.gethostname()}", "cyan")
+    def get_user(self): return f"{getpass.getuser()}@{socket.gethostname()}"
 
-    def get_time(self): return colored(time.strftime("%b %d, %Y|%I:%M%p", time.localtime()), "yellow")
+    def get_time(self): return time.strftime("%b %d, %Y|%I:%M%p", time.localtime())
 
     def error_handler(self, exception, outer_err, offender, logfile="", verbose=True):
         try:
             outer_off = ''.join([x.strip(' ').strip('\n') for x in outer_err[4]])
             off = ''.join([x.strip(' ').strip('\n') for x in offender[4]])
             error_msg = []
-            error_msg.append(f"╔══| Errors® |═[{self.get_time()}]═[{self.get_user()}]═[{colored(os.getcwd(), 'green')}]═══>>")
-            error_msg.append(f"║ {outer_err[1]} :: {'__main__' if outer_err[3] == '<module>' else outer_err[3]}")
-            error_msg.append(f"║ \t{outer_err[2]}: {outer_off}  -->")
-            error_msg.append(f"║ ++ {offender[1]} :: Func: {offender[3]}()")
-            error_msg.append(f"║ -->\t{offender[2]}: {off}")
-            error_msg.append(f"║ [ERR] {exception[0]}: {exception[1]}")
-            error_msg.append(f"╚══════════════════════════>>")
-            msg = "\n".join(error_msg)
+            error_msg.append(f"╔══| Errors® |═[{self.get_time()}]═[{self.get_user()}]═[{colored(os.getcwd(), 'green')}]═══>>\n")
+            error_msg.append(f"║ {outer_err[1]} :: {'__main__' if outer_err[3] == '<module>' else outer_err[3]}\n")
+            error_msg.append(f"║ \t{outer_err[2]}: {outer_off}  -->\n")
+            error_msg.append(f"║ ++ {offender[1]} :: Func: {offender[3]}()\n")
+            error_msg.append(f"║ -->\t{offender[2]}: {off}\n")
+            error_msg.append(f"║ [ERR] {exception[0]}: {exception[1]}\n")
+            error_msg.append(f"╚══════════════════════════>>\n\n")
+            msg = "".join(error_msg)
             log_print(msg)
             # return msg
-            return (error_msg, "ERROR")
+            return msg
         except: print("There has been Immeasureable damage. Good day.")
 
     def print_error(self, err):
@@ -275,9 +275,6 @@ class App:
             v_split=v_split, 
             title=title
             )
-        self.frontend.main_screen(title)
-        self.logic = Logic(self)
-        self.backend = Backend(self)
         
         # APP
         self.name = name
@@ -300,6 +297,9 @@ class App:
 
     def setup(self):
         """Run the init on eac of the modules."""
+        self.frontend.main_screen(self.title_string)
+        self.logic = Logic(self)
+        self.backend = Backend(self)
         if self.demo_mode:
             self.modules.append(About)
             self.modules.append(Fire)
@@ -318,6 +318,8 @@ class App:
         mesg = f"[{t}] {message}"
         if cr:  # carrage return
             self.appdata['message_log'].pop(-1)
+        if clear:
+            self.appdata['message_log'] = []
         self.appdata['message_log'].append(mesg)
 
     @property

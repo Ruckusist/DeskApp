@@ -1,4 +1,4 @@
-import time
+import time, os
 from deskapp import App
 
 def main() -> None:
@@ -11,9 +11,10 @@ def main() -> None:
         h_split = .3,
         autostart = False,
     )
-    print("This is working!")
+    print("Testing The Deskapp...")
     time.sleep(3)
-    app.setup()
+    os.system('clear')
+    time.sleep(1)
     app.start()
 
 if __name__ == "__main__":
