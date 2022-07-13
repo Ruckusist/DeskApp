@@ -170,6 +170,14 @@ class Frontend_TEST(Cursing):
 
 
 class Frontend(Cursing):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.header = None
+        self.winleft = None
+        self.winrightupper = None
+        self.winrightlower = None
+        self.footer = None
+        self.debug = None
 
     def recalc_winsizes(self):
         h = self.screen_h
@@ -219,7 +227,14 @@ class Frontend(Cursing):
 
     def main_screen(self, header='Deskapp'):
         """This is attempting a new main panel configuration"""
+        self.header = None
+        self.winleft = None
+        self.winrightupper = None
+        self.winrightlower = None
+        self.footer = None
+        self.debug = None
         self.recalc_winsizes()
+        self.screen.refresh()
         self.header = self.make_panel(self.header_dims, header)
         self.winleft = self.make_panel(self.winleft_dims, "Menu")
         self.winrightupper = self.make_panel(self.winright_upper_dims, "Panel 3")
