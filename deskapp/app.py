@@ -276,6 +276,7 @@ class App:
             many possible configuration options as possible.
         """
         self.error_log = []
+        self.app = self
         # self.appdata = {}
         # self.appdata['message_log'] = []
         self.appdata = {'message_log':[]}
@@ -392,7 +393,7 @@ class App:
     ## ANOTHER MOD MIGHT OVERRIDE THIS ID WHEN TAKING A 
     ## CALLBACK TO ENSURE ERROR CODES REPORT ACCURATELY.
     """
-    def repanel(self):
+    def test(self):
         # if self.high_low:
         #     self.frontend.v_split_pct = .15
         # else:
@@ -403,8 +404,9 @@ class App:
 
     @callback(ID=1, keypress=Keys.BACKSPACE) # spacebar
     def on_space(self, *args, **kwargs):
-        self.print("pressed backspace!")
-        self.app.repanel()
+        self.app.print("pressed backspace!")
+        self.app.test()
+        self.app.print("WAhooq!")
         
     @callback(ID=1, keypress=Keys.TAB)  # tab
     def on_tab(self, *args, **kwargs):
@@ -434,5 +436,5 @@ class App:
             
     @callback(ID=1, keypress=Keys.ESC) # escape
     def on_escape(self, *args, **kwargs):
-        self.print("pressed escape!")
+        self.app.print("pressed escape!")
         # self.repanel()
