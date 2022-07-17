@@ -85,7 +85,9 @@ class Cursing:
             x = self.screen.getch()
             try:
                 if int(x) > 0:
-                    self.keystroke(x)
+                    # self.keystroke(x)
+                    # self.footer[0].addstr(1, 1, f"{x}")
+                    pass
             except: pass
         else:
             self.screen.keypad(0)
@@ -285,7 +287,8 @@ class Window(object):
             x = self.screen.getch()
             try:
                 if int(x) > 0:
-                    self.keystroke(x)
+                    # self.keystroke(x)
+                    self.footer.panel.addstr(1, 1, f"{x}")
             except: pass
         else:
             self.screen.keypad(0)

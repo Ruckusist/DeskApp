@@ -6,6 +6,9 @@ class Keys:
     RIGHT = 261
     ENTER = 10
     SPACE = 32
+    BACKSPACE = 263
+    HOME  = 262
+    END   = 360
     ESC   = 27
     W     = 119
     A     = 97
@@ -17,3 +20,4 @@ class Keys:
     TAB     = 9
     PG_DOWN = 338
     PG_UP   = 339
+    

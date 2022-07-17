@@ -135,7 +135,7 @@ class Logic:
     def redraw_footer(self):
         # TODO: THIS NEEDS TO BE ANOTHER THING...
         if self.engine.frontend.screen_mode:
-            options = ["|q| to quit   |Tab| to enter Text  |enter| to start service", "|pgUp| change menu |pgDn| change menu"]
+            options = ["|q| to quit   |Tab| to enter Text  |enter| to start service", "|pgUp| change menu |pgDn| change menu |space| resize mesg cntr"]
         else:
             options = [" Cool stuff goes here...", "|enter| submit   |'stop'| to kill service"]
         self.engine.frontend.redraw_window(self.engine.frontend.debug)
@@ -276,6 +276,9 @@ class App:
             many possible configuration options as possible.
         """
         self.error_log = []
+        # self.appdata = {}
+        # self.appdata['message_log'] = []
+        self.appdata = {'message_log':[]}
         self.splash_screen = splash_screen
         self.frontend = Frontend(
             h_split=h_split,
@@ -289,8 +292,9 @@ class App:
         self.title_string = title
         self._menu = []
         self.modules = modules
-        self.appdata = {}
-        self.appdata['message_log'] = []
+        # self.appdata = {}
+        # self.appdata['message_log'] = []
+        self.high_low = True
 
         # SETUP
         self.demo_mode = demo_mode
@@ -306,6 +310,7 @@ class App:
         """Run the init on eac of the modules."""
         self.frontend.main_screen(self.title_string)
         self.logic = Logic(self)
+        self.repanel = self.logic.repanel
         self.backend = Backend(self)
         if self.demo_mode:
             self.modules.append(About)
@@ -323,10 +328,10 @@ class App:
         # t = time.strftime("%b %d, %Y|%I:%M%p", time.localtime())
         t = time.strftime("%b %d|%I:%M", time.localtime())
         mesg = f"[{t}] {message}"
-        if cr:  # carrage return
-            self.appdata['message_log'].pop(-1)
-        if clear:
-            self.appdata['message_log'] = []
+        # if cr:  # carrage return
+        #     self.appdata['message_log'].pop(-1)
+        # if clear:
+        #     self.appdata['message_log'] = []
         self.appdata['message_log'].append(mesg)
 
     @property
@@ -387,6 +392,20 @@ class App:
     ## ANOTHER MOD MIGHT OVERRIDE THIS ID WHEN TAKING A 
     ## CALLBACK TO ENSURE ERROR CODES REPORT ACCURATELY.
     """
+    def repanel(self):
+        # if self.high_low:
+        #     self.frontend.v_split_pct = .15
+        # else:
+        #     self.frontend.v_split_pct = .90
+        # self.high_low = not self.high_low
+        # self.logic.repanel()
+        self.print("Repaneled.")
+
+    @callback(ID=1, keypress=Keys.BACKSPACE) # spacebar
+    def on_space(self, *args, **kwargs):
+        self.print("pressed backspace!")
+        self.app.repanel()
+        
     @callback(ID=1, keypress=Keys.TAB)  # tab
     def on_tab(self, *args, **kwargs):
         self.frontend.screen_mode = False
@@ -397,6 +416,10 @@ class App:
     
     @callback(ID=1, keypress=Keys.PG_DOWN)  # pg_down
     def on_pg_down(self, *args, **kwargs):
+        try:
+            self.app.print("pressed PG_DOWN!")
+        except Exception as e:
+            sys.exit(e)
         if self.logic.cur < len(self.menu)-1:
             self.logic.cur += 1
         else:
@@ -408,3 +431,8 @@ class App:
             self.logic.cur -= 1
         else:
             self.logic.cur = len(self.menu)-1
+            
+    @callback(ID=1, keypress=Keys.ESC) # escape
+    def on_escape(self, *args, **kwargs):
+        self.print("pressed escape!")
+        # self.repanel()
