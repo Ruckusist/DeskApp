@@ -393,21 +393,17 @@ class App:
     ## ANOTHER MOD MIGHT OVERRIDE THIS ID WHEN TAKING A 
     ## CALLBACK TO ENSURE ERROR CODES REPORT ACCURATELY.
     """
-    def test(self):
-        # if self.high_low:
-        #     self.frontend.v_split_pct = .15
-        # else:
-        #     self.frontend.v_split_pct = .90
-        # self.high_low = not self.high_low
-        # self.logic.repanel()
-        self.print("Repaneled.")
-
-    @callback(ID=1, keypress=Keys.BACKSPACE) # spacebar
-    def on_space(self, *args, **kwargs):
-        self.app.print("pressed backspace!")
-        self.app.test()
-        self.app.print("WAhooq!")
+    
+    # @callback(ID=1, keypress=Keys.BACKSPACE) # backspace
+    # def on_space(self, *args, **kwargs):
+    #     self.app.print("pressed backspace!")
+    #     self.app.test()
+    #     self.app.print("WAhooq!")
         
+    # @callback(ID=1, keypress=127) # Shawns backspace
+    # def on_space2(self, *args, **kwargs): 
+    #     self.app.onspace(*args, **kwargs)
+    
     @callback(ID=1, keypress=Keys.TAB)  # tab
     def on_tab(self, *args, **kwargs):
         self.frontend.screen_mode = False
@@ -418,10 +414,6 @@ class App:
     
     @callback(ID=1, keypress=Keys.PG_DOWN)  # pg_down
     def on_pg_down(self, *args, **kwargs):
-        try:
-            self.app.print("pressed PG_DOWN!")
-        except Exception as e:
-            sys.exit(e)
         if self.logic.cur < len(self.menu)-1:
             self.logic.cur += 1
         else:
@@ -433,8 +425,3 @@ class App:
             self.logic.cur -= 1
         else:
             self.logic.cur = len(self.menu)-1
-            
-    @callback(ID=1, keypress=Keys.ESC) # escape
-    def on_escape(self, *args, **kwargs):
-        self.app.print("pressed escape!")
-        # self.repanel()
