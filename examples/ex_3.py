@@ -6,13 +6,15 @@ classIDEx3 = random.random()
 class Ex3(deskapp.Module):
     name = "Example 3"
     def __init__(self, app):
+        
         super().__init__(app)
         self.classID = classIDEx3
         self.elements = ['this', 'that', 'other']
         self.index = 1  # Verticle Print Position
-
+        
         self.should_loop = False  # <-- this is example 3
-
+        self.context['looptime'] = 0.0
+        
         self.register_module()
 
     def loop(self):
@@ -44,7 +46,6 @@ class Ex3(deskapp.Module):
             msg = f"Looping... Sleeping for {self.context['looptime']:.2f} secs"
         else: msg = "Press Enter to Start Looping."
         panel.addstr(self.index, 4, msg, self.frontend.chess_white)
-
         return False
 
     def end_safely(self):

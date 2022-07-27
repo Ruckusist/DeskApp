@@ -1,6 +1,6 @@
 # STOCK IMPORTS
 import os, time, getpass, socket, asyncio, sys, inspect
-from termcolor import colored
+#  from termcolor import colored
 from timeit import default_timer as timer
 # IMPORT CORE UITLS
 from deskapp.frontend import Frontend
@@ -69,7 +69,11 @@ class Logic:
         
 
         # AT LAST ! A SCREEN TIMER!
-        if self.last_update + 0.03 > timer(): return
+        if self.last_update + 0.03 > timer(): 
+            sleeptime = 0.03
+            # self.app.print("Overrun!")
+            time.sleep(0.03)
+            return
         self.last_update = timer()
         #############################
         self.app.frontend.redraw_window(self.app.frontend.winleft)
@@ -198,7 +202,7 @@ class Backend:
             outer_off = ''.join([x.strip(' ').strip('\n') for x in outer_err[4]])
             off = ''.join([x.strip(' ').strip('\n') for x in offender[4]])
             error_msg = []
-            error_msg.append(f"╔══| Errors® |═[{self.get_time()}]═[{self.get_user()}]═[{colored(os.getcwd(), 'green')}]═══>>\n")
+            error_msg.append(f"╔══| Errors® |═[{self.get_time()}]═[{self.get_user()}]═[{os.getcwd(), 'green'}]═══>>\n")
             error_msg.append(f"║ {outer_err[1]} :: {'__main__' if outer_err[3] == '<module>' else outer_err[3]}\n")
             error_msg.append(f"║ \t{outer_err[2]}: {outer_off}  -->\n")
             error_msg.append(f"║ ++ {offender[1]} :: Func: {offender[3]}()\n")
