@@ -43,7 +43,7 @@ setup(
     author='Ruckusist',
     author_email='ruckusist@outlook.com',
     url='https://ruckusist.com/deskapp',
-    packages=['deskapp'],
+    packages=['deskapp', 'deskapp.mods'],
     classifiers=[
           'Development Status :: 4 - Beta',
           'Environment :: Console',
