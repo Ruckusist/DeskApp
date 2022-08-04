@@ -14,11 +14,6 @@ scripts/
 *.swp
 
 junk/
-<<<<<<< HEAD
 
 # debug files
 log.txt
-=======
-log.txt
-
->>>>>>> 9d8364cd8a00f86c2f33c24fe051845ecf028ab6

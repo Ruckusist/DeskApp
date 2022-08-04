@@ -13,6 +13,7 @@ class Module:
 
     def __init__(self, app):
         self.app = app
+        self.print = app.print
         self.backend = app.backend
         self.logic = app.logic
         self.frontend = app.frontend
