@@ -11,11 +11,13 @@ __maintainer__  = "Eric Petersen"
 __email__       = "ruckusist@outlook.com"
 __status__      = "Beta"
 
-
 name = "DeskApp"
-from .app import App, Backend, Logic
-from .module import Module
-from .keys import Keys
-from .callback import callback, callbacks
-from .frontend import Frontend
-from .mods import *
+
+from .src.callback import callback, callbacks
+from .src.frontend import Frontend
+from .src.backend import Backend
+from .src.logic import Logic
+from .src.keys import Keys
+from .src.module import Module
+from .src.app import App
+

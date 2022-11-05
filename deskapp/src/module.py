@@ -1,8 +1,6 @@
-from deskapp.callback import callback, callbacks
-from deskapp.keys import Keys
-
 import functools, random, os, pkg_resources
 from jinja2 import Environment, FileSystemLoader
+from deskapp import callback, callbacks, Keys
 
 
 classID = lambda x: random.random()

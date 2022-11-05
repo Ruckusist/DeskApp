@@ -14,12 +14,8 @@ __status__ = "Prototype"
 import os, sys, time, threading
 import curses
 import curses.panel
-# except ImportError: print("this doesnt work in windows"); exit(1)
-
-# new color support reqires this. it should just be there... like print.
 from itertools import cycle
 from timeit import default_timer as timer
-
 from collections import namedtuple
 
 

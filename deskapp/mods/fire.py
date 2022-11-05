@@ -1,7 +1,5 @@
 import random, os, threading, time
-from deskapp.module import Module
-from deskapp.callback import callback
-from deskapp.keys import Keys
+from deskapp import Module, Keys, callback
 
 
 class Fire_:

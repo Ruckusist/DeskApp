@@ -1,8 +1,7 @@
 import random
-from deskapp.module import Module
-from deskapp.callback import callback
-
 from jinja2 import Environment
+from deskapp import Module, callback
+
 
 aboutID = random.random()
 class About(Module):
