@@ -6,7 +6,7 @@ from deskapp import (
     Frontend, Backend, Logic, callback, callbacks, Keys,
 )
 
-from deskapp.mods import About, Fire
+from deskapp.mods import About, Fire, Buttons
 
 # TODO: FIX THIS
 def log_print(msg):
@@ -71,7 +71,8 @@ class App:
             self.setup()
         
         self.callbacks = callbacks
-        self.ERROR = lambda x: self.backend.logger([x], "ERROR")
+        # self.ERROR = lambda x: self.backend.logger([x], "ERROR")
+        self.ERROR = lambda x: self.print(x)
 
     def setup(self):
         """Run the init on eac of the modules."""
@@ -82,6 +83,7 @@ class App:
         if self.demo_mode:
             self.modules.append(About)
             self.modules.append(Fire)
+            self.modules.append(Buttons)
         for mod in self.modules:
                 mod(self)
         self.is_setup = True

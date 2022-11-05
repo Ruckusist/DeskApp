@@ -3,10 +3,10 @@ from timeit import default_timer as timer
 
 
 class Logic:
-    def __init__(self, engine):
-        self.engine = engine  # access to the kill switch.
-        self.app = engine  # Trying to rebrand this...
-        # self.working_panels = []       # the list of pointers
+    def __init__(self, app):
+        self.app = app
+        self.print = app.print  # this is the newHotness
+
         self.cur = 0                   # the current working panel
         self.available_panels = {}     # V.2 of this idea.
 
@@ -74,8 +74,8 @@ class Logic:
 
             if rendered_page:  # or did the page render itself??
                 for index, line in enumerate(rendered_page.split('\n')):
-                    if index > self.engine.frontend.winright_upper_dims[0]-2: break
-                    panel.win.addstr(index+1, 1, line[:self.engine.frontend.winright_upper_dims[1]-2])
+                    if index > self.app.frontend.winright_upper_dims[0]-2: break
+                    panel.win.addstr(index+1, 1, line[:self.app.frontend.winright_upper_dims[1]-2])
             
         # UPDATE THE HEADER
         self.redraw_header()
@@ -111,17 +111,17 @@ class Logic:
             head_text = self.app.get_header()
         head_panel = self.app.frontend.header
         # if not self.app.error_timeout:
-        head_panel[0].addstr(1,1,head_text, self.engine.frontend.palette[3])
+        head_panel[0].addstr(1,1,head_text, self.app.frontend.palette[3])
 
     def redraw_footer(self):
         # TODO: THIS NEEDS TO BE ANOTHER THING...
-        if self.engine.frontend.screen_mode:
+        if self.app.frontend.screen_mode:
             options = ["|q| to quit   |Tab| to enter Text  |enter| to start service", "|pgUp| change menu |pgDn| change menu |space| resize mesg cntr"]
         else:
             options = [" Cool stuff goes here...", "|enter| submit   |'stop'| to kill service"]
-        self.engine.frontend.redraw_window(self.engine.frontend.debug)
-        self.engine.frontend.debug[0].addstr(1, 1, options[0], self.engine.frontend.color_gb)
-        self.engine.frontend.debug[0].addstr(2, 1, options[1], self.engine.frontend.color_gb)
+        self.app.frontend.redraw_window(self.app.frontend.debug)
+        self.app.frontend.debug[0].addstr(1, 1, options[0], self.app.frontend.color_gb)
+        self.app.frontend.debug[0].addstr(2, 1, options[1], self.app.frontend.color_gb)
 
     def end_safely(self):
         for mod_name in list(self.available_panels):
@@ -129,29 +129,36 @@ class Logic:
             mod.end_safely()
 
         self.app.frontend.end_safely()
-
+    
     def decider(self, keypress):
         """Callback decider system."""
-        mod_g = self.available_panels[
-            list(self.available_panels)[self.cur]
-        ]
-        mod = mod_g[0]
-        panel = mod_g[1]
+        cur_idx = list(self.available_panels)[self.cur]
+        cur_mod = self.available_panels[cur_idx]
+
+        mod_class = cur_mod[0]
+        mod_panel = cur_mod[1]
         app_callbacks = self.app.callbacks
-        if type(keypress) is str: 
-            mod.string_decider(panel, keypress)
+        
+        if isinstance(keypress, str):
+            mod_class.string_decider(keypress)
             return
-        if int(keypress) < 1: return
-        try:
-            all_calls_for_button =\
-                list(filter(lambda d: d['key'] in [keypress], app_callbacks))
-            call_for_button =\
-                list(filter(lambda d: d['classID'] in [mod.classID,0,1], all_calls_for_button))[0]
-        except Exception as e:
-            self.engine.ERROR(f"k: {keypress} has no function")
+
+        if isinstance(keypress, tuple):
+            mod_class.mouse_decider(keypress)
             return
-        try:
-            callback = call_for_button['func']
-            callback(mod, panel)
-        except Exception as e:
-            self.engine.ERROR(f"{call_for_button['func'].__name__} | {e}")
+
+        if isinstance(keypress, int):
+            try:
+                all_calls_for_button = list(filter(lambda d: d['key'] in [keypress], app_callbacks))
+                call_for_button = list(filter(lambda d: d['classID'] in [mod_class.classID,0,1], all_calls_for_button))[0]
+                
+            except Exception as ex:
+                self.print(f"k: {keypress} has no function")
+                return
+
+            try:
+                callback = call_for_button['func']
+                callback(mod_class, mod_panel)
+            except Exception as ex:
+                self.print(f"ERR in func: {call_for_button['func'].__name__}")
+                self.print(ex)

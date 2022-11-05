@@ -1,6 +1,6 @@
 import random
 from jinja2 import Environment
-from deskapp import Module, callback
+from deskapp import Module, callback, Keys
 
 
 aboutID = random.random()
@@ -35,6 +35,7 @@ window in the background for long sessions.
         template = Environment().from_string(page)
         return template.render(context=self.context)
 
-    @callback(ID=aboutID, keypress=10)
+    @callback(aboutID, Keys.ENTER)
     def on_enter(self, *args, **kwargs):
+        self.print("About: pressed enter")
         self.visible = False

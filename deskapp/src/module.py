@@ -31,6 +31,9 @@ class Module:
         self.scroll = 0
         self.classID = 0
         self.visible = True
+        self.mouseClick = [0,0,0]
+        self.mouse_pos = (0,0)
+
 
     def register_module(self):
         # DEPRICATING THIS!
@@ -51,7 +54,26 @@ class Module:
         template = self.templates_stock.get_template(f"{self.name}.j2")
         return template.render(context=self.context)
 
-    def string_decider(self, panel, string_input):
+    def mouse_decider(self, mouse_input):
+        btn = mouse_input[1]
+        # left
+        if btn == Keys.LEFT_CLICK_DOWN: self.mouseClick[0] = 2
+        elif btn == Keys.LEFT_CLICK_UP: self.mouseClick[0] = 1
+        else: self.mouseClick[0] = 0
+
+        # right
+        if btn == Keys.RIGHT_CLICK_DOWN: self.mouseClick[2] = 2
+        elif btn == Keys.RIGHT_CLICK_UP: self.mouseClick[2] = 1
+        else: self.mouseClick[2] = 0
+
+        # middle
+        if btn == Keys.MIDDLE_CLICK_DOWN: self.mouseClick[1] = 2
+        elif btn == Keys.MIDDLE_CLICK_UP: self.mouseClick[1] = 1
+        else: self.mouseClick[1] = 0
+
+        self.mouse_pos = mouse_input[0]
+
+    def string_decider(self, string_input):
         # panel.addstr(1, 3, f"[{name}] {string_input}"))
         self.context["text_input"] = string_input
 

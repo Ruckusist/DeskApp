@@ -1,4 +1,4 @@
-import random, os, threading, time
+import random, threading, time
 from deskapp import Module, Keys, callback
 
 
@@ -69,7 +69,28 @@ class Fire(Module):
         self.register_module()
         self.fire = None
 
-    @callback(classID, Keys.ENTER)   
+    def end_safely(self):
+        if self.fire:
+            self.fire.breaker = True
+
+    def page(self, panel) -> None:
+        max_w = int(self.app.frontend.winright_upper_dims[1] - 2)
+        max_h = int(self.app.frontend.winright_upper_dims[0] - 2)
+
+        if self.fire:
+            for index, line in enumerate(reversed(self.fire.gameboard)):
+                if max_h <=1: break
+                # panel.addstr(max_h, 1, f"{''.join(line)[:max_w]}")
+                for index_y, char in enumerate(line):
+                    panel.addstr(max_h, index_y+1, char,
+                    self.app.frontend.curses.color_pair(4) if char == '@' else (
+                        self.app.frontend.curses.color_pair(2) if char in ["^", "~", "*", "|"] else \
+                        self.app.frontend.curses.color_pair(5)))
+                max_h -= 1
+        else:
+            panel.addstr(1, 1, "Press Enter to Start/Stop the Fire.")
+
+    @callback(classID, Keys.ENTER)
     def on_enter(self, *args, **kwargs):
         if not self.fire:
             self.fire = Fire_((
@@ -86,22 +107,3 @@ class Fire(Module):
         if not self.fire.is_running:
             self.background_thread = threading.Thread(target=self.fire.multipass)
             self.background_thread.start()
-
-    def end_safely(self):
-        if self.fire:
-            self.fire.breaker = True
-
-    def page(self, panel) -> None:
-        max_w = int(self.app.frontend.winright_upper_dims[1] - 2)
-        max_h = int(self.app.frontend.winright_upper_dims[0] - 2)
-
-        if self.fire:
-            for index, line in enumerate(reversed(self.fire.gameboard)):
-                if max_h <=1: break
-                # panel.addstr(max_h, 1, f"{''.join(line)[:max_w]}")
-                for index_y, char in enumerate(line):
-                    panel.addstr(max_h, index_y+1, char, 
-                    self.app.frontend.curses.color_pair(4) if char == '@' else (self.app.frontend.curses.color_pair(2) if char in ["^", "~", "*", "|"] else self.app.frontend.curses.color_pair(5)))
-                max_h -= 1
-        else:
-            panel.addstr(1, 1, "Press Enter to Start/Stop the Fire.")

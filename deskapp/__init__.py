@@ -20,4 +20,3 @@ from .src.logic import Logic
 from .src.keys import Keys
 from .src.module import Module
 from .src.app import App
-

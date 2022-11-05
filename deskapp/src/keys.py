@@ -20,4 +20,12 @@ class Keys:
     TAB     = 9
     PG_DOWN = 338
     PG_UP   = 339
+
+    # MOUSE CLICKS
+    LEFT_CLICK_DOWN = 2
+    LEFT_CLICK_UP = 1
+    RIGHT_CLICK_DOWN = 2048
+    RIGHT_CLICK_UP = 1024
+    MIDDLE_CLICK_DOWN = 64
+    MIDDLE_CLICK_UP = 32
     

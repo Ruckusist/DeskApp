@@ -11,11 +11,12 @@ __maintainer__ = "Eric Petersen"
 __email__ = "ruckusist@alphagriffin.com"
 __status__ = "Prototype"
 
-import os, sys, time, threading
+# import os, sys, time, threading
+import os, time
 import curses
 import curses.panel
 from itertools import cycle
-from timeit import default_timer as timer
+# from timeit import default_timer as timer
 from collections import namedtuple
 
 
@@ -27,6 +28,7 @@ class Cursing:
         self.v_split_pct = v_split
         # curses.filter()
         self.screen = curses.initscr()
+        curses.flushinp()
         self.palette = []
         curses.start_color()
         self.setup_color()
@@ -36,8 +38,20 @@ class Cursing:
         curses.curs_set(0) # 0: invisible, 1: visible, 2: bright
         self.screen.keypad(1)
         self.screen.nodelay(1)
+        curses.mousemask(curses.ALL_MOUSE_EVENTS | curses.REPORT_MOUSE_POSITION)
+        curses.mouseinterval(0)
         self.screen_h, self.screen_w = self.screen.getmaxyx()
         self.screen_mode = True
+
+        self.header = None
+        self.footer = []
+
+    @property
+    def w(self):
+        return curses.COLS
+    @property
+    def h(self):
+        return curses.LINES
 
     def setup_color(self):
         """Load a custom theme."""
@@ -72,7 +86,28 @@ class Cursing:
             # time.sleep(2)
             pass
 
+    def get_click(self):
+        _, x, y, _, btn = curses.getmouse()
+        return tuple([(x,y),btn])
+
     def get_input(self):
+        push = 0
+        if self.screen_mode:  # WTF is this?
+            push = self.screen.getch()
+            if push == curses.KEY_MOUSE:
+                return 0
+        else:
+            self.screen.keypad(0)
+            curses.echo()  # when did i place the mouse cursor?
+            self.redraw_window(self.footer) # why are we doing this?
+            push = self.footer[0].getstr(1,1).decode('utf8')
+            self.screen.keypad(1)
+            curses.noecho()
+            self.screen_mode = True
+            self.redraw_window(self.footer)
+        return push
+    
+    def _get_input(self):
         """Pass curses control capture to another class."""
         x = 0
         # self.footer[0].addstr(1, 1, "Mode: KeyStroke")
@@ -109,8 +144,9 @@ class Cursing:
         curses.nocbreak()
         self.screen.keypad(0)
         curses.echo()
+        curses.flushinp()
         curses.endwin()
-        print("[*] Ended Safely.")
+        print(f"[*] {self.title} Ended Safely.")
 
     def test(self):
         self.screen.addstr(0, 0, '[%] this is working.1')

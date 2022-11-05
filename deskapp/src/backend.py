@@ -108,16 +108,25 @@ class Backend:
     def main(self):
         while self.running:
             try:
-                self.app.frontend.refresh()
-                keypress = 0
+                self.app.frontend.refresh()  # just calls some curses funcs.
+                # CAPTURE KEYBOARD
                 keypress = self.app.frontend.get_input()
-                # if keypress:
-                self.app.logic.decider(keypress)
+                if keypress and keypress != -1 and keypress != 0:
+                    self.app.logic.decider(keypress)
+
+                # Capture Mouse
+                if keypress == 0:
+                    mouseclick = self.app.frontend.get_click()  # ((x,y), btn)
+                    self.app.logic.decider(mouseclick)
+                
                 self.app.logic.all_page_update()
+
             except KeyboardInterrupt:
                 self.running = False
             except Exception as ex:
-                self.print("ERR: lets hope it doesnt come to this...")
+                self.print("ERR: Loop Error in Input. Try Again.")
+                if ex: self.print(ex)
+        
         self.exit_program()
 
     def start(self):
