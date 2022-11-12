@@ -33,4 +33,3 @@ class Keys:
     RIGHT_CLICK_UP = 1024
     MIDDLE_CLICK_DOWN = 64
     MIDDLE_CLICK_UP = 32
-    
