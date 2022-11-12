@@ -1,7 +1,7 @@
 import time, threading, random
 from timeit import default_timer as timer
 import deskapp
-from deskapp.frontend import main
+# from deskapp.frontend import main
 
 classID = random.random()
 class Math_Game(deskapp.Module):
