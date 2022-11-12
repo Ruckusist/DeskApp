@@ -7,14 +7,14 @@ from distutils.core import setup
 
 setup(
     name='Deskapp',
-	version = "0.0.7",
+	version = "0.0.8",
     description='An Open Source Terminal basesd Program Manager. Write and manage your own apps in this framework.',
     long_description_content_type='text/markdown',
     long_description=open('README.md').read(),
     author='Ruckusist',
     author_email='ruckusist@outlook.com',
     url='https://ruckusist.com/deskapp',
-    packages=['deskapp', 'deskapp.mods'],
+    packages=['deskapp', 'deskapp.mods','deskapp.src'],
     classifiers=[
           'Development Status :: 4 - Beta',
           'Environment :: Console',

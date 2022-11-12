@@ -15,6 +15,11 @@ class Keys:
     S     = 115
     D     = 100
 
+    # NUMBER KEYS
+    NUM1   = 49
+    NUM2   = 50
+    NUM3   = 51
+
     # DEFAULT KEYS
     Q       = 113
     TAB     = 9

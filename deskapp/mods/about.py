@@ -3,12 +3,12 @@ from jinja2 import Environment
 from deskapp import Module, callback, Keys
 
 
-aboutID = random.random()
+classID = random.random()
 class About(Module):
     name = "About"
     def __init__(self, app):
-        self.classID = aboutID
         super().__init__(app)
+        self.classID = classID
         self.register_module()
         
 
@@ -35,7 +35,7 @@ window in the background for long sessions.
         template = Environment().from_string(page)
         return template.render(context=self.context)
 
-    @callback(aboutID, Keys.ENTER)
+    @callback(classID, keypress=Keys.ENTER)
     def on_enter(self, *args, **kwargs):
         self.print("About: pressed enter")
-        self.visible = False
+        # self.visible = False

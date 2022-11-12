@@ -74,7 +74,7 @@ class Logic:
 
             if rendered_page:  # or did the page render itself??
                 for index, line in enumerate(rendered_page.split('\n')):
-                    if index > self.app.frontend.winright_upper_dims[0]-2: break
+                    if index > self.app.frontend.winright_upper_dims[0]-3: break
                     panel.win.addstr(index+1, 1, line[:self.app.frontend.winright_upper_dims[1]-2])
             
         # UPDATE THE HEADER
@@ -82,7 +82,7 @@ class Logic:
         # and update the footer.
         self.redraw_footer()
         self.redraw_messages()
-        time.sleep(.001)
+        # time.sleep(.001)  # this isnt necessary because of the screenrate.
 
     def redraw_messages(self):
         if False:
@@ -137,28 +137,19 @@ class Logic:
 
         mod_class = cur_mod[0]
         mod_panel = cur_mod[1]
-        app_callbacks = self.app.callbacks
         
         if isinstance(keypress, str):
             mod_class.string_decider(keypress)
-            return
 
-        if isinstance(keypress, tuple):
+        elif isinstance(keypress, tuple):
             mod_class.mouse_decider(keypress)
-            return
 
-        if isinstance(keypress, int):
+        elif isinstance(keypress, int):
             try:
-                all_calls_for_button = list(filter(lambda d: d['key'] in [keypress], app_callbacks))
-                call_for_button = list(filter(lambda d: d['classID'] in [mod_class.classID,0,1], all_calls_for_button))[0]
-                
-            except Exception as ex:
-                self.print(f"k: {keypress} has no function")
-                return
-
-            try:
+                all_calls_for_button = list(filter(lambda callback: callback['key'] in [int(keypress)], self.app.callbacks))
+                call_for_button = list(filter(lambda callback: callback['classID'] in [mod_class.classID,0,1], all_calls_for_button))[0]
                 callback = call_for_button['func']
                 callback(mod_class, mod_panel)
+
             except Exception as ex:
-                self.print(f"ERR in func: {call_for_button['func'].__name__}")
-                self.print(ex)
+                self.print(f"k: {keypress} has no function")

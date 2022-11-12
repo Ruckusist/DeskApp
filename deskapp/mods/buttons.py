@@ -7,18 +7,22 @@ buttonsID = random.random()
 class Buttons(Module):
     name = "Buttons"
     def __init__(self, app):
-        self.classID = buttonsID
         super().__init__(app)
+        self.classID = buttonsID
         self.register_module()
-        
 
     def page(self, panel=None):
-        page = f"""{self.mouse_pos} {self.mouseClick}"""
-        # template = self.templates_stock.get_template("about.j2")
+        page = f"""Click the mouse on the screen.
+        
+    Topleft is screen topleft. x is rows, y is cols.
+    as its supposed to be.\n
+    [L,M,R]  (x,y) coords 
+    {self.mouseClick}  {self.mouse_pos}"""
         template = Environment().from_string(page)
         return template.render(context=self.context)
 
     def mouse_decider(self, mouse_input):
+        # TODO: this super mouse? whats its job? this feels wrong.
         super().mouse_decider(mouse_input)
         if self.mouseClick[0]==1:
             self.print(f"left click! @ {self.mouse_pos}")

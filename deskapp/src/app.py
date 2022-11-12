@@ -39,28 +39,24 @@ class App:
             autostart:     bool = True,
         ) -> None:
         """This is the main entry point. This Constructor should hold as
-            many possible configuration options as possible.
+            many possible configuration options... as possible.
         """
         self.error_log = []
         self.app = self
-        # self.appdata = {}
-        # self.appdata['message_log'] = []
         self.appdata = {'message_log':[]}
         self.splash_screen = splash_screen
         self.frontend = Frontend(
             h_split=h_split,
-            v_split=v_split, 
+            v_split=v_split,
             title=title
             )
-        
+
         # APP
         self.name = name
         self.header_string = header
         self.title_string = title
         self._menu = []
         self.modules = modules
-        # self.appdata = {}
-        # self.appdata['message_log'] = []
         self.high_low = True
 
         # SETUP
@@ -69,9 +65,8 @@ class App:
         self.is_setup = False
         if autostart:
             self.setup()
-        
+
         self.callbacks = callbacks
-        # self.ERROR = lambda x: self.backend.logger([x], "ERROR")
         self.ERROR = lambda x: self.print(x)
 
     def setup(self):
@@ -162,15 +157,10 @@ class App:
     ## CALLBACK TO ENSURE ERROR CODES REPORT ACCURATELY.
     """
     
-    # @callback(ID=1, keypress=Keys.BACKSPACE) # backspace
-    # def on_space(self, *args, **kwargs):
-    #     self.app.print("pressed backspace!")
-    #     self.app.test()
-    #     self.app.print("WAhooq!")
-        
-    # @callback(ID=1, keypress=127) # Shawns backspace
-    # def on_space2(self, *args, **kwargs): 
-    #     self.app.onspace(*args, **kwargs)
+    @callback(ID=1, keypress=Keys.BACKSPACE) # backspace
+    def on_backspace(self, *args, **kwargs):
+        self.app.print("pressed backspace!")
+        self.frontend.v_split_pct = .1
     
     @callback(ID=1, keypress=Keys.TAB)  # tab
     def on_tab(self, *args, **kwargs):
