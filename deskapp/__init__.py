@@ -15,8 +15,9 @@ name = "DeskApp"
 
 from .src.callback import callback, callbacks
 from .src.frontend import Frontend
-from .src.backend import Backend
-from .src.logic import Logic
-from .src.keys import Keys
-from .src.module import Module
-from .src.app import App
+from .src.draw     import Draw
+from .src.backend  import Backend
+from .src.logic    import Logic
+from .src.keys     import Keys
+from .src.module   import Module
+from .src.app      import App

@@ -98,7 +98,10 @@ class Server:
         if self.verbose: 
             print(end='\r')
             self.print(f"Server Going Offline @ {self.server_host} : {self.server_port} % {self.buffer_size}")
-        
+
+    def update_publish(self, key, value):
+        self.engine.publish_data[key] = value
+
     def register_callback(self, func):
         self.callbacks.append(func)
         

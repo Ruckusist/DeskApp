@@ -43,8 +43,6 @@ class Logic:
         """
         This is run every round and rebuilds the windows.
         """
-        
-
         # AT LAST ! A SCREEN TIMER!
         if self.last_update + 0.03 > timer(): 
             sleeptime = 0.03

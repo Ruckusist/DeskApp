@@ -93,7 +93,7 @@ class Engine:
             self.users[username].session = False
    
     def callback(self, session:Session, message:Message):
-        if self.verbose: self.print("ENGINE::Callback")
+        # if self.verbose: self.print("ENGINE::Callback")
         if message.logout:
                 self.logout(session)
                 return

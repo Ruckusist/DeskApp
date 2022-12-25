@@ -263,6 +263,8 @@ class Frontend(Cursing):
         # del self.winrightlower
         self.winrightlower = self.make_panel(self.winright_lower_dims, "Messages")
 
+    
+    
     def main_screen(self, header='Deskapp'):
         """This is attempting a new main panel configuration"""
         self.header = None
@@ -283,7 +285,7 @@ class Frontend(Cursing):
         self.screen.refresh()
 
     def __call__(self, header='Deskapp') -> None:
-        self.splash_screen()
+        # self.splash_screen()
         self.main_screen(header)
         time.sleep(10)
         self.end_safely()

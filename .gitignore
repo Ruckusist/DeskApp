@@ -5,10 +5,14 @@ dist/
 
 # I Think im going to want the scripts folder back in.
 scripts/
+scratch/
 
 # these pycache folders are all over the place.
+__pycache__/
 */__pycache__/
 */*/__pycache__/
+*/*/*/__pycache__/
+*.pyc
 
 # vim temp buffers:
 *.swp

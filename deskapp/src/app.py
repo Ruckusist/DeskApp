@@ -3,7 +3,7 @@
 
 import time
 from deskapp import (
-    Frontend, Backend, Logic, callback, callbacks, Keys,
+    Frontend, Backend, Logic, callback, callbacks, Keys, Module
 )
 
 from deskapp.mods import About, Fire, Buttons
@@ -48,7 +48,7 @@ class App:
         self.frontend = Frontend(
             h_split=h_split,
             v_split=v_split,
-            title=title
+            title=title,
             )
 
         # APP
@@ -105,6 +105,9 @@ class App:
     @menu.setter
     def menu(self, mod_list: list) -> None:
         self._menu = mod_list
+
+    def add_module(self, module: Module):
+        self.logic.setup_panel(module(self))
 
     def set_header(self, title_string: str):
         self.header_string = title_string

@@ -8,3 +8,4 @@ from .src.error import *
 from .src.session import Session
 from .src.engine import Engine
 from .src.server import Server
+from .src.client import ClientSession
