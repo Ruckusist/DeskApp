@@ -234,6 +234,7 @@ class Logic(SubClass):
 
     def decider(self, keypress):
         """Callback decider system."""
+        if not self.available_panels: return
         cur_idx = list(self.available_panels)[self.current]
         cur_mod = self.available_panels[cur_idx]
 
