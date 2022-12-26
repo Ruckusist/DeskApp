@@ -318,6 +318,7 @@ class App:
 
 
 def main():
+    # this isnt working.
     app = App()
 
 
