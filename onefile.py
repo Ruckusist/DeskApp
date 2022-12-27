@@ -1,9 +1,9 @@
-import os, time
+import time, random
 from timeit import default_timer as timer
 import curses
 import curses.panel
 from collections import namedtuple
-from itertools import cycle
+# from itertools import cycle
 import functools
 
 # pylint: disable=missing-module-docstring
@@ -14,12 +14,12 @@ import functools
 
 
 callbacks = []
-def callback(ID, keypress) -> ():
+def callback(ID, keypress):
     """
     This callback system is an original design. @Ruckusist.
     """
     global callbacks
-    def decorated_callback(func) -> ():
+    def decorated_callback(func):
         @functools.wraps(func)
         def register_callback(*args, **kwargs):
             kwargs['keypress'] = keypress
@@ -77,6 +77,7 @@ class Curse:
         self.screen = curses.initscr()
         curses.flushinp()
         curses.start_color()
+        self.setup_color()
         curses.noecho()
         curses.cbreak()
         self.screen.keypad(1)
@@ -85,6 +86,30 @@ class Curse:
         curses.mouseinterval(0)
         self.screen_mode = True
         self.has_resized_happened = False
+
+    def setup_color(self):
+        """Load a custom theme."""
+        curses.init_pair(1, curses.COLOR_WHITE, curses.COLOR_BLACK)
+        self.color_white = curses.color_pair(1)
+        curses.init_pair(2, curses.COLOR_MAGENTA, curses.COLOR_BLACK)
+        self.color_magenta = curses.color_pair(2)
+        curses.init_pair(3, curses.COLOR_GREEN, curses.COLOR_BLACK)
+        self.color_green = curses.color_pair(3)
+        curses.init_pair(4, curses.COLOR_BLUE, curses.COLOR_RED)
+        self.chess_black = curses.color_pair(4)
+        curses.init_pair(5, curses.COLOR_RED, curses.COLOR_WHITE)
+        self.chess_white = curses.color_pair(5)
+        curses.init_pair(6, curses.COLOR_CYAN, curses.COLOR_BLACK)
+        self.color_cyan = curses.color_pair(6)
+        curses.init_pair(7, curses.COLOR_YELLOW, curses.COLOR_BLACK)
+        self.color_yellow = curses.color_pair(7)
+        curses.init_pair(8, curses.COLOR_RED, curses.COLOR_BLACK)
+        self.color_red = curses.color_pair(8)
+        curses.init_pair(9, curses.COLOR_BLUE, curses.COLOR_BLACK)
+        self.color_blue = curses.color_pair(9)
+        curses.init_pair(10, curses.COLOR_MAGENTA, curses.COLOR_WHITE)
+        self.color_select = curses.color_pair(10)
+
 
     @property
     def w(self):
@@ -124,7 +149,7 @@ class Curse:
         if box:
             win.box()
         if banner:
-            win.addstr(0, 2, f"| {label} |")
+            win.addstr(0, 2, f"| {label} |"[:dims[1]-2])
 
         panel = panel_type( win, _panel, label, dims )
         return panel
@@ -148,10 +173,21 @@ class SubClass:
 class Draw(SubClass):
     def __init__(self, app):
         super().__init__(app)
+        self.menu_split = int(self.front.w*self.app.h_split)
+        self.message_split = int(self.front.h*self.app.v_split)
+
+        # pointers
         self._header = None
         self._footer = None
         self._menu   = None
         self._messages = None
+
+        # flags
+        self.show_header = True
+        self.show_footer = True
+        self.show_menu = True
+        self.show_messages = True
+        self.show_help = False
 
     def update(self):
         """This was blowing out the screen when the
@@ -163,25 +199,49 @@ class Draw(SubClass):
     def header(self):
         dims = [3, self.front.w, 0, 0]
         panel = self.front.make_panel(dims, self.app.title)
-        panel.win.addstr(1,3, self.app.header)
+        panel.win.addstr(1,3, self.app.header, self.front.color_blue)
         self._header = panel
 
     def footer(self):
         dims = [3, self.front.w, self.front.h-3, 0]
         panel = self.front.make_panel(dims, "Input")
         # panel.win.addstr(1,10, self.app.header)
-        panel.win.addstr(1,10, f"lets go {self.app.logic.current}")
+        panel.win.addstr(1,2, f"Press <tab> to enter text.", self.front.color_green)
         self._footer = panel
 
     def menu(self):
-        pass
+        dims = [self.front.h-3-3, self.menu_split, 3, 0]
+        panel = self.front.make_panel(dims, "Menu")
+        for idx, mod in enumerate(self.app.menu):
+            cur = self.app.logic.current
+            color = self.front.color_select if idx==cur else self.front.color_red
+            panel.win.addstr(idx+1, 1, f"{mod.name}", color)
+        self._menu = panel
 
     def messages(self):
-        dims = [6, self.front.w, self.front.h-3-6, 0]
+        dims = [self.message_split-3, self.front.w-self.menu_split, self.front.h-self.message_split, self.menu_split]
         panel = self.front.make_panel(dims, "messages")
-        for idx, mesg in enumerate(self.app.data['messages'][-4:]):
-            panel.win.addstr(idx+1,1, f"{mesg:20s}")
+        for idx, mesg in enumerate(self.app.data['messages'][-(self.message_split-5):]):
+            panel.win.addstr(idx+1,1, f"{mesg:20s}", self.front.color_cyan)
         self._messages = panel
+
+    def mod(self, mod):
+        dims = [self.front.h-self.message_split-3, self.front.w-self.menu_split, 3, self.menu_split]
+        panel = self.front.make_panel(dims, mod.name)
+        panel.win.addstr(1,1, f"This is working", self.front.color_yellow)
+        return panel
+
+    def mods(self):
+        for m in self.app.menu:
+            p = self.mod(m)
+            self.app.logic.available_panels[m.name] = [m, p]
+
+    def draw_loop(self):
+        self.header()
+        self.menu()
+        self.footer()
+        self.messages()
+        self.update()
 
 
 class Backend(SubClass):
@@ -190,19 +250,27 @@ class Backend(SubClass):
         self.should_stop = False
         self.update_timeout = 1.5
         self.last_update = timer()
-
+    
     def loop(self):
-        # REDRAW THE SCREEN
-        self.app.draw.header()
-        self.app.draw.messages()
-        self.app.draw.footer()
-        self.app.draw.update()
+        # HANDLE A RESIZE?
+
 
         # HANDLE THE INPUT
         self.app.logic.handle_input( self.front.get_input() )
 
+        # REDRAW THE SCREEN
+        self.app.draw.draw_loop()
+
     def main(self):
         self.print("Backend is starting up.")
+        # lets start all the mods.
+        for mod in self.app.menu:
+            mod(self.app)
+        
+        self.print("Mods are initialize.")
+        self.app.draw.mods()
+        self.print("Mods are drawn.")
+
         while True:
             if self.should_stop:
                 break
@@ -228,8 +296,6 @@ class Logic(SubClass):
         self.available_panels = {}
 
     def handle_input(self, keypress):
-        # if keypress:
-        #     self.print(f"keypress {keypress} has no function")
         self.decider(keypress)
 
     def decider(self, keypress):
@@ -259,24 +325,82 @@ class Logic(SubClass):
 
 
 class Module(SubClass):
+    name = "Basic Module"
     def __init__(self, app):
         super().__init__(app)
+        self.class_id = 0
+        self.cur_el = 0
+        self.elements = []
+        self.scroll = 0
+        self.scroll_elements = []
+        self.input_string = ""
+        
+    def register_module(self):
+        self.app.menu.append(self)
+
+    def page(self, panel):
+        panel.win.addstr(2,2,"This is working!")
+
+    def string_decider(self, input_string):
+        self.input_string = input_string
+        self.print(f"text input: {input_string}")
+
+    def end_safely(self): pass
+
+    @callback(0, keypress=Keys.UP)
+    def on_up(self, *args, **kwargs):
+        if self.scroll < len(self.scroll_elements)-1:
+            self.scroll += 1
+        else: self.scroll = 0
+
+    @callback(0, keypress=Keys.DOWN)
+    def on_down(self, *args, **kwargs): 
+        """scroll down"""
+        if self.scroll < len(self.scroll_elements)-1:
+            self.scroll += 1
+        else: self.scroll = 0
+
+    @callback(0, keypress=Keys.RIGHT)
+    def on_left(self, *args, **kwargs): 
+        """rotate clickable elements"""
+        if self.cur_el < len(self.elements)-1:
+            self.cur_el += 1
+        else: self.cur_el = 0
+
+    @callback(0, keypress=Keys.LEFT)
+    def on_right(self, *args, **kwargs): 
+        """rotate clickable elements"""
+        if self.cur_el > 0:
+            self.cur_el -= 1
+        else: self.cur_el = len(self.elements)-1
+
+
+aboutID = random.random()
+class About(Module):
+    name = "About"
+    def __init__(self, app):
+        super().__init__(app)
+        self.class_id = aboutID
+        # self.register_module()
+
+    def page(self, panel):
+        panel.addstr(2,2,"This is happening.")
 
 
 class App:
     def __init__(self,
-                 modules:       list = [1,2,3,4],
+                 modules:       list = [],
                  splash_screen: bool = False,
                  demo_mode:     bool = True,
                  name:           str = "Deskapp",
                  title:          str = "Deskapp",
                  header:         str = "This is working.",
-                 v_split:      float = 0.16,
+                 v_split:      float = 0.4,
                  h_split:      float = 0.16,
                  autostart:     bool = True,
             ):
         # initialize the constructor.
-        self.modules = modules
+        self.user_modules = modules
         self.show_splash = splash_screen
         self.show_demo = demo_mode
         self.name = name
@@ -293,6 +417,15 @@ class App:
 
         # APP FUNCTIONALITY
         self.data = {'messages': [], 'errors': []}
+        self.menu = self.user_modules
+        if self.show_demo:
+            self.menu.append(About)
+
+        # Start the Game.
+        if self.should_autostart:
+            self.back.main()
+
+    def start(self):
         self.back.main()
 
     def print(self, message=""):
