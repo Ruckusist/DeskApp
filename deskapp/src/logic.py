@@ -145,7 +145,10 @@ class Logic:
         elif isinstance(keypress, int):
             try:
                 all_calls_for_button = list(filter(lambda callback: callback['key'] in [int(keypress)], self.app.callbacks))
+                
+                # filter for the current mods buttons
                 call_for_button = list(filter(lambda callback: callback['classID'] in [mod_class.classID,0,1], all_calls_for_button))[0]
+                
                 callback = call_for_button['func']
                 callback(mod_class, mod_panel)
 

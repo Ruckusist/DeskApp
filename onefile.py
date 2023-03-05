@@ -3,7 +3,6 @@ from timeit import default_timer as timer
 import curses
 import curses.panel
 from collections import namedtuple
-# from itertools import cycle
 import functools
 
 # pylint: disable=missing-module-docstring
@@ -14,11 +13,13 @@ import functools
 
 
 callbacks = []
+messages = []
 def callback(ID, keypress):
     """
     This callback system is an original design. @Ruckusist.
     """
     global callbacks
+    global messages
     def decorated_callback(func):
         @functools.wraps(func)
         def register_callback(*args, **kwargs):
@@ -30,7 +31,8 @@ def callback(ID, keypress):
                 'func': register_callback,
                 'classID': ID,
             })
-            # print(f"registered callback function {func.__name__}() at keypress: {keypress}")
+        # print(f"registered callback function {func.__name__}() at keypress: {keypress}")
+        messages.append(f"registered callback function {func.__name__}() at keypress: {keypress} by classID: {ID}")
     return decorated_callback # Maybe it returns NOTHING... oooooohhh....
 
 
@@ -50,6 +52,10 @@ class Keys:
     A     = 97
     S     = 115
     D     = 100
+
+    # F KEYS
+    F1    = 80 
+
 
     # NUMBER KEYS
     NUM1   = 49
@@ -210,7 +216,19 @@ class Draw(SubClass):
         self._footer = panel
 
     def menu(self):
-        dims = [self.front.h-3-3, self.menu_split, 3, 0]
+        # BUILD DIMS.
+        # height       = self.front.h-3-3
+        height = self.front.h
+        if self.show_footer: height -= 3
+        if self.show_header: height -= 3
+
+        menu_split = int(self.front.w*self.app.h_split)
+        width        = self.menu_split
+        top_left_x   = 3
+        if not self.show_header: top_left_x -= 3
+        top_left_y   = 0
+        dims = [height, width, top_left_x, top_left_y]
+        # dims = [self.front.h-3-3, self.menu_split, 3, 0]
         panel = self.front.make_panel(dims, "Menu")
         for idx, mod in enumerate(self.app.menu):
             cur = self.app.logic.current
@@ -222,57 +240,107 @@ class Draw(SubClass):
         dims = [self.message_split-3, self.front.w-self.menu_split, self.front.h-self.message_split, self.menu_split]
         panel = self.front.make_panel(dims, "messages")
         for idx, mesg in enumerate(self.app.data['messages'][-(self.message_split-5):]):
-            panel.win.addstr(idx+1,1, f"{mesg:20s}", self.front.color_cyan)
+            # changed 2-25-23: force mesg to str.
+            panel.win.addstr(idx+1,1, f"{str(mesg):20s}", self.front.color_cyan)
         self._messages = panel
 
     def mod(self, mod):
-        dims = [self.front.h-self.message_split-3, self.front.w-self.menu_split, 3, self.menu_split]
+        dims = [
+            self.front.h-self.message_split-3, 
+            self.front.w-self.menu_split, 3, 
+            self.menu_split
+            ]
         panel = self.front.make_panel(dims, mod.name)
-        panel.win.addstr(1,1, f"This is working", self.front.color_yellow)
+        # panel.win.addstr(1,1, f"This is working", self.front.color_yellow)
         return panel
-
-    def mods(self):
-        for m in self.app.menu:
-            p = self.mod(m)
-            self.app.logic.available_panels[m.name] = [m, p]
-
-    def draw_loop(self):
-        self.header()
-        self.menu()
-        self.footer()
-        self.messages()
-        self.update()
 
 
 class Backend(SubClass):
     def __init__(self, app):
         super().__init__(app)
         self.should_stop = False
-        self.update_timeout = 1.5
+        self.update_timeout = .05
         self.last_update = timer()
+
+        # display toggles.
+        self.show_header   = True
+        self.show_footer   = True
+        self.show_menu     = True
+        self.show_messages = True
+        self.show_main     = True
+        self.prev_display_toggles = (self.show_header, self.show_footer, self.show_menu, self.show_messages, self.show_main)
+        self.display_toggles = (self.show_header, self.show_footer, self.show_menu, self.show_messages, self.show_main)
+
+    def setup_mods(self):
+        # first time setup of all mods.
+        for mod in self.app.menu:
+            self.setup_mod(mod)
+
+    def setup_mod(self, mod):
+        message_split = int(self.front.h*self.app.v_split)
+        height      = self.front.h
+        if self.show_header: height -= 3
+        if self.show_footer: height -= 3
+        if self.show_messages: height -= message_split
+        width       = 0
+        top_left_x  = 0
+        top_left_y  = 0
+        # dims = [
+        #     self.front.h-self.message_split-3, 
+        #     self.front.w-self.menu_split, 3, 
+        #     self.menu_split
+        #     ]
+        class_id = random.random()
+        active_module = mod(self.app, class_id)
+        active_panel = self.app.draw.mod(active_module)
+        self.app.logic.available_panels[mod.name] = [active_module, active_panel]
+
+    def rebuild_mod_panels(self):
+        
+        for mod in self.app.logic.available_panels:
+            active = self.app.logic.available_panels[mod]
+            new_panel = self.app.draw.mod(active[0])
+            active[1] = new_panel
+
+
     
     def loop(self):
         # HANDLE A RESIZE?
+        if self.prev_display_toggles != self.display_toggles:
+            self.rebuild_mod_panels()
 
 
         # HANDLE THE INPUT
-        self.app.logic.handle_input( self.front.get_input() )
+        self.app.logic.decider( self.front.get_input() )
+
+        # RUN A FRAME ON EVERY MOD
+        for mod in self.app.logic.available_panels:
+            self.app.logic.available_panels[mod][0].page(
+                self.app.logic.available_panels[mod][1] )
 
         # REDRAW THE SCREEN
-        self.app.draw.draw_loop()
+        if self.show_header:
+            self.app.draw.header()
+        if self.show_footer:
+            self.app.draw.footer()
+        if self.show_menu:
+            self.app.draw.menu()
+        if self.show_messages:
+            self.app.draw.messages()
+        if self.show_main:
+            cur_panel = self.app.logic.current_panel()
+            cur_panel.panel.top()
+        self.app.draw.update()
+
+        self.prev_display_toggles = (self.show_header, self.show_footer, self.show_menu, self.show_messages, self.show_main)
 
     def main(self):
-        self.print("Backend is starting up.")
-        # lets start all the mods.
-        for mod in self.app.menu:
-            mod(self.app)
-        
-        self.print("Mods are initialize.")
-        self.app.draw.mods()
-        self.print("Mods are drawn.")
+        self.setup_mods()
 
         while True:
             if self.should_stop:
+                for mod in self.app.logic.available_panels:
+                    self.app.logic.available_panels[mod][0].end_safely()
                 break
 
             try:
@@ -295,14 +363,21 @@ class Logic(SubClass):
         self.current = 0
         self.available_panels = {}
 
-    def handle_input(self, keypress):
-        self.decider(keypress)
+    def current_mod(self):
+        name = list(self.available_panels)[self.current]
+        return self.available_panels[name][0]
+
+    def current_panel(self):
+        name = list(self.available_panels)[self.current]
+        return self.available_panels[name][1]
 
     def decider(self, keypress):
         """Callback decider system."""
-        if not self.available_panels: return
-        cur_idx = list(self.available_panels)[self.current]
-        cur_mod = self.available_panels[cur_idx]
+        # Do we have a good keypress?
+        if 0 > keypress: return
+
+        mod_name = list(self.available_panels)[self.current]
+        cur_mod = self.available_panels[mod_name]
 
         mod_class = cur_mod[0]
         mod_panel = cur_mod[1]
@@ -315,20 +390,28 @@ class Logic(SubClass):
 
         elif isinstance(keypress, int):
             try:
-                all_calls_for_button = list(filter(lambda callback: callback['key'] in [int(keypress)], self.app.callbacks))
-                call_for_button = list(filter(lambda callback: callback['classID'] in [mod_class.classID,0,1], all_calls_for_button))[0]
-                callback = call_for_button['func']
+                global callbacks
+                all_calls_for_button = list(filter(lambda callback: callback['key'] in [int(keypress)], callbacks))
+                if not all_calls_for_button:
+                    self.print(f"{keypress} has no function.")
+                    return
+                # Debugs.
+                # self.print(f"Number of calls on the {keypress} button: {len(all_calls_for_button)}")
+                call_for_button = list(filter(lambda callback: callback['classID'] in [mod_class.class_id,0,1], all_calls_for_button))  # [0]
+                # self.print(f"got some callbacks! -> {call_for_button}")
+                # self.print(f"there are {len(call_for_button)} callbacks on this button. {keypress}")
+                callback = call_for_button[0]['func']  # TODO: come back for this 0, cant be right.
                 callback(mod_class, mod_panel)
 
-            except Exception as _:
-                self.print(f"k: {keypress} has no function")
+            except Exception as e:
+                self.print(e)
 
 
 class Module(SubClass):
     name = "Basic Module"
-    def __init__(self, app):
+    def __init__(self, app, class_id):
         super().__init__(app)
-        self.class_id = 0
+        self.class_id = class_id
         self.cur_el = 0
         self.elements = []
         self.scroll = 0
@@ -374,18 +457,26 @@ class Module(SubClass):
             self.cur_el -= 1
         else: self.cur_el = len(self.elements)-1
 
-
-aboutID = random.random()
+######## These Are Extension.
 class About(Module):
     name = "About"
-    def __init__(self, app):
-        super().__init__(app)
-        self.class_id = aboutID
+    def __init__(self, app, class_id):
+        super().__init__(app, class_id)
+
+    def page(self, panel):
+        # panel.addstr(2,2,"This is happening.")
+        panel.win.addstr(1,1, f"This is working", self.front.color_yellow)
+
+class Buttons(Module):
+    name = "Button Test"
+    def __init__(self, app, class_id):
+        super().__init__(app, class_id)
+        # self.class_id = buttonID
         # self.register_module()
 
     def page(self, panel):
-        panel.addstr(2,2,"This is happening.")
-
+        panel.win.addstr(2,2, "Button zone.")
+########
 
 class App:
     def __init__(self,
@@ -400,6 +491,7 @@ class App:
                  autostart:     bool = True,
             ):
         # initialize the constructor.
+        self.app = self
         self.user_modules = modules
         self.show_splash = splash_screen
         self.show_demo = demo_mode
@@ -416,10 +508,11 @@ class App:
         self.logic = Logic(self)
 
         # APP FUNCTIONALITY
-        self.data = {'messages': [], 'errors': []}
+        global messages
+        self.data = {'messages': messages, 'errors': []}
         self.menu = self.user_modules
         if self.show_demo:
-            self.menu.append(About)
+            self.menu.extend([About, Buttons])
 
         # Start the Game.
         if self.should_autostart:
@@ -430,28 +523,32 @@ class App:
 
     def print(self, message=""):
         self.data['messages'].append(message)
+        if len(self.data['messages']) > 15:
+            self.data['messages'].pop(0)
+
+    
+    @callback(ID=1, keypress=Keys.NUM1)  # F1
+    def on_NUM1(self, *args, **kwargs):
+        self.print("pressed NUM1 ...")
+        pass
 
     @callback(ID=1, keypress=Keys.Q)  # q
     def on_q(self, *args, **kwargs):
-        self.back.should_stop = True
+        self.app.back.should_stop = True
 
     @callback(ID=1, keypress=Keys.PG_DOWN)  # pg_down
     def on_pg_down(self, *args, **kwargs):
-        if self.logic.current < len(self.modules)-1:
-            self.logic.current += 1
-        else:
-            self.logic.current = 0
+        self.app.logic.current += 1
+        if self.app.logic.current > len(list(self.app.logic.available_panels))-1:
+            self.app.logic.current = 0
     
     @callback(ID=1, keypress=Keys.PG_UP)  # pg_up
     def on_pg_up(self, *args, **kwargs):
-        if self.logic.current > 0:
-            self.logic.current -= 1
-        else:
-            self.logic.current = len(self.modules)-1
-
+        self.app.logic.current -= 1
+        if self.app.logic.current < 0:
+            self.app.logic.current = len(list(self.app.logic.available_panels))-1
 
 def main():
-    # this isnt working.
     app = App()
 
 
