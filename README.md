@@ -25,6 +25,7 @@
  - DeskType
  - DeskShip
  - DeskSnake (in progress)
+ - DeskFortress
 
 ## IDEA FOR APPS
 - Linux builder. This seems like a fun challenge. It should have all the
