@@ -142,6 +142,7 @@ class Curse:
         push = 0
         if self.screen_mode:  # WTF is this?
             push = self.screen.getch()
+
             if push == curses.KEY_MOUSE:
                 return 0
         else:
@@ -276,8 +277,8 @@ class Backend(SubClass):
         top_left_x  = self.front.h - 3
         top_left_y  = 0
         dims        = [height, width, top_left_x, top_left_y]
-        panel       = self.front.make_panel(dims, self.app.title)
-        panel.win.addstr(1,2, f"Press <tab> to enter text.", self.front.color_green)
+        panel       = self.front.make_panel(dims, "Input")
+        panel.win.addstr(1,2, f"Press <tab> to enter text; <h> for help.", self.front.color_green)
         return panel
 
     def draw_menu(self):
@@ -325,7 +326,7 @@ class Backend(SubClass):
     def update_messages(self):
         message_split = int(self.front.h*self.app.v_split)
         for idx, mesg in enumerate(self.app.data['messages'][-self.messages_h:]):
-            self.messages_panel.win.addstr(idx+1,1, f"{str(mesg)[self.messages_w-2]}", self.front.color_cyan)
+            self.messages_panel.win.addstr(idx+1,1, f"{str(mesg)[:self.messages_w-2]}", self.front.color_cyan)
 
     def update_menu(self):
         for idx, mod in enumerate(self.app.menu):
@@ -580,6 +581,9 @@ class App:
         if len(self.data['messages']) > 300:  # 4k screens with 12pt font have 282 lines.
             self.data['messages'].pop(0)
  
+    @callback(ID=1, keypress=Keys.TAB)  # set screen mode
+    def on_tab(self, *args, **kwargs): pass
+
     @callback(ID=1, keypress=Keys.RESIZE)  # screen resize
     def on_resize(self, *args, **kwargs):
         self.app.back.screen_size_changed = True
