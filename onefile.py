@@ -223,7 +223,7 @@ class Backend(SubClass):
         height      = self.front.h
         if self.show_header: height -= 3
         if self.show_footer: height -= 3
-        if self.show_messages: height -= message_split
+        if self.show_messages: height -= message_split + 5
         width       = self.front.w
         if self.show_menu: width -= menu_split
         top_left_x  = 3
@@ -243,7 +243,7 @@ class Backend(SubClass):
         height      = self.front.h
         if self.show_header: height -= 3
         if self.show_messages:
-            height -= (message_split + 3)
+            height -= (message_split + 8)
         else:
             if self.show_footer: height -= 3
 
