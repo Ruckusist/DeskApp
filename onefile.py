@@ -222,7 +222,7 @@ class Backend(SubClass):
         height      = self.front.h
         if self.show_header: height -= 3
         if self.show_footer: height -= 3
-        if self.show_messages: height -= message_split
+        if self.show_messages: height -= message_split + 5
         width       = self.front.w
         if self.show_menu: width -= menu_split
         top_left_x  = 3
@@ -242,7 +242,7 @@ class Backend(SubClass):
         height      = self.front.h
         if self.show_header: height -= 3
         if self.show_messages:
-            height -= (message_split + 3)
+            height -= (message_split + 8)
         else:
             if self.show_footer: height -= 3
 
@@ -325,7 +325,7 @@ class Backend(SubClass):
     def update_messages(self):
         message_split = int(self.front.h*self.app.v_split)
         for idx, mesg in enumerate(self.app.data['messages'][-self.messages_h:]):
-            self.messages_panel.win.addstr(idx+1,1, f"{str(mesg)[self.messages_w-2]}", self.front.color_cyan)
+            self.messages_panel.win.addstr(idx+1,1, f"{str(mesg)[:self.messages_w-2]}", self.front.color_cyan)
 
     def update_menu(self):
         for idx, mod in enumerate(self.app.menu):

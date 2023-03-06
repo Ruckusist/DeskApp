@@ -102,6 +102,8 @@ directory is a boon.
 
 
 ## ChangeLog
+3.5.23-Lannocc v0.0.9: Fixed a sizing anomaly.
+
 11.11.22-Ruckusist v.0.0.8: Added in the Server. The server has a long todo list
     please check this out if you want to help.
 
