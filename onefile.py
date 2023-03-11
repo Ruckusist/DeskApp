@@ -4,6 +4,7 @@ import curses
 import curses.panel
 from collections import namedtuple
 import enum
+from itertools import cycle
 import functools
 
 # pylint: disable=missing-module-docstring
@@ -113,6 +114,7 @@ class Curse:
         self.curses = curses
         self.screen = curses.initscr()
         curses.flushinp()
+        self.palette = []
         curses.start_color()
         self.setup_color()
         curses.noecho()
@@ -121,8 +123,11 @@ class Curse:
         self.screen.nodelay(1)
         curses.mousemask(curses.ALL_MOUSE_EVENTS | curses.REPORT_MOUSE_POSITION)
         curses.mouseinterval(0)
-        self.screen_mode = True
+        self.key_mode = False
+        self.key_buffer = ""
         self.has_resized_happened = False
+
+        self.toggle = True
 
     def setup_color(self):
         """Load a custom theme."""
@@ -147,6 +152,21 @@ class Curse:
         curses.init_pair(10, curses.COLOR_MAGENTA, curses.COLOR_WHITE)
         self.color_select = curses.color_pair(10)
 
+        self.color_bold = curses.A_BOLD
+        self.color_blink = curses.A_BLINK
+        self.color_error = self.color_bold | self.color_blink | self.color_red
+
+        try:
+            for i in range(0, curses.COLORS):
+                if i == 0: curses.init_pair(i+1, i, curses.COLOR_WHITE)
+                else: curses.init_pair(i+1, i, curses.COLOR_BLACK)
+                self.palette.append(curses.color_pair(i))
+        except:
+            for i in range(0, 7):
+               if i == 0: curses.init_pair(i+1, i, curses.COLOR_WHITE)
+               else: curses.init_pair(i+1, i, curses.COLOR_BLACK)
+               self.palette.append(curses.color_pair(i))
+
     @property
     def w(self):
         return self.curses.COLS
@@ -160,30 +180,50 @@ class Curse:
         self.screen.clear()
         self.curses.resizeterm(y, x)
         self.screen.refresh()
+        self.toggle = False
+        self.has_resized_happened = True
 
     def get_click(self):
         _, x, y, _, btn = curses.getmouse()
         return tuple([(x,y),btn])
 
     def get_input(self):
-        push = 0
-        # if self.screen_mode:  # WTF is this?
-        push = self.screen.getch()
+        try:     push = self.screen.getch()
+        except:  return 0
+
+        if push == 0: return 0
 
         if push == curses.KEY_MOUSE:
+            try:     return self.get_click()
+            except:  return 0
+
+        if push == Keys.RESIZE:
+            if self.toggle:
+                self.resized()
+            else:
+                self.toggle = True
             return 0
 
-        if self.screen_mode:
-            push = push
-        # else:
-            # self.screen.keypad(0)
-            # curses.echo()  # when did i place the mouse cursor?
-            # self.redraw_window(self.footer) # why are we doing this?
-            # push = self.footer[0].getstr(1,1).decode('utf8')
-            # self.screen.keypad(1)
-            # curses.noecho()
-            # self.screen_mode = True
-            # self.redraw_window(self.footer)
+        if self.key_mode:
+            if push == Keys.ENTER:
+                self.key_mode = False
+                return self.key_buffer  # any string will trigger the end of this.
+            try:     
+                key = Keys(push).name
+                if key == Keys.SPACE.name:
+                    key = " "
+                    self.key_buffer += key
+                elif key == Keys.BACKSPACE.name:
+                    self.key_buffer = "".join(list(self.keybuffer)[:-1])
+                else:
+                    key = key.lower()
+                    self.key_buffer += key
+                return 0
+                
+            except:
+                if push == 33:
+                    self.key_buffer += "!"
+
         return push
 
     def make_panel(self, dims, label, scroll=False, box=True, banner=True):
@@ -208,6 +248,33 @@ class Curse:
         curses.flushinp()
         curses.endwin()
 
+    def splash_screen(self):
+        splash = self.make_panel(
+            [self.h, self.w, 0, 0], 
+            "splash", 
+            box=False,
+            banner=False
+        )
+        curses.panel.update_panels()
+        self.screen.refresh()
+
+        cycled = cycle([x for x in range(len(self.palette))])
+        for x in range(self.h):
+            if x == int(self.h/2):
+                splash.win.addstr(x, int(self.w/2)-7, " Ruckusist.com")
+                splash.win.refresh()
+                time.sleep(.95)
+            else:
+                matrix = ["&", "^", "&", "$", "R", "\\", "|", "/", "-"]
+                cycled_matrix = cycle([x for x in matrix])
+                for y in range(self.w):
+                    if x == self.h-1 and y == self.w-1: break # hacks.
+                    splash.win.addstr(x, y, next(cycled_matrix), self.palette[next(cycled)] )
+                    splash.win.refresh()
+                    time.sleep(0.0001)
+        time.sleep(2)
+        self.screen.erase()
+
 
 class SubClass:
     def __init__(self, app):
@@ -217,7 +284,8 @@ class SubClass:
 
 
 class Backend(SubClass):
-    def __init__(self, app, show_header, show_footer, show_menu, show_messages, show_main):
+    def __init__(self, app, show_header, show_footer, 
+                 show_menu, show_messages, show_main):
         super().__init__(app)
         self.should_stop = False
         self.update_timeout = .05
@@ -235,7 +303,9 @@ class Backend(SubClass):
         self.messages_w     = 20
         self.show_main      = show_main
         self.redraw_mains()
-        self.prev_panels_shown = (self.show_header, self.show_footer, self.show_menu, self.show_messages, self.show_main)
+        self.prev_panels_shown = (self.show_header, self.show_footer, 
+                                  self.show_menu, self.show_messages, 
+                                  self.show_main)
 
     def redraw_mains(self):
         self.header_panel    = self.draw_header()
@@ -308,7 +378,7 @@ class Backend(SubClass):
         top_left_y  = 0
         dims        = [height, width, top_left_x, top_left_y]
         panel       = self.front.make_panel(dims, "Input")
-        if self.front.screen_mode:
+        if not self.front.key_mode:
             panel.win.addstr(1,2, f"Press <tab> to enter text; <h> for help.", self.front.color_green)
         return panel
 
@@ -355,9 +425,9 @@ class Backend(SubClass):
         self.header_panel.win.addstr(1,3, self.app.header, self.front.color_blue)
 
     def update_footer(self):
-        if not self.front.screen_mode:
-            self.show_footer = True
-            self.footer_panel.win.addstr(1,2, f": {self.footer_buffer}", self.front.color_yellow)
+        if self.front.key_mode:
+            pad = " " * ( self.front.w-6 - len(self.front.key_buffer) )
+            self.footer_panel.win.addstr(1,2, f": {self.front.key_buffer}{pad}", self.front.color_yellow)
         else:
             self.footer_panel.win.addstr(1,2, f"Press <tab> to enter text; <h> for help.", self.front.color_green)
 
@@ -383,16 +453,16 @@ class Backend(SubClass):
         self.app.logic.decider( self.front.get_input() )
 
         # HANDLE SCREEN RESIZE ??? NO. NOT YET. SOON.
-        if self.screen_size_changed:
+        if self.front.has_resized_happened:
             self.front.resized()
 
         # HANDLE PANEL RESIZE ->
         cur_panels_shown = (self.show_header, self.show_footer, self.show_menu, self.show_messages, self.show_main)
         if ((cur_panels_shown != self.prev_panels_shown) or 
-            self.screen_size_changed):
+            self.front.has_resized_happened):
             self.redraw_mains()
             self.redraw_mods()
-            self.screen_size_changed = False
+            self.front.has_resized_happened = False
 
         # RUN A FRAME ON EVERY MOD
         for mod in self.app.logic.available_panels:
@@ -471,7 +541,8 @@ class Logic(SubClass):
     def decider(self, keypress):
         """Callback decider system."""
         # Do we have a good keypress?
-        if 0 > keypress: return
+        if isinstance(keypress, int):
+            if 0 >= keypress: return
 
         mod_name = list(self.available_panels)[self.current]
         cur_mod = self.available_panels[mod_name]
@@ -480,8 +551,8 @@ class Logic(SubClass):
         mod_panel = cur_mod[1]
         
         if isinstance(keypress, str):
-            # mod_class.string_decider(keypress)
-            self.app.back.footer_buffer += keypress
+            mod_class.string_decider(self.front.key_buffer)
+            self.front.key_buffer = ""
 
         elif isinstance(keypress, tuple):
             mod_class.mouse_decider(keypress)
@@ -491,13 +562,9 @@ class Logic(SubClass):
                 global callbacks
                 all_calls_for_button = list(filter(lambda callback: callback['key'] in [int(keypress)], callbacks))
                 if not all_calls_for_button:
-                    self.print(f"{keypress} has no function. {Keys(keypress).name}")
+                    self.print(f"{keypress} has no function")
                     return
-                # Debugs.
-                # self.print(f"Number of calls on the {keypress} button: {len(all_calls_for_button)}")
                 call_for_button = list(filter(lambda callback: callback['classID'] in [mod_class.class_id,0,1], all_calls_for_button))  # [0]
-                # self.print(f"got some callbacks! -> {call_for_button}")
-                # self.print(f"there are {len(call_for_button)} callbacks on this button. {keypress}")
                 callback = call_for_button[0]['func']  # TODO: come back for this 0, cant be right.
                 callback(mod_class, mod_panel)
 
@@ -521,6 +588,8 @@ class Module(SubClass):
 
     def page(self, panel):
         panel.win.addstr(2,2,"This is working!")
+
+    def mouse_decider(self, mouse): pass
 
     def string_decider(self, input_string):
         self.input_string = input_string
@@ -613,7 +682,8 @@ class App:
 
         # CORE MODULES
         self.front = Curse()
-        # self.draw  = Draw(self)
+        if self.show_splash:
+            self.front.splash_screen()
         self.logic = Logic(self)
         self.back  = Backend(self, show_header, show_footer, show_menu, show_messages, show_main)
         
@@ -624,25 +694,34 @@ class App:
     def start(self):
         self.back.main()
 
-    def print(self, message=""):
+    def close(self):
+        self.back.should_stop = True
+    
+    def print(self, message: str=""):
         self.data['messages'].append(message)
         if len(self.data['messages']) > 300:  # 4k screens with 12pt font have 282 lines.
             self.data['messages'].pop(0)
- 
-    @callback(ID=1, keypress=Keys.ENTER)  # remove screen mode
-    def on_enter(self, *args, **kwargs):
-        if not self.app.front.screen_mode:
-            self.logic.decider(self.app.back.footer_buffer)
-            self.app.front.screen_mode = True
-            self.app.back.footer_buffer = ""
+
+    def error(self, message: str=""):
+        self.print(message)
+
+    def add_module(self, module: Module):
+        self.back.setup_mod(module)
+
+    def remove_module(self, module: str):
+        # is this important? TODO: maybe for a logout screen?
+        pass
+
+    def set_header(self, message: str):
+        self.header = message
+
+    ## CALLBACKS
 
     @callback(ID=1, keypress=Keys.TAB)  # set screen mode
     def on_tab(self, *args, **kwargs):
-        self.front.screen_mode = False
+        self.front.key_mode = True
+        self.app.back.show_footer = True
         self.print("pressed <tab> --> Press Enter after adding Text.")
-        value = " "*(self.front.w-3)
-        value = ":"+value
-        self.app.back.footer_panel.win.addstr(1,1,value,self.app.front.color_yellow)
 
     @callback(ID=1, keypress=Keys.RESIZE)  # screen resize
     def on_resize(self, *args, **kwargs):
@@ -656,7 +735,7 @@ class App:
 
     @callback(ID=1, keypress=Keys.NUM2)  # NUM2 - footer
     def on_NUM2(self, *args, **kwargs):
-        if not self.app.front.screen_mode:
+        if not self.app.front.key_mode:
             self.app.back.show_footer = not self.app.back.show_footer
             self.print(f"pressed NUM2 ... show_footer = {self.app.back.show_footer}")
 
@@ -674,6 +753,24 @@ class App:
     def on_NUM5(self, *args, **kwargs):
         self.app.back.show_messages = not self.app.back.show_messages
         self.print(f"pressed NUM5 ... show_messages = {self.app.back.show_messages}")
+    
+    @callback(ID=1, keypress=Keys.NUM6)  # NUM5 - show all
+    def on_NUM6(self, *args, **kwargs):
+        if not all([self.app.back.show_messages, self.app.back.show_menu,
+               self.app.back.show_main, self.app.back.show_header,
+               self.app.back.show_footer]):
+            
+            self.app.back.show_messages = True
+            self.app.back.show_menu = True
+            self.app.back.show_main = True
+            self.app.back.show_header = True
+            self.app.back.show_footer = True
+        else:
+            self.app.back.show_messages = False 
+            self.app.back.show_menu = False
+            self.app.back.show_header = False
+            self.app.back.show_footer = False
+            self.app.back.show_main = True
 
     @callback(ID=1, keypress=Keys.Q)  # q
     def on_q(self, *args, **kwargs):
@@ -693,8 +790,16 @@ class App:
 
 
 def main():
-    app = App()
+    app = App(
+        splash_screen=True,
+        show_footer=False,
+        show_header=False,
+        show_messages=False,
+        show_menu=False
+    )
 
-__all__ = (Keys, Curse, Backend, Logic, Module, App)
+__all__ = (Keys, Curse, Backend, Logic, Module, 
+           App, callback, callbacks)
+
 if __name__ == "__main__":
     main()

@@ -102,10 +102,14 @@ directory is a boon.
 
 
 ## ChangeLog
+3.11.23-Ruckusist v0.0.10: I have a stable enough onefile, im going to start
+    a twofile. Onefile should accept no more feature upgrade, and just get
+    the final bug fixes in before it migrates to a mutlifile for the 1.0 
+    release. much left to do.
+
 3.5.23-Lannocc v0.0.9: Fixed a sizing anomaly.
 
-11.11.22-Ruckusist v.0.0.8: Added in the Server. The server has a long todo list
-    please check this out if you want to help.
+11.11.22-Ruckusist v.0.0.8: Added in the Server. The server has a long todo list please check this out if you want to help.
 
 11.11.22-Ruckusist v.0.0.7: Added in mouse support. Refactored some parts in 
     previous 4-6 updates. No changes to the working API
