@@ -318,28 +318,6 @@ class Backend(SubClass):
         for mod in self.app.menu:
             self.setup_mod(mod)
 
-    def _calc_mm_sizing(self, inverse=False): # sizing for Module / Message
-        height      = self.front.h
-        if self.show_header: height -= 3
-        if self.show_footer: height -= 3
-        message_split = int(height*self.app.v_split)
-        if self.show_messages: height -= message_split
-
-        top_left_x  = 0
-        if self.show_header: top_left_x += 3
-        if inverse: # we are looking for "Messages" dims
-            top_left_x += height
-            height = message_split
-
-        menu_split = int(self.front.w*self.app.h_split)
-        width       = self.front.w
-        if self.show_menu: width -= menu_split
-
-        top_left_y  = 0
-        if self.show_menu: top_left_y += menu_split
-
-        return [height, width, top_left_x, top_left_y]
-
     def _calc_main_dims(self):
         height      = self.front.h
         if self.show_header: height -= 3
