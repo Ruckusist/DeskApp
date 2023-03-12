@@ -127,8 +127,6 @@ class Curse:
         self.key_buffer = ""
         self.has_resized_happened = False
 
-        self.toggle = True
-
     def setup_color(self):
         """Load a custom theme."""
         curses.init_pair(1, curses.COLOR_WHITE, curses.COLOR_BLACK)
@@ -180,7 +178,7 @@ class Curse:
         self.screen.clear()
         self.curses.resizeterm(y, x)
         self.screen.refresh()
-        self.toggle = False
+        curses.flushinp()
         self.has_resized_happened = True
 
     def get_click(self):
@@ -198,11 +196,7 @@ class Curse:
             except:  return 0
 
         if push == Keys.RESIZE:
-            if self.toggle:
-                self.resized()
-            else:
-                self.toggle = True
-            return 0
+            return push
 
         if self.key_mode:
             if push == Keys.ENTER:
@@ -250,8 +244,8 @@ class Curse:
 
     def splash_screen(self):
         splash = self.make_panel(
-            [self.h, self.w, 0, 0], 
-            "splash", 
+            [self.h, self.w, 0, 0],
+            "splash",
             box=False,
             banner=False
         )
@@ -284,7 +278,7 @@ class SubClass:
 
 
 class Backend(SubClass):
-    def __init__(self, app, show_header, show_footer, 
+    def __init__(self, app, show_header, show_footer,
                  show_menu, show_messages, show_main):
         super().__init__(app)
         self.should_stop = False
@@ -292,7 +286,7 @@ class Backend(SubClass):
         self.last_update = timer()
 
         # display toggles.
-        self.screen_size_changed = False
+        #self.screen_size_changed = False
         self.show_header    = show_header
         self.show_footer    = show_footer
         self.footer_buffer  = ""
@@ -437,15 +431,15 @@ class Backend(SubClass):
 
     def loop(self):
         # HANDLE THE INPUT
-        self.app.logic.decider( self.front.get_input() )
-
-        # HANDLE SCREEN RESIZE ??? NO. NOT YET. SOON.
-        if self.front.has_resized_happened:
+        key_mouse = self.front.get_input()
+        if key_mouse == Keys.RESIZE:
             self.front.resized()
+        else:
+            self.app.logic.decider( key_mouse )
 
         # HANDLE PANEL RESIZE ->
         cur_panels_shown = (self.show_header, self.show_footer, self.show_menu, self.show_messages, self.show_main)
-        if ((cur_panels_shown != self.prev_panels_shown) or 
+        if ((cur_panels_shown != self.prev_panels_shown) or
             self.front.has_resized_happened):
             self.redraw_mains()
             self.redraw_mods()
@@ -710,10 +704,10 @@ class App:
         self.app.back.show_footer = True
         self.print("pressed <tab> --> Press Enter after adding Text.")
 
-    @callback(ID=1, keypress=Keys.RESIZE)  # screen resize
-    def on_resize(self, *args, **kwargs):
-        self.app.back.screen_size_changed = True
-        self.print("got a resize")
+    #@callback(ID=1, keypress=Keys.RESIZE)  # screen resize
+    #def on_resize(self, *args, **kwargs):
+    #    self.app.back.screen_size_changed = True
+    #    self.print("got a resize")
 
     @callback(ID=1, keypress=Keys.NUM1)  # NUM1 - header
     def on_NUM1(self, *args, **kwargs):

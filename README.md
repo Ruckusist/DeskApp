@@ -102,6 +102,8 @@ directory is a boon.
 
 
 ## ChangeLog
+3.11.23-Lannocc v0.0.12: Live terminal resizing now works!
+
 3.11.23-Lannocc v0.0.11: Actually fixed the sizing problem this time.
 
 3.11.23-Ruckusist v0.0.10: I have a stable enough onefile, im going to start
