@@ -330,8 +330,8 @@ class Backend(SubClass):
         return [height, width, top_left_x, top_left_y]
 
     def setup_mod(self, mod):
-        class_id = random.random()
-        active_module = mod(self.app, class_id)
+        # class_id = random.random()
+        active_module = mod(self.app)
         dims = self._calc_main_dims()
         panel       = self.front.make_panel(dims, active_module.name)
         self.app.logic.available_panels[mod.name] = [active_module, panel]
