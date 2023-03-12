@@ -78,7 +78,7 @@ class Keys(enum.IntEnum):
     M = 109
 
     # F KEYS
-    F1    = 80 
+    F1    = 80
 
     # NUMBER KEYS
     NUM1   = 49
@@ -170,7 +170,7 @@ class Curse:
     @property
     def w(self):
         return self.curses.COLS
-        
+
     @property
     def h(self):
         return self.curses.LINES
@@ -208,7 +208,7 @@ class Curse:
             if push == Keys.ENTER:
                 self.key_mode = False
                 return self.key_buffer  # any string will trigger the end of this.
-            try:     
+            try:
                 key = Keys(push).name
                 if key == Keys.SPACE.name:
                     key = " "
@@ -219,7 +219,7 @@ class Curse:
                     key = key.lower()
                     self.key_buffer += key
                 return 0
-                
+
             except:
                 if push == 33:
                     self.key_buffer += "!"
@@ -303,8 +303,8 @@ class Backend(SubClass):
         self.messages_w     = 20
         self.show_main      = show_main
         self.redraw_mains()
-        self.prev_panels_shown = (self.show_header, self.show_footer, 
-                                  self.show_menu, self.show_messages, 
+        self.prev_panels_shown = (self.show_header, self.show_footer,
+                                  self.show_menu, self.show_messages,
                                   self.show_main)
 
     def redraw_mains(self):
@@ -318,50 +318,59 @@ class Backend(SubClass):
         for mod in self.app.menu:
             self.setup_mod(mod)
 
-    def setup_mod(self, mod):
-        menu_split = int(self.front.w*self.app.h_split)
-        message_split = int(self.front.h*self.app.v_split)
+    def _calc_mm_sizing(self, inverse=False): # sizing for Module / Message
         height      = self.front.h
         if self.show_header: height -= 3
         if self.show_footer: height -= 3
-        if self.show_messages: height -= message_split + 5
+        message_split = int(height*self.app.v_split)
+        if self.show_messages: height -= message_split
+
+        top_left_x  = 0
+        if self.show_header: top_left_x += 3
+        if inverse: # we are looking for "Messages" dims
+            top_left_x += height
+            height = message_split
+
+        menu_split = int(self.front.w*self.app.h_split)
         width       = self.front.w
         if self.show_menu: width -= menu_split
-        top_left_x  = 3
-        if not self.show_header: top_left_x -= 3
-        top_left_y  = menu_split
-        if not self.show_menu: top_left_y = 0
-        dims = [height, width, top_left_x, top_left_y]
+
+        top_left_y  = 0
+        if self.show_menu: top_left_y += menu_split
+
+        return [height, width, top_left_x, top_left_y]
+
+    def _calc_main_dims(self):
+        height      = self.front.h
+        if self.show_header: height -= 3
+        if self.show_footer: height -= 3
+        message_split = int(height*self.app.v_split)
+        if self.show_messages: height -= message_split
+        top_left_x  = 0
+        if self.show_header: top_left_x += 3
+
+        menu_split = int(self.front.w*self.app.h_split)
+        width       = self.front.w
+        if self.show_menu: width -= menu_split
+        top_left_y  = 0
+        if self.show_menu: top_left_y += menu_split
+
+        return [height, width, top_left_x, top_left_y]
+
+    def setup_mod(self, mod):
         class_id = random.random()
         active_module = mod(self.app, class_id)
+        dims = self._calc_main_dims()
         panel       = self.front.make_panel(dims, active_module.name)
         self.app.logic.available_panels[mod.name] = [active_module, panel]
 
     def redraw_mods(self):
-        menu_split = int(self.front.w*self.app.h_split)
-        message_split = int(self.front.h*self.app.v_split)
-        
-        height      = self.front.h
-        if self.show_header: height -= 3
-        if self.show_messages:
-            height -= (message_split + 8)
-        else:
-            if self.show_footer: height -= 3
-
-        width       = self.front.w
-        if self.show_menu: width -= menu_split
-        
-        top_left_x  = 0
-        if self.show_header: top_left_x += 3
-        top_left_y  = 0
-        if self.show_menu: top_left_y += menu_split
-
-        dims = [height, width, top_left_x, top_left_y]
+        dims = self._calc_main_dims()
         for mod in self.app.logic.available_panels:
             active = self.app.logic.available_panels[mod]
             panel = self.front.make_panel(dims, active[0].name)
             active[1] = panel
-    
+
     def draw_header(self):
         height      = 3
         width       = self.front.w
@@ -391,7 +400,7 @@ class Backend(SubClass):
         width        = menu_split
         top_left_x   = 0
         if self.show_header: top_left_x += 3
-        top_left_y   = 0 
+        top_left_y   = 0
 
         dims = [height, width, top_left_x, top_left_y]
         self.menu_w = width
@@ -399,25 +408,26 @@ class Backend(SubClass):
         return panel
 
     def draw_messages(self):
-        menu_split = int(self.front.w*self.app.h_split)
-        message_split = int(self.front.h*self.app.v_split)
         height      = self.front.h
+        if self.show_header: height -= 3
         if self.show_footer: height -= 3
-        if self.show_main: height -= (message_split + 4)
-        else:
-            if self.show_header: height -= 3
+        top_left_x  = 0
+        if self.show_header: top_left_x += 3
+        if self.show_main:
+            message_split = int(height*self.app.v_split)
+            height -= message_split
+            top_left_x += height
+            height = message_split
 
+        menu_split = int(self.front.w*self.app.h_split)
         width       = self.front.w
         if self.show_menu: width -= menu_split
-        top_left_x  = 0
-        if self.show_main: top_left_x += message_split + 4
-        else:
-            if self.show_header: top_left_x += 3
         top_left_y  = 0
         if self.show_menu: top_left_y += menu_split
-        dims        = [height, width, top_left_x, top_left_y]
-        self.messages_h = height-2
-        self.messages_w = width-2
+
+        dims = [height, width, top_left_x, top_left_y]
+        self.messages_h = dims[0]-2
+        self.messages_w = dims[0]-2
         panel       = self.front.make_panel(dims, "Messages")
         return panel
 
@@ -432,7 +442,6 @@ class Backend(SubClass):
             self.footer_panel.win.addstr(1,2, f"Press <tab> to enter text; <h> for help.", self.front.color_green)
 
     def update_messages(self):
-        message_split = int(self.front.h*self.app.v_split)
         for idx, mesg in enumerate(self.app.data['messages'][-self.messages_h:]):
             mesg = str(mesg)
             if len(mesg) < self.messages_w-2:
@@ -549,7 +558,7 @@ class Logic(SubClass):
 
         mod_class = cur_mod[0]
         mod_panel = cur_mod[1]
-        
+
         if isinstance(keypress, str):
             mod_class.string_decider(self.front.key_buffer)
             self.front.key_buffer = ""
@@ -582,7 +591,7 @@ class Module(SubClass):
         self.scroll = 0
         self.scroll_elements = []
         self.input_string = ""
-        
+
     def register_module(self):
         self.app.menu.append(self)
 
@@ -604,21 +613,21 @@ class Module(SubClass):
         else: self.scroll = 0
 
     @callback(0, keypress=Keys.DOWN)
-    def on_down(self, *args, **kwargs): 
+    def on_down(self, *args, **kwargs):
         """scroll down"""
         if self.scroll < len(self.scroll_elements)-1:
             self.scroll += 1
         else: self.scroll = 0
 
     @callback(0, keypress=Keys.RIGHT)
-    def on_left(self, *args, **kwargs): 
+    def on_left(self, *args, **kwargs):
         """rotate clickable elements"""
         if self.cur_el < len(self.elements)-1:
             self.cur_el += 1
         else: self.cur_el = 0
 
     @callback(0, keypress=Keys.LEFT)
-    def on_right(self, *args, **kwargs): 
+    def on_right(self, *args, **kwargs):
         """rotate clickable elements"""
         if self.cur_el > 0:
             self.cur_el -= 1
@@ -686,7 +695,7 @@ class App:
             self.front.splash_screen()
         self.logic = Logic(self)
         self.back  = Backend(self, show_header, show_footer, show_menu, show_messages, show_main)
-        
+
         # Start the Game.
         if self.should_autostart:
             self.start()
@@ -696,7 +705,7 @@ class App:
 
     def close(self):
         self.back.should_stop = True
-    
+
     def print(self, message: str=""):
         self.data['messages'].append(message)
         if len(self.data['messages']) > 300:  # 4k screens with 12pt font have 282 lines.
@@ -753,20 +762,20 @@ class App:
     def on_NUM5(self, *args, **kwargs):
         self.app.back.show_messages = not self.app.back.show_messages
         self.print(f"pressed NUM5 ... show_messages = {self.app.back.show_messages}")
-    
+
     @callback(ID=1, keypress=Keys.NUM6)  # NUM5 - show all
     def on_NUM6(self, *args, **kwargs):
         if not all([self.app.back.show_messages, self.app.back.show_menu,
                self.app.back.show_main, self.app.back.show_header,
                self.app.back.show_footer]):
-            
+
             self.app.back.show_messages = True
             self.app.back.show_menu = True
             self.app.back.show_main = True
             self.app.back.show_header = True
             self.app.back.show_footer = True
         else:
-            self.app.back.show_messages = False 
+            self.app.back.show_messages = False
             self.app.back.show_menu = False
             self.app.back.show_header = False
             self.app.back.show_footer = False
@@ -781,7 +790,7 @@ class App:
         self.app.logic.current += 1
         if self.app.logic.current > len(list(self.app.logic.available_panels))-1:
             self.app.logic.current = 0
-    
+
     @callback(ID=1, keypress=Keys.PG_UP)  # pg_up
     def on_pg_up(self, *args, **kwargs):
         self.app.logic.current -= 1
