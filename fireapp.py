@@ -94,7 +94,11 @@ class Fire(Module):
             line = "".join(line)
 
             for y, char in enumerate(line):
-                panel.win.addstr(max_h,y,str(char))
+                panel.win.addstr(max_h,y,str(char),
+                                 self.app.front.color_yellow if char == '@' else (
+                                    self.app.front.color_black if char in ["^", "~", "*", "|"] else (
+                                        self.app.front.color_red
+                                    )))
 
             max_h -= 1
 

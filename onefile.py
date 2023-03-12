@@ -131,6 +131,8 @@ class Curse:
         """Load a custom theme."""
         curses.init_pair(1, curses.COLOR_WHITE, curses.COLOR_BLACK)
         self.color_white = curses.color_pair(1)
+        curses.init_pair(11, curses.COLOR_BLACK, curses.COLOR_BLACK)
+        self.color_black = curses.color_pair(11)
         curses.init_pair(2, curses.COLOR_MAGENTA, curses.COLOR_BLACK)
         self.color_magenta = curses.color_pair(2)
         curses.init_pair(3, curses.COLOR_GREEN, curses.COLOR_BLACK)
@@ -282,7 +284,7 @@ class Backend(SubClass):
                  show_menu, show_messages, show_main):
         super().__init__(app)
         self.should_stop = False
-        self.update_timeout = .05
+        self.update_timeout = .07
         self.last_update = timer()
 
         # display toggles.
@@ -399,7 +401,7 @@ class Backend(SubClass):
 
         dims = [height, width, top_left_x, top_left_y]
         self.messages_h = dims[0]-2
-        self.messages_w = dims[0]-2
+        self.messages_w = dims[1]-2
         panel       = self.front.make_panel(dims, "Messages")
         return panel
 
