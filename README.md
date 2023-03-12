@@ -110,6 +110,10 @@ directory is a boon.
 
 ## ChangeLog
 3.11.23-Ruckusist: Deskapp.org - is now a thing.
+3.11.23-Lannocc v0.0.12: Live terminal resizing now works!
+
+3.11.23-Lannocc v0.0.11: Actually fixed the sizing problem this time.
+
 3.11.23-Ruckusist v0.0.10: I have a stable enough onefile, im going to start
     a twofile. Onefile should accept no more feature upgrade, and just get
     the final bug fixes in before it migrates to a mutlifile for the 1.0 
