@@ -261,7 +261,7 @@ class Curse:
         cycled = cycle([x for x in range(len(self.palette))])
         for x in range(self.h):
             if x == int(self.h/2):
-                splash.win.addstr(x, int(self.w/2)-7, " Ruckusist.com")
+                splash.win.addstr(x, int(self.w/2)-7, " Deskapp.org")
                 splash.win.refresh()
                 time.sleep(.95)
             else:
@@ -332,9 +332,11 @@ class Backend(SubClass):
         top_left_y  = menu_split
         if not self.show_menu: top_left_y = 0
         dims = [height, width, top_left_x, top_left_y]
-        class_id = random.random()
-        active_module = mod(self.app, class_id)
-        panel       = self.front.make_panel(dims, active_module.name)
+        # class_id = random.random()
+        # active_module = mod(self.app, class_id)
+        active_module = mod(self.app)
+        panel       = self.front.make_panel(dims, active_module.name,
+                                            box=self.app.show_box,banner=self.app.show_banner)
         self.app.logic.available_panels[mod.name] = [active_module, panel]
 
     def redraw_mods(self):
@@ -625,21 +627,32 @@ class Module(SubClass):
         else: self.cur_el = len(self.elements)-1
 
 ######## These Are Extension.
+About_ID = random.random()
 class About(Module):
     name = "About"
-    def __init__(self, app, class_id):
-        super().__init__(app, class_id)
+    def __init__(self, app):
+        super().__init__(app, About_ID)
 
     def page(self, panel):
         panel.win.addstr(1,1, f"This is working", self.front.color_yellow)
 
+    @callback(About_ID, Keys.ENTER)
+    def on_enter(self, *args, **kwargs):
+        self.print("Welcome to the about page!")
+
+
+Buttons_ID = random.random()
 class Buttons(Module):
     name = "Buttons"
-    def __init__(self, app, class_id):
-        super().__init__(app, class_id)
+    def __init__(self, app):
+        super().__init__(app, Buttons_ID)
 
     def page(self, panel):
         panel.win.addstr(2,2, "Button zone.")
+
+    @callback(Buttons_ID, Keys.ENTER)
+    def on_enter(self, *args, **kwargs):
+        self.print("Pressed Enter Button! Lets GOOO!!!!")
 ########
 
 class App:
@@ -656,6 +669,8 @@ class App:
                  show_menu:       bool = True,
                  show_messages:   bool = True,
                  show_main:       bool = True,
+                 show_box:        bool = True,
+                 show_banner:     bool = True,
                  # DEFAULT SPLITS
                  v_split:        float = 0.4,
                  h_split:        float = 0.16,
@@ -666,6 +681,8 @@ class App:
         self.user_modules = modules
         self.show_splash = splash_screen
         self.show_demo = demo_mode
+        self.show_box = show_box
+        self.show_banner = show_banner
         self.name = name
         self.title = title
         self.header = header
@@ -798,8 +815,11 @@ def main():
         show_menu=False
     )
 
-__all__ = (Keys, Curse, Backend, Logic, Module, 
-           App, callback, callbacks)
+
+__all__ = (
+    'Keys','Curse','Backend','Logic','Module',
+    'App','callback','callbacks','main'
+)
 
 if __name__ == "__main__":
     main()

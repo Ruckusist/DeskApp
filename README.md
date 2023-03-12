@@ -1,4 +1,7 @@
-# | A very Ruckusist Production |
+## | A very Ruckusist Production |
+
+# Deskapp.org
+
 ## A console program manager for python apps.
 
 ## Install
@@ -10,6 +13,7 @@
  on android, but this app works real good in termux.
 
 ## Run
+
 `deskapp` from the console will invoke the app. (why? what else should it do here?)
     What kinds of run commands would you want to provide here? Maybe if i had
     a single file app, and i wanted to create an .exe, i could call 
@@ -19,6 +23,7 @@
     at all.
 
 ## IDEAS FOR GAMES
+
  - Desklike
  - DeskHunter
  - Desk2042
@@ -28,6 +33,7 @@
  - DeskFortress
 
 ## IDEA FOR APPS
+
 - Linux builder. This seems like a fun challenge. It should have all the
     features of the standing linux config building system, but should offer
     the clickability, and UX of a proper deskapp. You could click this onto
@@ -39,7 +45,8 @@
 - RoboDog
 
 ## TODO
-    [ ] Unify the printing mechinism. There are like 3 different printing 
+
+    [x] Unify the printing mechinism. There are like 3 different printing 
         schemes going on in here, and that needs to be fixed. like formost.
 
     [ ] Freshen up the examples folder; do a new example based on the login
@@ -60,21 +67,21 @@
         - Further Mouse support. Mouse handling is now passed to the module, 
             and it is useable. but it is far from clean/good.
 
-        - further draw support. the logic class has draw functions in there. 
+        x further draw support. the logic class has draw functions in there. 
             those functions to redraw the screen should either be in the
             frontend class, as an extention, or in a intermediate class that
             can redraw any prebuilt setup of screen.
 
-        - remove all the parts from the screen by toggle.
-         - !! Also i want to be able to start with the visibility of everything
+        x remove all the parts from the screen by toggle.
+         x !! Also i want to be able to start with the visibility of everything
             turned off. so the module is full screen.
-            [ ] Toggle Menu.
-            [ ] Toggle Header.
-            [ ] Toggle Meta.
-            [ ] Toggle Footer.
-            [ ] Toggle Messages.
+            [x] Toggle Menu.
+            [x] Toggle Header.
+            [x] Toggle Meta.
+            [x] Toggle Footer.
+            [x] Toggle Messages.
         
-        - Fullsceen messages, full screen module page.
+        x Fullsceen messages, full screen module page.
 
     [ ] Reproduce all this work in other programming languages. I have heard a 
         legend of a javascript module that if you write the code out in their
@@ -102,6 +109,7 @@ directory is a boon.
 
 
 ## ChangeLog
+3.11.23-Ruckusist: Deskapp.org - is now a thing.
 3.11.23-Ruckusist v0.0.10: I have a stable enough onefile, im going to start
     a twofile. Onefile should accept no more feature upgrade, and just get
     the final bug fixes in before it migrates to a mutlifile for the 1.0 
