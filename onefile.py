@@ -333,7 +333,7 @@ class Backend(SubClass):
         # class_id = random.random()
         active_module = mod(self.app)
         dims = self._calc_main_dims()
-        panel       = self.front.make_panel(dims, active_module.name)
+        panel       = self.front.make_panel(dims, active_module.name, box=self.app.show_box, banner=self.app.show_banner)
         self.app.logic.available_panels[mod.name] = [active_module, panel]
 
     def redraw_mods(self):
