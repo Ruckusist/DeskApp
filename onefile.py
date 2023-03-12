@@ -284,7 +284,7 @@ class Backend(SubClass):
                  show_menu, show_messages, show_main):
         super().__init__(app)
         self.should_stop = False
-        self.update_timeout = .07
+        self.update_timeout = .1
         self.last_update = timer()
 
         # display toggles.

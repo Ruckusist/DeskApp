@@ -53,6 +53,7 @@ class Flames:
         self.is_running = False
         self.breaker = False
 
+
 Fire_ID = random.random()
 class Fire(Module):
     name = "FireApp"
@@ -95,9 +96,9 @@ class Fire(Module):
 
             for y, char in enumerate(line):
                 panel.win.addstr(max_h,y,str(char),
-                                 self.app.front.color_yellow if char == '@' else (
-                                    self.app.front.color_black if char in ["^", "~", "*", "|"] else (
-                                        self.app.front.color_red
+                                 self.app.front.chess_black if char == '@' else (
+                                    self.app.front.color_magenta if char in ["^", "~", "*", "|"] else (
+                                        self.app.front.chess_white
                                     )))
 
             max_h -= 1
