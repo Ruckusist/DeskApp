@@ -126,6 +126,8 @@ class Curse:
         self.key_mode = False
         self.key_buffer = ""
         self.has_resized_happened = False
+        self.h = curses.LINES
+        self.w = curses.COLS
 
     def setup_color(self):
         """Load a custom theme."""
@@ -167,18 +169,18 @@ class Curse:
                else: curses.init_pair(i+1, i, curses.COLOR_BLACK)
                self.palette.append(curses.color_pair(i))
 
-    @property
-    def w(self):
-        return self.curses.COLS
+    # @property
+    # def w(self):
+    #     return self.curses.COLS
 
-    @property
-    def h(self):
-        return self.curses.LINES
+    # @property
+    # def h(self):
+    #     return self.curses.LINES
 
     def resized(self):
-        y, x = self.screen.getmaxyx()
+        self.w, self.h = self.screen.getmaxyx()
         self.screen.clear()
-        self.curses.resizeterm(y, x)
+        self.curses.resizeterm(self.w, self.h)
         self.screen.refresh()
         curses.flushinp()
         self.has_resized_happened = True
@@ -336,14 +338,15 @@ class Backend(SubClass):
         active_module = mod(self.app)
         dims = self._calc_main_dims()
         panel       = self.front.make_panel(dims, active_module.name, box=self.app.show_box, banner=self.app.show_banner)
-        self.app.logic.available_panels[mod.name] = [active_module, panel]
+        self.app.logic.available_panels[mod.name] = [active_module, panel, dims]
 
     def redraw_mods(self):
         dims = self._calc_main_dims()
-        for mod in self.app.logic.available_panels:
-            active = self.app.logic.available_panels[mod]
-            panel = self.front.make_panel(dims, active[0].name)
+        for mod_name in self.app.logic.available_panels:
+            active = self.app.logic.available_panels[mod_name]
+            panel = self.front.make_panel(dims, active[0].name, box=self.app.show_box, banner=self.app.show_banner)
             active[1] = panel
+            active[2] = dims
 
     def draw_header(self):
         height      = 3
@@ -516,6 +519,10 @@ class Logic(SubClass):
     def current_panel(self):
         name = list(self.available_panels)[self.current]
         return self.available_panels[name][1]
+    
+    def current_dims(self):
+        name = list(self.available_panels)[self.current]
+        return self.available_panels[name][2]
 
     def string_decider(self, input_string):
         mod = self.current_mod()
@@ -565,6 +572,14 @@ class Module(SubClass):
         self.scroll = 0
         self.scroll_elements = []
         self.input_string = ""
+
+    @property
+    def h(self):
+        return self.app.logic.current_dims()[0]
+
+    @property
+    def w(self):
+        return self.app.logic.current_dims()[1]
 
     def register_module(self):
         self.app.menu.append(self)
@@ -804,3 +819,7 @@ __all__ = (
 
 if __name__ == "__main__":
     main()
+
+
+# q: are you there?
+# a: yes, i'm here.

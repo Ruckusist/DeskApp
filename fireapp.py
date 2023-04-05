@@ -4,8 +4,8 @@ from onefile import App,Module,Keys,callback
 class Flames:
     def __init__(self, module):
         self.parent = module
-        self.h = self.parent.front.h-1
-        self.w = self.parent.front.w-1
+        self.h = self.parent.h-1
+        self.w = self.parent.w-1
         self.size = self.w * self.h
         self.og_chars = [" ", ".", ":", "^", "*", "x", "s", "S", "#", "$"]
         self.chars = [" ", ",", "^", "~", "*", "|", "H", "$", "#", "@"]
@@ -22,10 +22,17 @@ class Flames:
         self.is_running = False
         self.breaker = False
 
+    def make_gameboard(self):
+        self.size = self.parent.w * self.parent.h
+        self.b = []
+        for x in range(self.size + self.parent.w * 2 + 2):
+            self.b.append(0)
+        self.gameboard = [['*' for x in range(self.parent.w)] for y in range(self.parent.h)]
+
     def one_pass(self):
         # credit : https://medium.com/sweetmeat/python-curses-based-ascii-art-fire-animation-259e9e007767
-        w = self.parent.front.w-1
-        h = self.parent.front.h-1
+        w = self.parent.w-1
+        h = self.parent.h-1
         b = self.b
         size = h*w
         c = self.chars
@@ -59,53 +66,56 @@ class Fire(Module):
     name = "FireApp"
     def __init__(self, app):
         super().__init__(app, Fire_ID)
-        self.fire = Flames(self)
+        self.fire = None  # Flames(self)
 
     def end_safely(self):
         self.fire.breaker = True
-
-    def test_page(self, panel):
-        panel.win.addstr(0,0," - FireApp - by Ruckusist", self.front.color_green)
-        max_h = self.front.h
-        max_y = self.front.w-1
-        if not self.fire:
-            panel.win.addstr(1,0,"Press Enter to Start the Fire.")
-            for i, line in enumerate(range(max_h-2)):
-                panel.win.addstr(max_h-1, 0, "".join([" "*(max_y)]))
-                max_h -= 1
-            return
-        for i, line in enumerate(range(max_h-2)):
-            panel.win.addstr(max_h-1, 0, "".join(["*"*(max_y)]))
-            max_h -= 1
+        self.fire.is_running = False
 
     def page(self, panel):
-
         panel.win.addstr(0,0," - FireApp - by Ruckusist", self.front.color_green)
-        max_h = self.front.h-1
-        max_y = self.front.w-1
-
-        if not self.fire.is_running:
+        max_h = self.h-1
+        max_y = self.w-1
+        def blank():
+            nonlocal max_h
+            nonlocal max_y
             panel.win.addstr(1,0,"Press Enter to Start the Fire.")
             for i, line in enumerate(range(max_h-2)):
-                panel.win.addstr(max_h-1, 0, "".join([" "*(max_y)]))
+                panel.win.addstr(max_h, 0, "".join([" "*(max_y)]))
                 max_h -= 1
+        if not self.fire:
+            blank()
+            return
+        if not self.fire.is_running:
+            # blank()
             return
         
         for i, line in enumerate(reversed(self.fire.gameboard)):
             line = "".join(line)
 
             for y, char in enumerate(line):
-                panel.win.addstr(max_h,y,str(char),
-                                 self.app.front.chess_black if char == '@' else (
-                                    self.app.front.color_magenta if char in ["^", "~", "*", "|"] else (
-                                        self.app.front.chess_white
-                                    )))
+                if y > max_y: break
+                try:
+                    panel.win.addstr(max_h,y,str(char),
+                                    self.app.front.chess_black if char == '@' else (
+                                        self.app.front.color_magenta if char in ["^", "~", "*", "|"] else (
+                                            self.app.front.chess_white
+                                        )))
+                except Exception as e:
+                    self.print(e)
+                    break
 
             max_h -= 1
 
     @callback(Fire_ID, Keys.ENTER)
     def on_enter(self, *args, **kwargs):
-        # # Turn off
+        # init
+        if not self.fire:
+            self.fire = Flames(self)
+            self.print("Initializing fire.")
+            self.print("Fire initialized.")
+            
+        # Turn off
         if self.fire.is_running:
             if not self.fire.breaker: 
                 self.fire.breaker=True
