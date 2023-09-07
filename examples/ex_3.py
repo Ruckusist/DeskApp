@@ -1,9 +1,9 @@
 import time, threading, random
 from timeit import default_timer as timer
-import deskapp
+import onefile
 
 classIDEx3 = random.random()
-class Ex3(deskapp.Module):
+class Ex3(onefile.Module):
     name = "Example 3"
     def __init__(self, app):
         
@@ -51,7 +51,7 @@ class Ex3(deskapp.Module):
     def end_safely(self):
         self.should_loop = False
 
-    @deskapp.callback(classIDEx3, deskapp.Keys.ENTER)
+    @onefile.callback(classIDEx3, onefile.Keys.ENTER)
     def on_enter(self, *args, **kwargs):
         if self.should_loop: self.should_loop = False
         else:
@@ -59,5 +59,5 @@ class Ex3(deskapp.Module):
             threading.Thread(target=self.loop).start()
 
 if __name__ == "__main__":
-    app = deskapp.App([Ex3])
+    app = onefile.App([Ex3])
     app.start()

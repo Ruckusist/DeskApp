@@ -1,16 +1,9 @@
-from deskapp import App
+import deskapp
 
-def main() -> None:
-    app = App(
-        title = "DeskApp",
-        header = "Welcome to Deskapp",
-        demo_mode = True,
-        splash_screen = True,
-        v_split = .4,
-        h_split = .16,
-        autostart = False,
+app = deskapp.App(
+        splash_screen=True,
+        show_footer=False,
+        show_header=False,
+        show_messages=False,
+        show_menu=True
     )
-    app.start()
-
-if __name__ == "__main__":
-    main()

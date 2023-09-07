@@ -1,8 +1,8 @@
-import deskapp
+import onefile
 import random
 
 classIDEx2 = random.random()
-class Ex2(deskapp.Module):
+class Ex2(onefile.Module):
     name = "Example 2"
     def __init__(self, app):
         super().__init__(app)
@@ -30,5 +30,5 @@ class Ex2(deskapp.Module):
         return False
 
 if __name__ == "__main__":
-    app = deskapp.App([Ex2])
+    app = onefile.App([Ex2])
     app.start()

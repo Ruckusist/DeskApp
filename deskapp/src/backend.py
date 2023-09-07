@@ -1,136 +1,227 @@
-import os
-import sys, inspect     # tracebacks
-import time, datetime   # time
-import socket, getpass  # for user information
+import time
+from timeit import default_timer as timer
+from deskapp import SubClass, Keys
 
+class Backend(SubClass):
+    def __init__(self, app, show_header, show_footer,
+                 show_menu, show_messages, show_main):
+        super().__init__(app)
+        self.should_stop = False
+        self.update_timeout = .1
+        self.last_update = timer()
 
-class OLD_Backend:
-    """This is the Main_Loop"""
-    def __init__(self, parent):
-        self.app = parent
-        self.running = True
-        self.error_log = self.app.error_log
-        
-    def logger(self, message:list, message_type:str):       
-        # for line in message:
-        #     print(f"[{message_type}]\t{line}")
-        #  TODO
-        self.error_log.append((message, message_type))
+        # display toggles.
+        #self.screen_size_changed = False
+        self.show_header    = show_header
+        self.show_footer    = show_footer
+        self.footer_buffer  = ""
+        self.show_menu      = show_menu
+        self.menu_w         = 15
+        self.show_messages  = show_messages
+        self.message_h      = 3
+        self.messages_w     = 20
+        self.show_main      = show_main
+        self.redraw_mains()
+        self.prev_panels_shown = (self.show_header, self.show_footer,
+                                  self.show_menu, self.show_messages,
+                                  self.show_main)
 
-    def get_user(self): return f"{getpass.getuser()}@{socket.gethostname()}"
+    def redraw_mains(self):
+        self.header_panel    = self.draw_header()
+        self.footer_panel    = self.draw_footer()
+        self.menu_panel      = self.draw_menu()
+        self.messages_panel  = self.draw_messages()
 
-    def get_time(self): return time.strftime("%b %d, %Y|%I:%M%p", time.localtime())
+    def setup_mods(self):
+        # first time setup of all mods.
+        for mod in self.app.menu:
+            self.setup_mod(mod)
 
-    def error_handler(self, exception, outer_err, offender, logfile="", verbose=True):
-        try:
-            outer_off = ''.join([x.strip(' ').strip('\n') for x in outer_err[4]])
-            off = ''.join([x.strip(' ').strip('\n') for x in offender[4]])
-            error_msg = []
-            error_msg.append(f"╔══| Errors® |═[{self.get_time()}]═[{self.get_user()}]═[{os.getcwd(), 'green'}]═══>>\n")
-            error_msg.append(f"║ {outer_err[1]} :: {'__main__' if outer_err[3] == '<module>' else outer_err[3]}\n")
-            error_msg.append(f"║ \t{outer_err[2]}: {outer_off}  -->\n")
-            error_msg.append(f"║ ++ {offender[1]} :: Func: {offender[3]}()\n")
-            error_msg.append(f"║ -->\t{offender[2]}: {off}\n")
-            error_msg.append(f"║ [ERR] {exception[0]}: {exception[1]}\n")
-            error_msg.append(f"╚══════════════════════════>>\n\n")
-            msg = "".join(error_msg)
-            log_print(msg)
-            # return msg
-            return msg
-        except: print("There has been Immeasureable damage. Good day.")
+    def _calc_main_dims(self):
+        height      = self.front.h
+        if self.show_header: height -= 3
+        if self.show_footer: height -= 3
+        message_split = int(height*self.app.v_split)
+        if self.show_messages: height -= message_split
+        top_left_x  = 0
+        if self.show_header: top_left_x += 3
 
-    def print_error(self, err):
-        error_mesg = err[0]
-        print(err[1])
-        for line in error_mesg:
-            print(line)
+        menu_split = int(self.front.w*self.app.h_split)
+        width       = self.front.w
+        if self.show_menu: width -= menu_split
+        top_left_y  = 0
+        if self.show_menu: top_left_y += menu_split
 
-    @property
-    def is_running(self):
-        return self.running
+        return [height, width, top_left_x, top_left_y]
 
-    async def main(self):
-        while self.is_running:
-            self.app.frontend.refresh()
-            keypress = 0
-            keypress = self.app.frontend.get_input()
-            # if keypress:
-            self.app.logic.decider(keypress)
-            self.app.logic.all_page_update()
-  
-    def start(self):
-        try:
-            # print("Starting main loop.")
-            asyncio.run(self.main())
-        except KeyboardInterrupt:
-            # so it should never end this way.
-            print("Keyboard Interrupt: Ending Safely.")
-        except Exception:
-            exception = sys.exc_info()
-            outer_err = inspect.stack()[-1]
-            offender = inspect.trace()[-1]
-            error = self.error_handler(
-                exception, 
-                outer_err, 
-                offender
-            )
-            # The error isnt working because its not printing.
-            print(error)
+    def setup_mod(self, mod):
+        # class_id = random.random()
+        active_module = mod(self.app)
+        dims = self._calc_main_dims()
+        panel       = self.front.make_panel(dims, active_module.name, box=self.app.show_box, banner=self.app.show_banner)
+        self.app.logic.available_panels[mod.name] = [active_module, panel, dims]
 
-        finally:
-            self.exit_program()
+    def redraw_mods(self):
+        dims = self._calc_main_dims()
+        for mod_name in self.app.logic.available_panels:
+            active = self.app.logic.available_panels[mod_name]
+            panel = self.front.make_panel(dims, active[0].name, box=self.app.show_box, banner=self.app.show_banner)
+            active[1] = panel
+            active[2] = dims
 
-    def exit_program(self):
-        self.app.logic.end_safely()
+    def draw_header(self):
+        height      = 3
+        width       = self.front.w
+        top_left_x  = 0
+        top_left_y  = 0
+        dims        = [height, width, top_left_x, top_left_y]
+        panel       = self.front.make_panel(dims, self.app.title)
+        return panel
 
+    def draw_footer(self):
+        height      = 3
+        width       = self.front.w
+        top_left_x  = self.front.h - 3
+        top_left_y  = 0
+        dims        = [height, width, top_left_x, top_left_y]
+        panel       = self.front.make_panel(dims, "Input")
+        if not self.front.key_mode:
+            panel.win.addstr(1,2, f"Press <tab> to enter text; <h> for help.", self.front.color_green)
+        return panel
 
-class Backend:
-    """
-    Backend.
-    This should be the main running thread. This should be the 
-    main exception catcher. 
-    
-    TODO: fork the process and hold on to it as a tray icon(w/e).
-    Then come back to the running instance, there should be a 
-    exit/shutdown difference.
-    TODO: do the error handling and make a nice text file out 
-    of it.
-    TODO: The profiler should begin to grow here but eventually 
-    move out it its own class.
-    TODO: Should modules use a thread that has already been 
-    modified by the backend?
-    """
-    def __init__(self, app):
-        self.app = app
-        self.running = True
-        self.print = app.print
+    def draw_menu(self):
+        height = self.front.h
+        if self.show_footer: height -= 3
+        if self.show_header: height -= 3
+
+        menu_split = int(self.front.w*self.app.h_split)
+        width        = menu_split
+        top_left_x   = 0
+        if self.show_header: top_left_x += 3
+        top_left_y   = 0
+
+        dims = [height, width, top_left_x, top_left_y]
+        self.menu_w = width
+        panel = self.front.make_panel(dims, "Menu")
+        return panel
+
+    def draw_messages(self):
+        height      = self.front.h
+        if self.show_header: height -= 3
+        if self.show_footer: height -= 3
+        top_left_x  = 0
+        if self.show_header: top_left_x += 3
+        if self.show_main:
+            message_split = int(height*self.app.v_split)
+            height -= message_split
+            top_left_x += height
+            height = message_split
+
+        menu_split = int(self.front.w*self.app.h_split)
+        width       = self.front.w
+        if self.show_menu: width -= menu_split
+        top_left_y  = 0
+        if self.show_menu: top_left_y += menu_split
+
+        dims = [height, width, top_left_x, top_left_y]
+        self.messages_h = dims[0]-2
+        self.messages_w = dims[1]-2
+        panel       = self.front.make_panel(dims, "Messages")
+        return panel
+
+    def update_header(self):
+        self.header_panel.win.addstr(1,3, self.app.header, self.front.color_blue)
+
+    def update_footer(self):
+        if self.front.key_mode:
+            pad = " " * ( self.front.w-6 - len(self.front.key_buffer) )
+            self.footer_panel.win.addstr(1,2, f": {self.front.key_buffer}{pad}", self.front.color_yellow)
+        else:
+            self.footer_panel.win.addstr(1,2, f"Press <tab> to enter text; <h> for help.", self.front.color_green)
+
+    def update_messages(self):
+        for idx, mesg in enumerate(self.app.data['messages'][-self.messages_h:]):
+            mesg = str(mesg)
+            if len(mesg) < self.messages_w-2:
+                dif = (self.messages_w-2) - len(mesg)
+                mesg += " "*dif
+            else:
+                mesg = mesg[:self.messages_w-2]
+            self.messages_panel.win.addstr(idx+1,1, f"{mesg}", self.front.color_cyan)
+
+    def update_menu(self):
+        for idx, mod in enumerate(self.app.menu):
+            cur = self.app.logic.current
+            color = self.front.color_select if idx==cur else self.front.color_red
+            self.menu_panel.win.addstr(idx+1, 1, f"{str(mod.name)[:self.menu_w-2]}", color)
+
+    def loop(self):
+        # HANDLE THE INPUT
+        key_mouse = self.front.get_input()
+        if key_mouse == Keys.RESIZE:
+            self.front.resized()
+        else:
+            self.app.logic.decider( key_mouse )
+
+        # HANDLE PANEL RESIZE ->
+        cur_panels_shown = (self.show_header, self.show_footer, self.show_menu, self.show_messages, self.show_main)
+        if ((cur_panels_shown != self.prev_panels_shown) or
+            self.front.has_resized_happened):
+            self.redraw_mains()
+            self.redraw_mods()
+            self.front.has_resized_happened = False
+
+        # RUN A FRAME ON EVERY MOD
+        for mod in self.app.logic.available_panels:
+            self.app.logic.available_panels[mod][0].page(
+                self.app.logic.available_panels[mod][1] )
+
+        # UPDATE THE BUILT IN STUFF.
+        self.update_messages()
+        self.update_header()
+        self.update_footer()
+        self.update_menu()
+
+        # REDRAW THE SCREEN
+        if self.show_header:   self.header_panel.panel.show()
+        else:                  self.header_panel.panel.hide()
+        if self.show_footer:   self.footer_panel.panel.show()
+        else:                  self.footer_panel.panel.hide()
+        if self.show_menu:     self.menu_panel.panel.show()
+        else:                  self.menu_panel.panel.hide()
+        if self.show_messages: self.messages_panel.panel.show()
+        else:                  self.messages_panel.panel.hide()
+        cur_panel = self.app.logic.current_panel()
+        if self.show_main:
+            cur_panel.panel.show()
+            cur_panel.panel.top()
+        else:
+            for mod in self.app.logic.available_panels:
+                self.app.logic.available_panels[mod][1].panel.hide()
+
+        self.front.curses.panel.update_panels()
+        self.front.screen.refresh()
+
+        self.prev_panels_shown = cur_panels_shown
 
     def main(self):
-        while self.running:
-            try:
-                self.app.frontend.refresh()  # just calls some curses funcs.
-                # CAPTURE KEYBOARD
-                keypress = self.app.frontend.get_input()
-                if keypress and keypress != -1 and keypress != 0:
-                    self.app.logic.decider(keypress)
+        self.setup_mods()
 
-                # Capture Mouse
-                if keypress == 0:
-                    mouseclick = self.app.frontend.get_click()  # ((x,y), btn)
-                    self.app.logic.decider(mouseclick)
-                
-                self.app.logic.all_page_update()
+        while True:
+            if self.should_stop:
+                for mod in self.app.logic.available_panels:
+                    self.app.logic.available_panels[mod][0].end_safely()
+                break
+
+            try:
+                start_loop_time = timer()
+                self.loop()
+                loop_runtime = timer() - start_loop_time
+                sleepfor = self.update_timeout - loop_runtime
+                time.sleep(sleepfor)
 
             except KeyboardInterrupt:
-                self.running = False
-            except Exception as ex:
-                self.print("ERR: Loop Error in Input. Try Again.")
-                if ex: self.print(ex)
-        
-        self.exit_program()
+                break
 
-    def start(self):
-        self.main()
-
-    def exit_program(self):
-        self.app.logic.end_safely()
+        self.front.end_safely()
+        print(f"[*] {self.app.title} Ended Safely.")

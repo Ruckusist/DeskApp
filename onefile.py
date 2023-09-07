@@ -206,22 +206,15 @@ class Curse:
             if push == Keys.ENTER:
                 self.key_mode = False
                 return self.key_buffer  # any string will trigger the end of this.
-            try:
-                key = Keys(push).name
-                if key == Keys.SPACE.name:
-                    key = " "
-                    self.key_buffer += key
-                elif key == Keys.BACKSPACE.name:
-                    self.key_buffer = "".join(list(self.keybuffer)[:-1])
-                else:
-                    key = key.lower()
-                    self.key_buffer += key
+            if push == 263:  # backspace
+                self.key_buffer = "".join(list(self.key_buffer)[:-1])
                 return 0
-
+            try:
+                key = chr(push)
+                self.key_buffer += key
+                return 0
             except:
-                if push == 33:
-                    self.key_buffer += "!"
-
+                return 0
         return push
 
     def make_panel(self, dims, label, scroll=False, box=True, banner=True):
@@ -597,9 +590,9 @@ class Module(SubClass):
 
     @callback(0, keypress=Keys.UP)
     def on_up(self, *args, **kwargs):
-        if self.scroll < len(self.scroll_elements)-1:
-            self.scroll += 1
-        else: self.scroll = 0
+        if self.scroll < 1:
+            self.scroll = len(self.scroll_elements)-1
+        else: self.scroll -= 1
 
     @callback(0, keypress=Keys.DOWN)
     def on_down(self, *args, **kwargs):
@@ -710,6 +703,9 @@ class App:
     def close(self):
         self.back.should_stop = True
 
+    def exit(self):
+        self.close()
+
     def print(self, message: str=""):
         self.data['messages'].append(message)
         if len(self.data['messages']) > 300:  # 4k screens with 12pt font have 282 lines.
@@ -801,6 +797,8 @@ class App:
         if self.app.logic.current < 0:
             self.app.logic.current = len(list(self.app.logic.available_panels))-1
 
+def random_class_id():
+    return random.random()
 
 def main():
     app = App(
@@ -819,7 +817,3 @@ __all__ = (
 
 if __name__ == "__main__":
     main()
-
-
-# q: are you there?
-# a: yes, i'm here.

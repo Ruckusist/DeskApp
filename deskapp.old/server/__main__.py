@@ -1,5 +1,5 @@
 import time
-from deskapp import Module, Keys, callback, App
+from onefile import Module, Keys, callback, App
 from deskapp.server import Server
 
 

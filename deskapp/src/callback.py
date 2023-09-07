@@ -1,12 +1,21 @@
-import functools # , random, os, pkg_resources
+"""
+Deskapp 1.0
+callback.py
+last updated: 6-10-23
+updated by: Ruckusist
+State: Good. Stable.
+"""
+
+import functools
 
 callbacks = []
-def callback(ID, keypress) -> ():
+def callback(ID, keypress):
     """
     This callback system is an original design. @Ruckusist.
     """
     global callbacks
-    def decorated_callback(func) -> ():
+    # global messages
+    def decorated_callback(func):
         @functools.wraps(func)
         def register_callback(*args, **kwargs):
             kwargs['keypress'] = keypress
@@ -17,5 +26,6 @@ def callback(ID, keypress) -> ():
                 'func': register_callback,
                 'classID': ID,
             })
-            # print(f"registered callback function {func.__name__}() at keypress: {keypress}")
+        # print(f"registered callback function {func.__name__}() at keypress: {keypress}")
+        # messages.append(f"registered callback function {func.__name__}() at keypress: {keypress} by classID: {ID}")
     return decorated_callback # Maybe it returns NOTHING... oooooohhh....

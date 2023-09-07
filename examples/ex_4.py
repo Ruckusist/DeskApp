@@ -1,10 +1,10 @@
 import time, threading, random
 from timeit import default_timer as timer
-import deskapp
+import onefile
 # from deskapp.frontend import main
 
 classID = random.random()
-class Math_Game(deskapp.Module):
+class Math_Game(onefile.Module):
     name = "Math Game"
     def __init__(self, app):
         super().__init__(app)
@@ -117,7 +117,7 @@ class Math_Game(deskapp.Module):
             x = ''
         self.context["text_input"] = str(x)
 
-    @deskapp.callback(classID, deskapp.Keys.ENTER)
+    @onefile.callback(classID, onefile.Keys.ENTER)
     def on_enter(self, *args, **kwargs):
         
         try:
@@ -135,5 +135,5 @@ class Math_Game(deskapp.Module):
         pass
 
 if __name__ == "__main__":
-    app = deskapp.App([Math_Game], demo_mode=False)
+    app = onefile.App([Math_Game], demo_mode=False)
     app.start()

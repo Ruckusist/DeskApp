@@ -43,6 +43,8 @@
 - Bitcoin Trader (obviously)
 - MP3 player / organizer
 - RoboDog
+- Deskapt: An apt package manager frontend for the terminal.
+
 
 ## TODO
 
@@ -109,6 +111,7 @@ directory is a boon.
 
 
 ## ChangeLog
+6.10.23-Ruckusist: Starting to reassamble the onefile back into a One.0 version.
 3.11.23-Ruckusist: Deskapp.org - is now a thing.
 3.11.23-Lannocc v0.0.12: Live terminal resizing now works!
 
