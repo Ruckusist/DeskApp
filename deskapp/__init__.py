@@ -11,7 +11,7 @@ class SubClass:
         self.print = app.print
         self.front = app.front
 
-from .src.test import Test
+# from .src.test import Test
 from .src.callback import callback, callbacks
 from .src.keys import Keys
 from .src.curse import Curse

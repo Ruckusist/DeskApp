@@ -1,4 +1,4 @@
-from deskapp import SubClass, Keys
+from deskapp import SubClass, Keys, callbacks, callback
 
 class Logic(SubClass):
     def __init__(self, app):

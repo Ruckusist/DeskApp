@@ -1,9 +1,9 @@
 import deskapp
 
 app = deskapp.App(
-        splash_screen=True,
+        splash_screen=False,
         show_footer=False,
-        show_header=False,
-        show_messages=False,
-        show_menu=True
+        show_header=True,
+        show_messages=True,
+        show_menu=True,
     )

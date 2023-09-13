@@ -1,5 +1,5 @@
 import onefile
-import server
+import deskapp.serv.server as server
 
 
 class_id = onefile.random_class_id()
