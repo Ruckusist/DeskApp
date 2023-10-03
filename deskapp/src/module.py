@@ -18,6 +18,18 @@ class Module(SubClass):
     @property
     def w(self):
         return self.app.logic.current_dims()[1]
+    
+    def write(self, panel, x, y, string):
+        if x >= self.h: 
+            self.print("printed too many rows (x)")
+            return
+        if y >= self.w:
+            self.print("printed off screen (y)")
+            return
+        if len(string) > self.w-y:
+            self.print("string is too long")
+            return
+        panel.win.addstr(x, y, string)
 
     def register_module(self):
         self.app.menu.append(self)

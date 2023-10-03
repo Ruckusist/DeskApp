@@ -3,8 +3,7 @@ from timeit import default_timer as timer
 from deskapp import SubClass, Keys
 
 class Backend(SubClass):
-    def __init__(self, app, show_header, show_footer,
-                 show_menu, show_messages, show_main):
+    def __init__(self, app):
         super().__init__(app)
         self.should_stop = False
         self.update_timeout = .1
@@ -12,15 +11,17 @@ class Backend(SubClass):
 
         # display toggles.
         #self.screen_size_changed = False
-        self.show_header    = show_header
-        self.show_footer    = show_footer
+        self.show_header    = app.show_header
+        self.show_footer    = app.show_footer
+        self.show_menu      = app.show_menu
+        self.show_messages  = app.show_messages
+        self.show_main      = app.show_main
+
         self.footer_buffer  = ""
-        self.show_menu      = show_menu
         self.menu_w         = 15
-        self.show_messages  = show_messages
         self.message_h      = 3
         self.messages_w     = 20
-        self.show_main      = show_main
+        
         self.redraw_mains()
         self.prev_panels_shown = (self.show_header, self.show_footer,
                                   self.show_menu, self.show_messages,
@@ -75,6 +76,8 @@ class Backend(SubClass):
         top_left_x  = 0
         top_left_y  = 0
         dims        = [height, width, top_left_x, top_left_y]
+        dims_string = ' ,'.join([str(x) for x in dims])
+        self.print(f"Header dims: {dims_string}")
         panel       = self.front.make_panel(dims, self.app.title)
         return panel
 
@@ -167,6 +170,7 @@ class Backend(SubClass):
         cur_panels_shown = (self.show_header, self.show_footer, self.show_menu, self.show_messages, self.show_main)
         if ((cur_panels_shown != self.prev_panels_shown) or
             self.front.has_resized_happened):
+            self.print("Resizing...")
             self.redraw_mains()
             self.redraw_mods()
             self.front.has_resized_happened = False

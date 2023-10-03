@@ -49,7 +49,7 @@ class Logic(SubClass):
                     self.print(f"{keypress} has no function")
                     return
                 call_for_button = list(filter(lambda callback: callback['classID'] in [mod_class.class_id,0,1], all_calls_for_button))  # [0]
-                callback = call_for_button[0]['func']  # TODO: come back for this 0, cant be right.
+                callback = call_for_button[-1]['func']  # TODO: come back for this 0, cant be right.
                 callback(mod_class, mod_panel)
 
             except Exception as e:

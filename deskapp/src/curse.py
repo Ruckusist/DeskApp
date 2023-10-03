@@ -84,7 +84,7 @@ class Curse:
     #     return self.curses.LINES
 
     def resized(self):
-        self.w, self.h = self.screen.getmaxyx()
+        self.h, self.w = self.screen.getmaxyx()
         self.screen.clear()
         self.curses.resizeterm(self.w, self.h)
         self.screen.refresh()

@@ -21,6 +21,7 @@ class Keys(enum.IntEnum):
     END   = 360
     ESC   = 27
     Q = 113
+    q = 81
     W = 119
     E = 101
     R = 114
@@ -46,6 +47,8 @@ class Keys(enum.IntEnum):
     B = 98
     N = 110
     M = 109
+
+    #
 
     # F KEYS
     F1    = 80
