@@ -10,6 +10,7 @@ class Module(SubClass):
         self.scroll = 0
         self.scroll_elements = []
         self.input_string = ""
+        self.mouse_input = None
 
     @property
     def h(self):

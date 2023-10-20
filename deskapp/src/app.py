@@ -8,7 +8,7 @@ State: Good. Stable.
 
 
 from deskapp import Curse, Logic, Backend, Module, Keys, callback, callbacks
-from deskapp.mods import About, Buttons, Fire
+from deskapp.mods import About, Buttons, Fire, Deskhunter
 
 class App:
     def __init__(self,
@@ -68,7 +68,7 @@ class App:
         self.data = {'messages': [], 'errors': []}
         self.menu = self.user_modules
         if self.show_demo:
-            self.menu.extend([About, Buttons])
+            self.menu.extend([About, Buttons, Fire])  # , Deskhunter
 
         # CORE MODULES
         self.front = Curse()

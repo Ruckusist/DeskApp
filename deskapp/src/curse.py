@@ -75,18 +75,16 @@ class Curse:
                else: curses.init_pair(i+1, i, curses.COLOR_BLACK)
                self.palette.append(curses.color_pair(i))
 
-    # @property
-    # def w(self):
-    #     return self.curses.COLS
+    def w(self):
+        return self.curses.COLS
 
-    # @property
-    # def h(self):
-    #     return self.curses.LINES
+    def h(self):
+        return self.curses.LINES
 
     def resized(self):
         self.h, self.w = self.screen.getmaxyx()
         self.screen.clear()
-        self.curses.resizeterm(self.w, self.h)
+        # self.curses.resizeterm(self.w, self.h)
         self.screen.refresh()
         curses.flushinp()
         self.has_resized_happened = True
@@ -104,9 +102,6 @@ class Curse:
         if push == curses.KEY_MOUSE:
             try:     return self.get_click()
             except:  return 0
-
-        if push == Keys.RESIZE:
-            return push
 
         if self.key_mode:
             if push == Keys.ENTER:
