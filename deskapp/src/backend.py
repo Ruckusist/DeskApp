@@ -77,7 +77,7 @@ class Backend(SubClass):
         top_left_y  = 0
         dims        = [height, width, top_left_x, top_left_y]
         dims_string = ' ,'.join([str(x) for x in dims])
-        self.print(f"Header dims: {dims_string}")
+        # self.print(f"Header dims: {dims_string}")
         panel       = self.front.make_panel(dims, self.app.title)
         return panel
 
@@ -170,7 +170,7 @@ class Backend(SubClass):
         cur_panels_shown = (self.show_header, self.show_footer, self.show_menu, self.show_messages, self.show_main)
         if ((cur_panels_shown != self.prev_panels_shown) or
             self.front.has_resized_happened):
-            self.print("Resizing...")
+            # self.print("Resizing...")
             self.redraw_mains()
             self.redraw_mods()
             self.front.has_resized_happened = False
@@ -227,5 +227,11 @@ class Backend(SubClass):
             except KeyboardInterrupt:
                 break
 
+            except Exception as e:
+                if not self.should_stop:
+                    self.print(f"Error off main loop: {e} ** carrying on **")
+                raise
+
+
         self.front.end_safely()
-        print(f"[*] {self.app.title} Ended Safely.")
+        print(f"[*] {self.app.title} Ended Safely. Thanks for choosing Ruckusist.com!")

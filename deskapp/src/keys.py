@@ -80,3 +80,5 @@ class Keys(enum.IntEnum):
 
     # SIGNALS
     RESIZE = 410
+    FOCUS = 589
+    LOST_FOCUS = 588

@@ -7,7 +7,7 @@ from distutils.core import setup
 
 setup(
     name='Deskapp',
-	version = "0.0.9",
+	version = "0.1.0",
     description='An Open Source Terminal basesd Program Manager. Write and manage your own apps in this framework.',
     long_description_content_type='text/markdown',
     long_description=open('README.md').read(),
@@ -26,7 +26,7 @@ setup(
           'Programming Language :: Python',
           'Topic :: Office/Business',
           ],
-    install_requires=['jinja2'],
+    install_requires=['rich'],
     entry_points = {
         'console_scripts': ['deskapp=deskapp.__main__:main']
     },
