@@ -1,7 +1,7 @@
 """
 Deskapp 1.0
-app.py
-last updated: 6-10-23
+curse.py
+last updated: 10-2-23
 updated by: Ruckusist
 State: Good. Stable.
 """
