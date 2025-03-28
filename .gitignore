@@ -16,11 +16,13 @@ __pycache__/
 
 # vim temp buffers:
 *.swp
-
 junk/
 
 # debug files
 log.txt
+
+# stop tracking the .old stuff
+*.old
 
 
 # WORKING PROJECTS

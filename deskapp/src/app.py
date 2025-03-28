@@ -8,7 +8,7 @@ State: Good. Stable.
 
 
 from deskapp import Curse, Logic, Backend, Module, Keys, callback, callbacks
-from deskapp.mods import About, Buttons, Fire
+from deskapp.mods import About, Buttons, Fire, Deskhunter
 
 class App:
     def __init__(self,
@@ -35,6 +35,9 @@ class App:
                  v_split:        float = 0.4,
                  h_split:        float = 0.16,
                  autostart:       bool = True,
+                 # COMMAND CONTROLS
+                 use_mouse:       bool = False,
+                 use_focus:       bool = False,
             ):
         # initialize the constructor.
         self.app = self
@@ -68,10 +71,10 @@ class App:
         self.data = {'messages': [], 'errors': []}
         self.menu = self.user_modules
         if self.show_demo:
-            self.menu.extend([About, Buttons])
+            self.menu.extend([About, Buttons, Fire])  # , Deskhunter
 
         # CORE MODULES
-        self.front = Curse()
+        self.front = Curse(use_mouse=use_mouse, use_focus=use_focus)
         if self.show_splash:
             self.front.splash_screen()
         self.logic = Logic(self)
@@ -90,12 +93,12 @@ class App:
     def exit(self):
         self.close()
 
-    def print(self, message: str=""):
+    def print(self, message: str="", **kwargs):
         # check to see if prev message same as this one.
         prev_message = self.data['messages'][-1] if len(self.data['messages']) > 0 else ""
         if type(prev_message) == type(str):
             if message == prev_message:
-                self.data["messages"][-1] = f"{message} (repating...)"
+                self.data["messages"][-1] = f"{message} (repeating...)"
             elif message == prev_message[:-14]:
                 pass
             else:
@@ -109,6 +112,7 @@ class App:
         self.print(message)
 
     def add_module(self, module: Module):
+        # !! THIS Not Working properly.
         self.back.setup_mod(module)
 
     def remove_module(self, module: str):

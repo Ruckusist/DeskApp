@@ -16,7 +16,9 @@ import time
 from deskapp import Keys
 
 class Curse:
-    def __init__(self):
+    def __init__(self, use_mouse=False, use_focus=False):
+        self.use_mouse = use_mouse
+        self.use_focus = use_focus
         self.curses = curses
         self.screen = curses.initscr()
         curses.flushinp()
@@ -75,18 +77,16 @@ class Curse:
                else: curses.init_pair(i+1, i, curses.COLOR_BLACK)
                self.palette.append(curses.color_pair(i))
 
-    # @property
-    # def w(self):
-    #     return self.curses.COLS
+    def w(self):
+        return self.curses.COLS
 
-    # @property
-    # def h(self):
-    #     return self.curses.LINES
+    def h(self):
+        return self.curses.LINES
 
     def resized(self):
         self.h, self.w = self.screen.getmaxyx()
         self.screen.clear()
-        self.curses.resizeterm(self.w, self.h)
+        # self.curses.resizeterm(self.w, self.h)
         self.screen.refresh()
         curses.flushinp()
         self.has_resized_happened = True
@@ -96,31 +96,50 @@ class Curse:
         return tuple([(x,y),btn])
 
     def get_input(self):
+        # BUILT IN CURSES INPUT
         try:     push = self.screen.getch()
         except:  return 0
 
+        # ALWAYS THROWS A 0 when nothing is happening. some sort 
+        # of a timeout. anyway, throw it out.
         if push == 0: return 0
 
+        # MOUSE EVENT
+        # THIS IS TOGGLED BY THE USE_MOUSE PARAMETER
         if push == curses.KEY_MOUSE:
-            try:     return self.get_click()
-            except:  return 0
+            try:
+                if self.use_mouse: return self.get_click()
+                else: return 0
+            except: return 0
 
-        if push == Keys.RESIZE:
-            return push
+        # GAIN AND LOSE FOCUS.
+        if push == Keys.FOCUS:
+            if self.use_focus: return push
+            return 0
+        if push == Keys.LOST_FOCUS:
+            if self.use_focus: return push
+            return 0
 
+        # KEYMODE IS A SPECIAL MODE THAT ALLOWS FOR THE INPUT OF
+        # STRINGS. THIS IS USED FOR THE COMMAND LINE.
         if self.key_mode:
+            # RETURN ON ENTER PUSH, THIS SHOULD BE COMMON.
             if push == Keys.ENTER:
                 self.key_mode = False
                 return self.key_buffer  # any string will trigger the end of this.
+            
+            # ADDED FUNCTIONALITY TO HANDLE BACKSPACE
             if push == 263:  # backspace
                 self.key_buffer = "".join(list(self.key_buffer)[:-1])
                 return 0
             try:
+                # THIS IS WORKING. IT'S A LITTLE HACKY, BUT IT WORKS.
                 key = chr(push)
                 self.key_buffer += key
                 return 0
             except:
                 return 0
+            
         return push
 
     def make_panel(self, dims, label, scroll=False, box=True, banner=True):

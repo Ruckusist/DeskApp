@@ -45,10 +45,17 @@
 - RoboDog
 - Deskapt: An apt package manager frontend for the terminal.
 
+# IDEAS FOR NEW FUNCTIONALITY
+- the string decider should be like the callback system and use
+    regular expressions to fire a definded function.
+
+- an inturrupt system/ event system -- cant seem to throw off the
+    incoming socket server without crashing it. -- looking for more
+    solutions.
 
 ## TODO
 
-    [x] Unify the printing mechinism. There are like 3 different printing 
+    [x] Unify the printing mechinism. There are like 3 differe/home/dad/code/DeskApp/examplesnt printing 
         schemes going on in here, and that needs to be fixed. like formost.
 
     [ ] Freshen up the examples folder; do a new example based on the login
@@ -109,6 +116,8 @@ directory is a boon.
         The Web Server should come with a javascript library that can connect
             to 'The Server'. and a login page, start with some ping-pong after that.
 
+## KNOWN BUGS
+11.3.23 - Starting a blank app with only demo mode turned off, will result in no mods being loaded and the decider cant load available panels.
 
 ## ChangeLog
 6.10.23-Ruckusist: Starting to reassamble the onefile back into a One.0 version.

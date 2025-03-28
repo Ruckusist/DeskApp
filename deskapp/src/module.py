@@ -1,5 +1,7 @@
 from deskapp import SubClass, Keys, callback, callbacks
 
+
+
 class Module(SubClass):
     name = "Basic Module"
     def __init__(self, app, class_id):
@@ -10,6 +12,7 @@ class Module(SubClass):
         self.scroll = 0
         self.scroll_elements = []
         self.input_string = ""
+        self.mouse_input = None
 
     @property
     def h(self):
@@ -19,7 +22,19 @@ class Module(SubClass):
     def w(self):
         return self.app.logic.current_dims()[1]
     
-    def write(self, panel, x, y, string):
+    def write(self, panel, x, y, string, color=None):
+        if color is "yellow":
+            c = self.front.color_yellow
+        elif color is "red":
+            c = self.front.color_red
+        elif color is "green":
+            c = self.front.color_green
+        elif color is "blue":
+            c = self.front.color_blue
+        elif color is "black":
+            c = self.front.color_black        
+        else: 
+            c = self.front.color_white
         if x >= self.h: 
             self.print("printed too many rows (x)")
             return
@@ -29,7 +44,15 @@ class Module(SubClass):
         if len(string) > self.w-y:
             self.print("string is too long")
             return
-        panel.win.addstr(x, y, string)
+        panel.win.addstr(x, y, string,c)
+
+    def element_scroller(self, panel):
+        # self.index = 3
+        for index, element in enumerate(self.scroll_elements):
+            color = self.front.chess_white if index is not self.scroll else self.front.color_black
+            cursor = ">> " if index is self.scroll else "   "
+            panel.win.addstr(index+self.index, 2, cursor+element, color)
+        self.index += len(self.scroll_elements)
 
     def register_module(self):
         self.app.menu.append(self)
