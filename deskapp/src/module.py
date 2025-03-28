@@ -23,15 +23,15 @@ class Module(SubClass):
         return self.app.logic.current_dims()[1]
     
     def write(self, panel, x, y, string, color=None):
-        if color is "yellow":
+        if color == "yellow":
             c = self.front.color_yellow
-        elif color is "red":
+        elif color == "red":
             c = self.front.color_red
-        elif color is "green":
+        elif color == "green":
             c = self.front.color_green
-        elif color is "blue":
+        elif color == "blue":
             c = self.front.color_blue
-        elif color is "black":
+        elif color == "black":
             c = self.front.color_black        
         else: 
             c = self.front.color_white

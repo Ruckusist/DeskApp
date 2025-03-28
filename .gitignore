@@ -17,6 +17,7 @@ __pycache__/
 # vim temp buffers:
 *.swp
 junk/
+old/
 
 # debug files
 log.txt
