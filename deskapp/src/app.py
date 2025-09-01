@@ -69,9 +69,14 @@ class App:
 
         # APP FUNCTIONALITY
         self.data = {'messages': [], 'errors': []}
-        self.menu = self.user_modules
+        self.menu = self.user_modules.copy()  # Make a copy to avoid modifying the original
         if self.show_demo:
             self.menu.extend([About, Buttons, Fire])  # , Deskhunter
+        elif not self.menu:
+            # If no modules provided and demo mode is off, add at least the About module
+            # to prevent the app from failing
+            self.menu.append(About)
+            self.print("No modules provided - adding About module to prevent failure")
 
         # CORE MODULES
         self.front = Curse(use_mouse=use_mouse, use_focus=use_focus)

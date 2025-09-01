@@ -82,14 +82,14 @@ class Module(SubClass):
         else: self.scroll = 0
 
     @callback(0, keypress=Keys.RIGHT)
-    def on_left(self, *args, **kwargs):
+    def on_right(self, *args, **kwargs):
         """rotate clickable elements"""
         if self.cur_el < len(self.elements)-1:
             self.cur_el += 1
         else: self.cur_el = 0
 
     @callback(0, keypress=Keys.LEFT)
-    def on_right(self, *args, **kwargs):
+    def on_left(self, *args, **kwargs):
         """rotate clickable elements"""
         if self.cur_el > 0:
             self.cur_el -= 1

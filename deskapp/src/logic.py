@@ -7,20 +7,27 @@ class Logic(SubClass):
         self.available_panels = {}
 
     def current_mod(self):
+        if not self.available_panels:
+            return None
         name = list(self.available_panels)[self.current]
         return self.available_panels[name][0]
 
     def current_panel(self):
+        if not self.available_panels:
+            return None
         name = list(self.available_panels)[self.current]
         return self.available_panels[name][1]
     
     def current_dims(self):
+        if not self.available_panels:
+            return (0, 0)
         name = list(self.available_panels)[self.current]
         return self.available_panels[name][2]
 
     def string_decider(self, input_string):
         mod = self.current_mod()
-        mod.string_decider(input_string)
+        if mod:
+            mod.string_decider(input_string)
 
     def decider(self, keypress):
         """Callback decider system."""
