@@ -41,9 +41,11 @@ class Engine:
             self.print(f"Loaded User Database. {len(self.users)}")
 
     def hash_password(self, password):
-        # YEAH I KNOW. THIS SHOULD HAPPEN CLIENT SIDE AND ONLY TRANSMIT
-        # A HASHED PASSWORD AND NOT PLAIN TEXT. TODO::
-        # CAUSE SOMETHING SOMETHING... windows...
+        # TODO: SECURITY IMPROVEMENT NEEDED
+        # Currently passwords are transmitted in plain text from client to server.
+        # This should be changed to hash passwords client-side before transmission
+        # for better security. Consider implementing secure password protocols
+        # like SRP (Secure Remote Password) or at minimum use TLS encryption.
         return self.hasher.hash(password)
 
     def check_password(self, username, password):

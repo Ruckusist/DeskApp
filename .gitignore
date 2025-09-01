@@ -1,30 +1,75 @@
-# Dev folders.
-build/
-dist/
-*.egg-info/
-
-# I Think im going to want the scripts folder back in.
-scripts/
-scratch/
-
-# these pycache folders are all over the place.
+# Python bytecode and cache
 __pycache__/
-*/__pycache__/
-*/*/__pycache__/
-*/*/*/__pycache__/
-*.pyc
+*.py[cod]
+*$py.class
+*.so
 
-# vim temp buffers:
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# IDE and editor files
+.vscode/
+.idea/
 *.swp
-junk/
-old/
+*.swo
+*~
 
-# debug files
+# Testing
+.coverage
+.pytest_cache/
+.tox/
+.nox/
+htmlcov/
+.coverage.*
+
+# Logs and databases
+*.log
+*.db
+*.sqlite3
 log.txt
 
-# stop tracking the .old stuff
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Project specific
+scripts/
+scratch/
+junk/
+old/
 *.old
 
+# Server data files
+users.data
 
 # WORKING PROJECTS
 robin.py
