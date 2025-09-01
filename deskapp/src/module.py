@@ -1,9 +1,15 @@
 from deskapp import SubClass, Keys, callback, callbacks
 
 
-
 class Module(SubClass):
+    """
+    Base class for creating Deskapp modules.
+    
+    Provides common functionality for handling user input, rendering,
+    and interacting with the application framework.
+    """
     name = "Basic Module"
+    
     def __init__(self, app, class_id):
         super().__init__(app)
         self.class_id = class_id
@@ -55,12 +61,23 @@ class Module(SubClass):
         self.index += len(self.scroll_elements)
 
     def register_module(self):
+        """Register this module with the application menu."""
         self.app.menu.append(self)
 
     def page(self, panel):
-        panel.win.addstr(2,2,"This is working!")
+        """
+        Render the module's content to the given panel.
+        
+        Override this method in subclasses to provide custom rendering.
+        
+        Args:
+            panel: The curses panel to render to
+        """
+        panel.win.addstr(2, 2, "This is working!")
 
-    def mouse_decider(self, mouse): pass
+    def mouse_decider(self, mouse): 
+        """Handle mouse input events. Override in subclasses as needed."""
+        pass
 
     def string_decider(self, input_string):
         self.input_string = input_string
