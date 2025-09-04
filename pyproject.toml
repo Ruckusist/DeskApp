@@ -1,0 +1,63 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "Deskapp"
+version = "0.1.0"
+description = "An Open Source terminal-based app framework and server."
+readme = "README.md"
+requires-python = ">=3.8"
+authors = [{ name = "Ruckusist", email = "ruckusist@outlook.com" }]
+classifiers = [
+  "Development Status :: 4 - Beta",
+  "Environment :: Console",
+  "Intended Audience :: Developers",
+  "Operating System :: POSIX",
+  "Programming Language :: Python",
+]
+dependencies = [
+  "passlib",
+  "boto3",
+  "tomli; python_version < \"3.11\"",
+]
+
+[project.urls]
+Homepage = "https://deskapp.org"
+
+[project.scripts]
+deskapp = "deskapp.__main__:main"
+sidedesk = "sidedesk.__main__:main"
+deskchat = "deskapp.deskchat.__main__:main"
+deskapp-aws = "deskapp.aws.__main__:main"
+
+[tool.setuptools]
+packages = { find = { include = ["deskapp*", "sidedesk*"] } }
+include-package-data = true
+
+[tool.ruff]
+line-length = 100
+# Target the minimum supported Python version
+target-version = "py38"
+# Common directories to exclude from linting/formatting
+exclude = [
+  ".venv",
+  "build",
+  "dist",
+]
+
+[tool.ruff.lint]
+# Enable a focused, useful rule set:
+# E,F = pycodestyle/pyflakes; I = isort; B = flake8-bugbear; UP = pyupgrade; S = bandit
+select = ["E", "F", "I", "B", "UP", "S"]
+# Ignore assert usage in tests and scripts (S101), which is often acceptable
+ignore = ["S101"]
+
+[tool.ruff.format]
+# Use Ruff as the formatter (via pre-commit hook)
+quote-style = "double"
+indent-style = "space"
+line-ending = "auto"
+skip-magic-trailing-comma = false
+# Format code blocks inside docstrings
+docstring-code-format = true

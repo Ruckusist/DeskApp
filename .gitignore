@@ -3,8 +3,6 @@ build/
 dist/
 *.egg-info/
 
-# I Think im going to want the scripts folder back in.
-scripts/
 scratch/
 
 # these pycache folders are all over the place.
@@ -22,9 +20,11 @@ old/
 # debug files
 log.txt
 
+# local project config (secrets)
+.config/
+
 # stop tracking the .old stuff
 *.old
-
 
 # WORKING PROJECTS
 robin.py

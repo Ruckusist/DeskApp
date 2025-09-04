@@ -158,11 +158,27 @@ class Curse:
 
     def end_safely(self):
         """Return control to the shell."""
-        curses.nocbreak()
-        self.screen.keypad(0)
-        curses.echo()
-        curses.flushinp()
-        curses.endwin()
+        try:
+            curses.nocbreak()
+        except Exception:
+            pass
+        try:
+            self.screen.keypad(0)
+        except Exception:
+            pass
+        try:
+            curses.echo()
+        except Exception:
+            pass
+        try:
+            curses.flushinp()
+        except Exception:
+            pass
+        try:
+            curses.endwin()
+        except Exception:
+            # Ignore teardown errors when curses is not active
+            pass
 
     def splash_screen(self):
         splash = self.make_panel(

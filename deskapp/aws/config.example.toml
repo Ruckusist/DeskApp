@@ -1,0 +1,17 @@
+# Deskapp AWS configuration (example)
+# Copy to: ~/.config/deskapp/aws/config.toml
+# Or set DESKAPP_AWS_CONFIG_PATH to point to a custom file.
+
+# Preferred: use an AWS profile (recommended)
+profile_name = "default"
+region_name = "us-east-1"
+
+# Target EC2 instance to manage
+instance_id = "i-0123456789abcdef0"
+
+# Optional: direct credentials (NOT recommended; prefer profile or env vars)
+# If provided, these override the profile for session creation.
+# access_key_id = "{{AWS_ACCESS_KEY_ID}}"
+# secret_access_key = "{{AWS_SECRET_ACCESS_KEY}}"
+# session_token = "{{AWS_SESSION_TOKEN}}"  # optional
+
