@@ -1,2 +1,0 @@
-we are building a terminal chatserver and chat client. the client
-app can serve as the frontend for the server.

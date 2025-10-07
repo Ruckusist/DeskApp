@@ -28,3 +28,11 @@ log.txt
 
 # WORKING PROJECTS
 robin.py
+
+# app stuff
+/venv/
+/.venv/
+users.data
+*.pid
+
+/.github/proposals/*
