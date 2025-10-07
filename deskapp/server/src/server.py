@@ -153,6 +153,39 @@ class Server:
                 self.print(f"{session.username} ! Subing to channel {message.sub}")
             self.engine.sub(session, message)
 
+        # Chat message protocol: message.chat_user + message.chat_text
+        if getattr(message, 'chat_user', None) and getattr(message, 'chat_text', None):
+            entry = {'user': message.chat_user, 'text': message.chat_text}
+            chat_log = self.engine.publish_data.setdefault('chat', [])
+            chat_log.append(entry)
+            # Trim log to avoid unbounded growth
+            if len(chat_log) > 1000:
+                del chat_log[:len(chat_log)-1000]
+            # Broadcast updated chat to all subscribers with 'chat'
+            # (Next engine.run tick will also publish, but we push immediately for responsiveness)
+            for user in [u for u in self.engine.users.values() if u.online]:
+                if 'chat' in getattr(user, 'subscriptions', []):
+                    try:
+                        user.session.send_message(sub='chat', data=chat_log)
+                    except Exception:
+                        pass
+
+        # Bot attach protocol: message.bot_add with provider/model
+        if getattr(message, 'bot_add', None):
+            bots = self.engine.publish_data.setdefault('bots', {})
+            name = getattr(message, 'bot_name', None) or getattr(message, 'model', None)
+            provider = getattr(message, 'provider', None) or 'unknown'
+            kind = getattr(message, 'kind', None) or 'standard'
+            if name:
+                bots[name] = {'provider': provider, 'kind': kind}
+                # Broadcast bots update
+                for user in [u for u in self.engine.users.values() if u.online]:
+                    if 'bots' in getattr(user, 'subscriptions', []):
+                        try:
+                            user.session.send_message(sub='bots', data=bots)
+                        except Exception:
+                            pass
+
         if message.test:
             if self.verbose:
                 self.print(f"PING PONG! @ {session.username} {session.address[0]} : {session.address[1]}")

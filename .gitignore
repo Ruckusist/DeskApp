@@ -28,3 +28,12 @@ log.txt
 
 # WORKING PROJECTS
 robin.py
+
+# virtural
+/venv/
+/.venv/
+
+# app stuff
+users.data
+*.pid
+

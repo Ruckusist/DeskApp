@@ -2,7 +2,7 @@
 import random
 from deskapp import Module, callback, Keys
 from sidedesk.server import get_status as server_status, start as server_start
-from sidedesk.client.manager import init_app as client_init, login as client_login
+from sidedesk.client.manager import init_app as client_init, login as client_login, logout as client_logout, status as client_status
 
 Login_ID = random.random()
 class Login(Module):
@@ -16,8 +16,9 @@ class Login(Module):
             client_init(self.print, self.app.data)
         except Exception:
             pass
-        self.cur_el = 0
-        self.elements = ["Username", "Server", "Log In"]
+    # Start with selector on "Log In" button for quicker entry
+        self.cur_el = 2
+        self.elements = ["Username", "Server", "Log In"]  # label updates dynamically
         self.input_string = ""
 
     def page(self, panel):
@@ -33,7 +34,11 @@ class Login(Module):
             port = 28080
         self.write(panel, self.index, 4, f"Server:   {self.server}:{port}", "white" if self.cur_el != 1 else "green")
         self.index += 1
-        self.write(panel, self.index, 4, "[ Log In ]" if self.cur_el == 2 else "Log In", "green" if self.cur_el == 2 else "white")
+        cst = client_status()
+        logged = cst.get('logged_in')
+        btn_label = "Log Out" if logged else "Log In"
+        display = f"[ {btn_label} ]" if self.cur_el == 2 else btn_label
+        self.write(panel, self.index, 4, display, "green" if self.cur_el == 2 else ("yellow" if logged else "white"))
         self.index += 2
         self.write(panel, self.index, 4, "Use UP/DOWN to move, ENTER to log in", "yellow")
 
@@ -52,6 +57,15 @@ class Login(Module):
     @callback(Login_ID, Keys.ENTER)
     def on_enter(self, *args, **kwargs):
         if self.cur_el == 2:
+            # Toggle login / logout
+            cst = client_status()
+            if cst.get('logged_in'):
+                ok, err = client_logout()
+                if ok:
+                    self.print("Logged out.")
+                else:
+                    self.print(f"Logout error: {err}")
+                return
             status = server_status()
             if not status.get('running'):
                 ok, err = server_start(sink=self.print, quiet=True, verbose=False)
@@ -59,7 +73,6 @@ class Login(Module):
                 status = server_status()
             host = self.server or status.get('host', 'localhost')
             port = status.get('port', 28080)
-            # If server entry includes :port, honor it
             if ':' in host:
                 try:
                     h, p = host.split(':', 1)

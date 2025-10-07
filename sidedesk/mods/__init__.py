@@ -7,6 +7,10 @@ from .chat import Chat
 from .log import Log
 from .settings import Settings
 from .test import Test
+from .ollama import Ollama
+from .gemini import Gemini
+from .openai import OpenAI
+from .hugface import Hugface
 
 __all__ = [
     "Login",
@@ -16,4 +20,8 @@ __all__ = [
     "Log",
     "Settings",
     "Test",
+    "Ollama",
+    "Gemini",
+    "OpenAI",
+    "Hugface",
 ]

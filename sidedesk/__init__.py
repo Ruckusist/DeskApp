@@ -8,6 +8,10 @@ from .mods import (
 	Log,
 	Settings,
 	Test,
+	Ollama,
+	Gemini,
+	OpenAI,
+	Hugface,
 )
 
 # Re-export client API for convenience if needed later
@@ -21,5 +25,9 @@ __all__ = [
 	"Log",
 	"Settings",
 	"Test",
+	"Ollama",
+	"Gemini",
+	"OpenAI",
+	"Hugface",
 	"client",
 ]

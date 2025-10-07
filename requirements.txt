@@ -1,1 +1,5 @@
 passlib
+psutil
+ollama
+google-generativeai
+google-genai

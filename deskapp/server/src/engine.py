@@ -19,7 +19,15 @@ class Engine:
         # publish data is furnished by the app.
         # I dont like that an app has to reach all the way here
         # and write directly to this. that seems wrong. TODO::
-        self.publish_data = {'users': []}
+        # Data published to subscribers. Keys map to channels.
+        # users : list[str]
+        # chat  : list[{user, text}]
+        # bots  : dict[name -> {provider, kind}]
+        self.publish_data = {
+            'users': [],
+            'chat': [],
+            'bots': {},
+        }
         self.thread = threading.Thread(target=self.run, daemon=True)
         # self.thread = multiprocessing.Process(target=self.run, args=(), daemon=True)
         self.thread.start()

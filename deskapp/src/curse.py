@@ -7,7 +7,7 @@ State: Good. Stable.
 """
 
 
-import curses  
+import curses
 import curses.panel
 from collections import namedtuple
 from itertools import cycle
@@ -62,15 +62,47 @@ class Curse:
         curses.init_pair(10, curses.COLOR_MAGENTA, curses.COLOR_WHITE)
         self.color_select = curses.color_pair(10)
 
+        # Additional accent colors for richer UIs
+        try:
+            curses.init_pair(12, curses.COLOR_BLACK, curses.COLOR_YELLOW)
+            self.color_accent = curses.color_pair(12)
+            curses.init_pair(13, curses.COLOR_WHITE, curses.COLOR_GREEN)
+            self.color_status_ok = curses.color_pair(13)
+            curses.init_pair(14, curses.COLOR_WHITE, curses.COLOR_RED)
+            self.color_status_bad = curses.color_pair(14)
+            curses.init_pair(15, curses.COLOR_WHITE, curses.COLOR_BLUE)
+            self.color_status_banner = curses.color_pair(15)
+        except Exception:
+            # Fallbacks to existing colors if init_pair fails
+            self.color_accent = self.color_yellow
+            self.color_status_ok = self.color_green
+            self.color_status_bad = self.color_red
+            self.color_status_banner = self.color_blue
+
         self.color_bold = curses.A_BOLD
         self.color_blink = curses.A_BLINK
+        try:
+            self.color_dim = curses.A_DIM
+        except Exception:
+            self.color_dim = 0
         self.color_error = self.color_bold | self.color_blink | self.color_red
 
         try:
+            reserved_pairs = {12, 13, 14, 15}
             for i in range(0, curses.COLORS):
-                if i == 0: curses.init_pair(i+1, i, curses.COLOR_WHITE)
-                else: curses.init_pair(i+1, i, curses.COLOR_BLACK)
-                self.palette.append(curses.color_pair(i))
+                pair_id = i + 1
+                if pair_id in reserved_pairs:
+                    # Keep our custom status colors intact
+                    continue
+                if i == 0:
+                    curses.init_pair(pair_id, i, curses.COLOR_WHITE)
+                else:
+                    curses.init_pair(pair_id, i, curses.COLOR_BLACK)
+                # color_pair() takes a pair number; clamp to available
+                try:
+                    self.palette.append(curses.color_pair(pair_id))
+                except Exception:
+                    pass
         except:
             for i in range(0, 7):
                if i == 0: curses.init_pair(i+1, i, curses.COLOR_WHITE)
@@ -100,7 +132,7 @@ class Curse:
         try:     push = self.screen.getch()
         except:  return 0
 
-        # ALWAYS THROWS A 0 when nothing is happening. some sort 
+        # ALWAYS THROWS A 0 when nothing is happening. some sort
         # of a timeout. anyway, throw it out.
         if push == 0: return 0
 
@@ -127,7 +159,7 @@ class Curse:
             if push == Keys.ENTER:
                 self.key_mode = False
                 return self.key_buffer  # any string will trigger the end of this.
-            
+
             # ADDED FUNCTIONALITY TO HANDLE BACKSPACE
             if push == 263:  # backspace
                 self.key_buffer = "".join(list(self.key_buffer)[:-1])
@@ -139,7 +171,7 @@ class Curse:
                 return 0
             except:
                 return 0
-            
+
         return push
 
     def make_panel(self, dims, label, scroll=False, box=True, banner=True):

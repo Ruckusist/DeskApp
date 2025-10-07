@@ -1,7 +1,9 @@
 """
 Sidedesk server controller package.
-Provides a simple manager API to start/stop/restart the DeskApp server
-from inside the Sidedesk UI.
+
+Delegates to the shared deskapp deskchat server manager so Sidedesk does not
+implement unique server behavior. This ensures all features (detach, metrics)
+live under deskapp.
 """
 
-from .manager import start, stop, restart, is_running, get_status
+from deskapp.deskchat.server import start, stop, restart, is_running, get_status
