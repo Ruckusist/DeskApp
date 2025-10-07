@@ -3,29 +3,31 @@ from deskapp.server import Session, Errors
 
 
 class ClientSession(Session):
-    def __init__(self, 
+    def __init__(self,
                  SERVER_HOST="localhost",
                  SERVER_PORT=28080,
                  BUFFER_SIZE=1024,
                  VERBOSE=True
                  ):
-        
+
         self.host = SERVER_HOST
         self.port = SERVER_PORT
         self.buffer_size = BUFFER_SIZE
+        self.BufferSize = BUFFER_SIZE  # For Session compatibility
         self.verbose = VERBOSE
         self.should_shutdown = False
         self.logged_in = False
         self.connected = False
         self.username = None
         self.print = Errors('client.log', 2, color=True, reporter=' C ')
-        
+        self.Print = self.print  # For Session compatibility
+
         # PUBSUB data
         self.data = {}
 
         # Callbacks data
         self.callbacks = []
-    
+
     def connect(self):
         if self.connected: return True
         try:
@@ -61,12 +63,12 @@ class ClientSession(Session):
         if message.get('login',0):
             if message.login == True:
                 self.logged_in = True
-                if self.verbose: 
+                if self.verbose:
                     self.print(f"Properly logged in as {self.username}")
             else:
-                if self.verbose: 
+                if self.verbose:
                     self.print(f"{self.username} !! Bad Password. Kicked out.")
-                    
+
         if message.sub:
             if not self.data.get(message.sub, False):
                 self.data[message.sub] = message.data
@@ -76,8 +78,8 @@ class ClientSession(Session):
         # TEST PROTOCOL.
         counter = 0
         if message.test:
-            if counter < 2: 
-                counter += 1    
+            if counter < 2:
+                counter += 1
                 if self.verbose: self.print(f"PING PONG!", end='\r')
                 if self.verbose: time.sleep(.5)
                 session.send_message(test=True)
@@ -111,7 +113,7 @@ class ClientSession(Session):
             self.disconnect()
         if self.verbose:
             self.print("Client Session ended Safely.")
-        
+
     @Errors.protected
     def test(self):
         self.print(f"Lets Go! Client Session Started.")
@@ -119,40 +121,40 @@ class ClientSession(Session):
         flag = False
         while True:
             time.sleep(.5)
-            if failed >= 4: 
-                if self.verbose: 
+            if failed >= 4:
+                if self.verbose:
                     self.print(f"Can't reach target server: {self.host}:{self.port}")
                 break
-            
+
             if not self.connected:
-                if self.verbose: 
+                if self.verbose:
                     self.print(f"Connecting to {self.host}:{self.port}")
                 connected = self.connect()
                 if not connected:
                     self.print(f"Failed to connect to {self.host}:{self.port}")
                     failed += 1
                 continue
-            
+
             if not self.logged_in:
-                if self.verbose: 
+                if self.verbose:
                     self.print(f"Trying to login as Agent42")
-                
+
                 self.login()
                 failed += 1
                 continue
-                
+
             if not self.logged_in:
                 if not self.connected:
-                    if self.verbose: 
+                    if self.verbose:
                         self.print(f"Login attempt {failed+1} failed, trying again in 5 secs.")
                 time.sleep(5)
                 failed += 1
                 continue
-            
+
             if not flag:
                 self.print("this is working")
                 flag = True
-            
+
         # if self.logged_in and self.connected:
         #     self.logout()
         #     self.disconnect()
@@ -164,6 +166,6 @@ def main():
         ClientSession()
         .test()
     )
-    
+
 if __name__ == "__main__":
     main()

@@ -1,136 +1,191 @@
-import pickle, os, time, threading
+# engine.py
+# last updated: 10-5-25
+# credit: Claude Sonnet 4.5 - code quality improvements
+
+import pickle
+import os
+import time
+import threading
+import bcrypt
 from deskapp.server import Session, Message, User, Errors
-from passlib.hash import bcrypt
 
 
 class Engine:
-    ## RENAME THIS TO LOGINDB
-    def __init__(self, user_type:User=User, verbose=True, sink=None, quiet=False):
-        self.verbose = verbose
-        self.print = Errors(logfile='log.txt', level=5, color=True, reporter="Eng", sink=sink, quiet=quiet)
-        if os.path.exists('users.data'):
-            self.load()
+    def __init__(
+        self,
+        UserType: User = User,
+        Verbose=True,
+        sink=None,
+        quiet=False
+    ):
+        self.Verbose = Verbose
+        self.Print = Errors(
+            logfile="log.txt",
+            level=5,
+            color=True,
+            reporter="Eng",
+            sink=sink,
+            quiet=quiet
+        )
+        if os.path.exists("users.data"):
+            self.Load()
         else:
-            self.users = {}
+            self.Users = {}
 
-        self.user_type = user_type
-        self.hasher = bcrypt.using(rounds=13, relaxed=True)  # default is 12 rounds.
+        self.UserType = UserType
 
-        # publish data is furnished by the app.
-        # I dont like that an app has to reach all the way here
-        # and write directly to this. that seems wrong. TODO::
-        self.publish_data = {'users': []}
-        self.thread = threading.Thread(target=self.run, daemon=True)
-        # self.thread = multiprocessing.Process(target=self.run, args=(), daemon=True)
-        self.thread.start()
+        # Create default admin user if no users exist
+        self.CreateDefaultAdmin()
 
-    def save(self):
-        if not self.users:
-            if self.verbose:
-                self.print("No users to save.")
+        self.PublishData = {"users": []}
+        self.Thread = threading.Thread(target=self.Run, daemon=True)
+        self.Thread.start()
+
+    def Save(self):
+        if not self.Users:
+            if self.Verbose:
+                self.Print("No users to save.")
             return
-        for user in self.users:
-            self.users[user].session = False
+        for user in self.Users:
+            self.Users[user].session = False
 
-        pickle.dump(self.users, open('users.data', 'wb'))
-        if self.verbose:
-            self.print("Saved User Database.")
+        pickle.dump(self.Users, open("users.data", "wb"))
+        if self.Verbose:
+            self.Print("Saved User Database.")
 
-    def load(self):
-        self.users = pickle.load(open('users.data', 'rb'))
-        if self.verbose:
-            self.print(f"Loaded User Database. {len(self.users)}")
+    def Load(self):
+        self.Users = pickle.load(open("users.data", "rb"))
+        if self.Verbose:
+            self.Print(f"Loaded User Database. {len(self.Users)}")
 
-    def hash_password(self, password):
-        # YEAH I KNOW. THIS SHOULD HAPPEN CLIENT SIDE AND ONLY TRANSMIT
-        # A HASHED PASSWORD AND NOT PLAIN TEXT. TODO::
-        # CAUSE SOMETHING SOMETHING... windows...
-        return self.hasher.hash(password)
+    def CreateDefaultAdmin(self):
+        """Create default admin user if no users exist."""
+        if not self.Users or len(self.Users) == 0:
+            username = "dude"
+            password = "pass"
+            hashedPassword = self.HashPassword(password)
+            adminUser = self.UserType(
+                username=username,
+                password=hashedPassword,
+                session=None
+            )
+            self.Users[username] = adminUser
+            self.Save()
+            if self.Verbose:
+                self.Print(
+                    f"Created default admin user: {username}"
+                )
 
-    def check_password(self, username, password):
-        saved_password = self.users[username].password
-        return self.hasher.verify(password, saved_password)
+    def HashPassword(self, password):
+        """Hash password using bcrypt directly."""
+        # Bcrypt has a 72 byte limit
+        passwordBytes = password.encode("utf-8")
+        if len(passwordBytes) > 72:
+            passwordBytes = passwordBytes[:72]
+        salt = bcrypt.gensalt(rounds=13)
+        return bcrypt.hashpw(passwordBytes, salt).decode("utf-8")
+
+    def CheckPassword(self, username, password):
+        """Verify password against stored hash."""
+        # Bcrypt has a 72 byte limit
+        passwordBytes = password.encode("utf-8")
+        if len(passwordBytes) > 72:
+            passwordBytes = passwordBytes[:72]
+        savedPassword = self.Users[username].password
+        savedPasswordBytes = savedPassword.encode("utf-8")
+        return bcrypt.checkpw(passwordBytes, savedPasswordBytes)
 
     @Errors.protected
-    def login(self, session:Session, message:Message) -> bool:
-        # self.print("ENGINE:Login")
+    def Login(self, session: Session, message: Message) -> bool:
         username = message.username
         password = message.password
 
-        if self.verbose:
-            self.print(f"Logging in {username}, {'*'*len(password)}")
+        if self.Verbose:
+            self.Print(f"Logging in {username}, {'*'*len(password)}")
 
-        if self.users.get(username, False):  # already logged in
-            if self.users[username].online:
+        if self.Users.get(username, False):
+            if self.Users[username].online:
                 return True
 
-        if not self.users.get(username, False):  # new user
-            hashed_password = self.hash_password(password)
-            session.username = username  # dubious again... but its working.
-            NewUser = self.user_type(
+        if not self.Users.get(username, False):
+            hashedPassword = self.HashPassword(password)
+            session.Username = username
+            newUser = self.UserType(
                 username=username,
-                password=hashed_password,
+                password=hashedPassword,
                 session=session
-                )
-            NewUser.session.user = NewUser  # assign this userdata back to the session.
+            )
+            newUser.session.user = newUser
 
-            self.users[username] = NewUser
+            self.Users[username] = newUser
             return True
 
         else:
-            if self.check_password(username, password):  # returning user
-                session.username = username  # dubious at best.
-                session.user = self.users[username]  # this feels wrong too...
-                self.users[username].session = session
-                self.users[username].subscriptions = [] # reset all previous subs?
+            if self.CheckPassword(username, password):
+                session.Username = username
+                session.user = self.Users[username]
+                self.Users[username].session = session
+                self.Users[username].subscriptions = []
                 return True
         return False
 
-    def logout(self, session):
-        username = session.username
-        if self.verbose:
-            self.print(f"engine:logout -- {username}")
-        if self.users.get(username, False):
-            self.users[username].session = False
+    def Logout(self, session):
+        username = session.Username
+        if self.Verbose:
+            self.Print(f"engine:logout -- {username}")
+        if self.Users.get(username, False):
+            self.Users[username].session = False
 
-    def callback(self, session:Session, message:Message):
-        # if self.verbose: self.print("ENGINE::Callback")
+    def Callback(self, session: Session, message: Message):
         if message.logout:
-                self.logout(session)
-                return
+            self.Logout(session)
+            return
         if message.login:
-            good_login = self.login(session, message)
-            if not good_login: session.send_message(login=False)
-            else:              session.send_message(login=True)
+            goodLogin = self.Login(session, message)
+            if not goodLogin:
+                session.SendMessage(login=False)
+            else:
+                session.SendMessage(login=True)
             return
 
-    def end_safely(self):
-        self.save()
+    def EndSafely(self):
+        self.Save()
 
-    def sub(self, session: Session, message:Message):
-        user = self.users[session.username]
+    def Sub(self, session: Session, message: Message):
+        user = self.Users[session.Username]
         if not message.remove:
             user.subscriptions.append(message.sub)
         else:
             user.subscriptions.remove(message.sub)
 
-    def run(self):
-        if self.verbose:
-            self.print(f"Starting Pub/Sub Server")
+    def Run(self):
+        if self.Verbose:
+            self.Print("Starting Pub/Sub Server")
         while True:
             try:
                 time.sleep(.15)
-                # get a list of users to talk to.
-                usersOnline = [self.users[x] for x in self.users if self.users[x].online]
-                self.publish_data['users'] = [x for x in self.users if self.users[x].online]
+                usersOnline = [
+                    self.Users[x]
+                    for x in self.Users
+                    if self.Users[x].online
+                ]
+                self.PublishData["users"] = [
+                    x for x in self.Users if self.Users[x].online
+                ]
                 for user in usersOnline:
                     for sub in user.subscriptions:
-                        if self.publish_data.get(sub,False):  # does this server have this data?
-                            user.session.send_message(sub=sub,data=self.publish_data[sub])
-                        elif sub == 'self':
-                            user.session.send_message(sub=sub,data=user.data)
+                        if self.PublishData.get(sub, False):
+                            user.session.SendMessage(
+                                sub=sub,
+                                data=self.PublishData[sub]
+                            )
+                        elif sub == "self":
+                            user.session.SendMessage(
+                                sub=sub,
+                                data=user.data
+                            )
                         else:
-                            if self.verbose:
-                                self.print("sub data does not exist.")
+                            if self.Verbose:
+                                self.Print("sub data does not exist.")
             except KeyboardInterrupt:
                 break

@@ -1,71 +1,99 @@
 # server.py
+# last updated: 10-5-25
+# credit: Claude Sonnet 4.5 - code quality improvements
 """
 This server is the main loop for grabbing incoming messages.
 It should also server as controller for the subsystems.
-It should also carry information about all the underlying
-subsystems.
+It should also carry information about all the underlying subsystems.
 """
 
-import time, socket, threading
-# import multiprocessing
+import time
+import socket
+import threading
 from deskapp.server import Session, Message, Engine, User, Errors
 
 
 class Server:
-    def __init__(self,
-                 # SERVER_HOST="0.0.0.0",
-                 SERVER_HOST="localhost",
-                 SERVER_PORT=28080,
-                 BUFFER_SIZE=1024,
-                 VERBOSE=True,
-                 USER=User,
-                 SINK=None,
-                 QUIET=False,
-                 ):
-        self.server_host = SERVER_HOST
-        self.server_port = SERVER_PORT
-        self.buffer_size = BUFFER_SIZE
-        self.verbose = VERBOSE
-        self.user_type = USER
-        self.reporter = "Srv"
-        self.print = Errors(logfile='log.txt', level=5, color=True, reporter=self.reporter, sink=SINK, quiet=QUIET)
+    def __init__(
+        self,
+        ServerHost="localhost",
+        ServerPort=28080,
+        BufferSize=1024,
+        Verbose=True,
+        UserType=User,
+        Sink=None,
+        Quiet=False,
+    ):
+        self.ServerHost = ServerHost
+        self.ServerPort = ServerPort
+        self.BufferSize = BufferSize
+        self.Verbose = Verbose
+        self.UserType = UserType
+        self.Reporter = "Srv"
+        self.Print = Errors(
+            logfile="log.txt",
+            level=5,
+            color=True,
+            reporter=self.Reporter,
+            sink=Sink,
+            quiet=Quiet
+        )
 
-        if self.verbose:
-            self.print(f"Server Coming Online @ {SERVER_HOST} : {SERVER_PORT} % {BUFFER_SIZE}")
+        self.Print = Errors(
+            logfile="log.txt",
+            level=5,
+            color=True,
+            reporter=self.Reporter,
+            sink=Sink,
+            quiet=Quiet
+        )
 
-        self.stream = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.stream.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)  # EXPERIMENTAL
-        self.stream.bind((self.server_host, self.server_port))
-        self.stream.listen()
+        if self.Verbose:
+            msg = (
+                f"Server Coming Online @ {ServerHost} : "
+                f"{ServerPort} % {BufferSize}"
+            )
+            self.Print(msg)
 
-        self.clients = []
-        self.callbacks = []
-        self.engine = Engine(self.user_type, VERBOSE, sink=SINK, quiet=QUIET)
-        self.should_shutdown = False
-        self.thread = threading.Thread(target=self.loop, daemon=True)
-        # self.thread = multiprocessing.Process(target=self.loop, args=(), daemon=True)
+        self.Stream = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.Stream.setsockopt(
+            socket.SOL_SOCKET,
+            socket.SO_REUSEADDR,
+            1
+        )
+        self.Stream.bind((self.ServerHost, self.ServerPort))
+        self.Stream.listen()
 
-    def start(self):
-        self.thread.start()
+        self.Clients = []
+        self.Callbacks = []
+        self.Engine = Engine(
+            self.UserType,
+            self.Verbose,
+            sink=Sink,
+            quiet=Quiet
+        )
+        self.ShouldShutdown = False
+        self.Thread = threading.Thread(target=self.Loop, daemon=True)
 
-    def stop(self):
-        # OMG WTF IS THIS DOING.
-        # IS IT PUNCHING ITSELF IN THE FACE?
-        self.should_shutdown = True
-        # Close the listening socket to unblock accept()
+        self.Thread = threading.Thread(target=self.Loop, daemon=True)
+
+    def Start(self):
+        self.Thread.start()
+
+    def Stop(self):
+        self.ShouldShutdown = True
         try:
-            self.stream.shutdown(socket.SHUT_RDWR)
+            self.Stream.shutdown(socket.SHUT_RDWR)
         except OSError:
             pass
         try:
-            self.stream.close()
+            self.Stream.close()
         except OSError:
             pass
-        # Best-effort nudge to wake accept on some platforms
         try:
             stream = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             stream.settimeout(0.2)
-            addr = (self.server_host, self.server_port)
+            addr = (self.ServerHost, self.ServerPort)
             stream.connect(addr)
         except OSError:
             pass
@@ -75,91 +103,98 @@ class Server:
             except Exception:
                 pass
 
-    def getSessionbyUsername(self, username):
-        for i in self.clients:
-            if i.username == username:
-                return i
+    def GetSessionByUsername(self, username):
+        for client in self.Clients:
+            if client.Username == username:
+                return client
         return False
 
-    def loop(self):
-        while not self.should_shutdown:
+    def Loop(self):
+        while not self.ShouldShutdown:
             try:
-                client_socket, address = self.stream.accept()
-                if self.should_shutdown:
+                clientSocket, address = self.Stream.accept()
+                if self.ShouldShutdown:
                     try:
-                        client_socket.close()
+                        clientSocket.close()
                     except Exception:
                         pass
                     continue
                 session = Session(
                     server=self,
-                    stream=client_socket,
+                    stream=clientSocket,
                     addr=address,
-                    verbose=self.verbose
+                    verbose=self.Verbose
                 )
-                self.clients.append(session)
+                self.Clients.append(session)
             except KeyboardInterrupt:
                 break
             except OSError:
-                # accept interrupted due to shutdown/close
-                if self.should_shutdown:
+                if self.ShouldShutdown:
                     break
                 else:
                     continue
 
-    def disconnect(self, session):
-        if session in self.clients:
-            self.clients.remove(session)
-            if self.verbose:
-                self.print(f"Client Disconnected @ {session.address[0]} : {session.address[1]}")
+    def Disconnect(self, session):
+        if session in self.Clients:
+            self.Clients.remove(session)
+            if self.Verbose:
+                msg = (
+                    f"Client Disconnected @ {session.Address[0]} : "
+                    f"{session.Address[1]}"
+                )
+                self.Print(msg)
 
-    def end_safely(self):
-        # SHUT DOWN ALL ONLINE CLIENTS
-        for session in self.clients:
-            session.should_shutdown = True
-            try: session.stream.shutdown(socket.SHUT_RDWR)
-            except OSError: pass  # [Errno 107] Transport endpoint is not connected
-            session.stream.close()
-            session.thread.join()
+    def EndSafely(self):
+        for session in self.Clients:
+            session.ShouldShutdown = True
+            try:
+                session.Stream.shutdown(socket.SHUT_RDWR)
+            except OSError:
+                pass
+            session.Stream.close()
+            session.Thread.join()
 
-        # SAVE ALL USERS IN DATABASE
-        self.engine.end_safely()
+        self.Engine.EndSafely()
 
-        # PRINT
-        if self.verbose:
-            # Avoid direct print; logger handles sink/quiet
-            self.print(f"Server Going Offline @ {self.server_host} : {self.server_port} % {self.buffer_size}")
+        if self.Verbose:
+            msg = (
+                f"Server Going Offline @ {self.ServerHost} : "
+                f"{self.ServerPort} % {self.BufferSize}"
+            )
+            self.Print(msg)
 
-    def update_publish(self, key, value):
-        self.engine.publish_data[key] = value
+    def UpdatePublish(self, key, value):
+        self.Engine.PublishData[key] = value
 
-    def register_callback(self, func):
-        self.callbacks.append(func)
+    def RegisterCallback(self, func):
+        self.Callbacks.append(func)
 
-    def remove_callback(self, func):
-        self.callbacks.remove(func)
+    def RemoveCallback(self, func):
+        self.Callbacks.remove(func)
 
-    def callback(self, session:Session, message:Message) -> None:
+    def Callback(self, session: Session, message: Message) -> None:
         if message.login:
-            self.engine.callback(session, message)
-            # return
+            self.Engine.Callback(session, message)
 
         if message.logout:
-            # ENGINE.LOGOUT HAS ALREADY BEEN CALLED.
-            self.disconnect(session)
+            self.Disconnect(session)
 
         if message.sub:
-            if self.verbose:
-                self.print(f"{session.username} ! Subing to channel {message.sub}")
-            self.engine.sub(session, message)
+            if self.Verbose:
+                msg = f"{session.Username} ! Subing to channel {message.sub}"
+                self.Print(msg)
+            self.Engine.Sub(session, message)
 
         if message.test:
-            if self.verbose:
-                self.print(f"PING PONG! @ {session.username} {session.address[0]} : {session.address[1]}")
+            if self.Verbose:
+                msg = (
+                    f"PING PONG! @ {session.Username} "
+                    f"{session.Address[0]} : {session.Address[1]}"
+                )
+                self.Print(msg)
             time.sleep(.5)
-            session.send_message(test=True)
+            session.SendMessage(test=True)
 
-        if self.callbacks:
-            for callback in self.callbacks:
+        if self.Callbacks:
+            for callback in self.Callbacks:
                 callback(session, message)
-

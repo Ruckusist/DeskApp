@@ -17,9 +17,9 @@ classifiers = [
   "Programming Language :: Python",
 ]
 dependencies = [
-  "passlib",
-  "boto3",
-  "tomli; python_version < \"3.11\"",
+    "passlib",
+    "boto3",
+    "flask"
 ]
 
 [project.urls]
