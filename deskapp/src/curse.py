@@ -7,7 +7,7 @@ State: Good. Stable.
 """
 
 
-import curses  
+import curses
 import curses.panel
 from collections import namedtuple
 from itertools import cycle
@@ -127,7 +127,7 @@ class Curse:
         try:     push = self.screen.getch()
         except:  return 0
 
-        # ALWAYS THROWS A 0 when nothing is happening. some sort 
+        # ALWAYS THROWS A 0 when nothing is happening. some sort
         # of a timeout. anyway, throw it out.
         if push == 0: return 0
 
@@ -154,7 +154,7 @@ class Curse:
             if push == Keys.ENTER:
                 self.key_mode = False
                 return self.key_buffer  # any string will trigger the end of this.
-            
+
             # ADDED FUNCTIONALITY TO HANDLE BACKSPACE
             if push == 263:  # backspace
                 self.key_buffer = "".join(list(self.key_buffer)[:-1])
@@ -166,7 +166,7 @@ class Curse:
                 return 0
             except:
                 return 0
-            
+
         return push
 
     def make_panel(self, dims, label, scroll=False, box=True, banner=True):
