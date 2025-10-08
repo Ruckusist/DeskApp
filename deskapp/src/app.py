@@ -12,32 +12,37 @@ from deskapp.mods import About, Buttons, Fire
 
 class App:
     def __init__(self,
-                 modules:         list = [],
-                 splash_screen:   bool = False,
-                 demo_mode:       bool = True,
-                 name:             str = "Deskapp",
-                 title:            str = "Deskapp",
-                 header:           str = "This is working.",
+                 modules:              list = [],
+                 splash_screen:        bool = False,
+                 demo_mode:            bool = True,
+                 name:                  str = "Deskapp",
+                 title:                 str = "Deskapp",
+                 header:                str = "This is working.",
                  # PANELS ON STARTUP
-                 show_header:     bool = True,
-                 disable_header:  bool = False,
-                 show_footer:     bool = True,
-                 disable_footer:  bool = False,
-                 show_menu:       bool = True,
-                 disable_menu:    bool = False,
-                 show_messages:   bool = True,
-                 disable_messages:bool = False,
-                 show_main:       bool = True,
-                 disable_main:    bool = False,
-                 show_box:        bool = True,
-                 show_banner:     bool = True,
+                 show_header:          bool = True,
+                 disable_header:       bool = False,
+                 show_footer:          bool = True,
+                 disable_footer:       bool = False,
+                 show_menu:            bool = True,
+                 disable_menu:         bool = False,
+                 show_messages:        bool = True,
+                 disable_messages:     bool = False,
+                 show_main:            bool = True,
+                 disable_main:         bool = False,
+                 show_right_panel:     bool = False,
+                 disable_right_panel:  bool = False,
+                 show_info_panel:      bool = True,
+                 disable_info_panel:   bool = False,
+                 show_box:             bool = True,
+                 show_banner:          bool = True,
                  # DEFAULT SPLITS
-                 v_split:        float = 0.4,
-                 h_split:        float = 0.16,
-                 autostart:       bool = True,
+                 v_split:             float = 0.4,
+                 h_split:             float = 0.16,
+                 r_split:             float = 0.16,
+                 autostart:            bool = True,
                  # COMMAND CONTROLS
-                 use_mouse:       bool = False,
-                 use_focus:       bool = False,
+                 use_mouse:            bool = False,
+                 use_focus:            bool = False,
             ):
         # initialize the constructor.
         self.app = self
@@ -51,6 +56,7 @@ class App:
         self.header = header
         self.v_split = v_split
         self.h_split = h_split
+        self.r_split = r_split
         self.should_autostart = autostart
 
         # PANELS ON STARTUP
@@ -59,6 +65,9 @@ class App:
         self.show_menu = show_menu
         self.show_messages = show_messages
         self.show_main = show_main
+        # Added by GPT5 10-07-25
+        self.show_right_panel = show_right_panel
+        self.show_info_panel = show_info_panel
 
         # DISABLE SOME PANELS
         self.disable_header = disable_header
@@ -66,6 +75,9 @@ class App:
         self.disable_menu = disable_menu
         self.disable_messages = disable_messages
         self.diable_main = disable_main
+        # Added by GPT5 10-07-25
+        self.disable_right_panel = disable_right_panel
+        self.disable_info_panel = disable_info_panel
 
         # APP FUNCTIONALITY
         self.data = {'messages': [], 'errors': []}
@@ -180,7 +192,8 @@ class App:
     def on_NUM6(self, *args, **kwargs):
         if not all([self.app.back.show_messages, self.app.back.show_menu,
                self.app.back.show_main, self.app.back.show_header,
-               self.app.back.show_footer]):
+               self.app.back.show_footer, getattr(self.app.back, 'show_right_panel', True),
+               getattr(self.app.back, 'show_info_panel', True)]):
 
             if not self.app.disable_messages:
                 self.app.back.show_messages = True
@@ -192,12 +205,40 @@ class App:
                 self.app.back.show_header = True
             if not self.app.disable_footer:
                 self.app.back.show_footer = True
+            if not self.app.disable_info_panel:
+                self.app.back.show_info_panel = True
+            if not self.app.disable_right_panel:
+                self.app.back.show_right_panel = True
         else:
             self.app.back.show_messages = False
             self.app.back.show_menu = False
             self.app.back.show_header = False
             self.app.back.show_footer = False
             self.app.back.show_main = True
+            # leave info/right off in hide-all mode
+            if hasattr(self.app.back, 'show_right_panel'):
+                self.app.back.show_right_panel = False
+            if hasattr(self.app.back, 'show_info_panel'):
+                self.app.back.show_info_panel = False
+
+    @callback(ID=1, keypress=Keys.NUM7)
+    def on_NUM7(self, *args, **kwargs):
+        if not self.app.disable_info_panel:
+            if not self.app.front.key_mode:
+                self.app.back.show_info_panel = not self.app.back.show_info_panel
+                self.print(f"pressed NUM7 ... show_info_panel = {self.app.back.show_info_panel}")
+        else:
+            self.print("Info panel disabled. Cannot toggle.")
+
+    # Added by GPT5 10-07-25 NUM8 toggle info panel
+    @callback(ID=1, keypress=Keys.NUM8)
+    def on_NUM8(self, *args, **kwargs):
+        if not self.app.disable_right_panel:
+            if not self.app.front.key_mode:
+                self.app.back.show_right_panel = not self.app.back.show_right_panel
+                self.print(f"pressed NUM8 ... show_right_panel = {self.app.back.show_right_panel}")
+        else:
+            self.print("Right panel disabled. Cannot toggle.")
 
     @callback(ID=1, keypress=Keys.Q)  # Q
     def on_Q(self, *args, **kwargs):

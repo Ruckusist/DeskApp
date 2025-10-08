@@ -24,30 +24,34 @@ class Module(SubClass):
     @property
     def w(self):
         return self.app.logic.current_dims()[1]
-    
+
     def write(self, panel, x, y, string, color=None):
-        if color == "yellow":
-            c = self.front.color_yellow
-        elif color == "red":
-            c = self.front.color_red
-        elif color == "green":
-            c = self.front.color_green
-        elif color == "blue":
-            c = self.front.color_blue
-        elif color == "black":
-            c = self.front.color_black        
-        else: 
-            c = self.front.color_white
-        if x >= self.h: 
-            self.print("printed too many rows (x)")
-            return
-        if y >= self.w:
-            self.print("printed off screen (y)")
-            return
-        if len(string) > self.w-y:
-            self.print("string is too long")
-            return
-        panel.win.addstr(x, y, string,c)
+        # Added by GPT5 10-07-25: improved write using panel dims not main dims
+        try:
+            ph, pw = panel.dims[0], panel.dims[1]
+        except Exception:
+            ph, pw = self.h, self.w
+        if color == "yellow": c = self.front.color_yellow
+        elif color == "red": c = self.front.color_red
+        elif color == "green": c = self.front.color_green
+        elif color == "blue": c = self.front.color_blue
+        elif color == "black": c = self.front.color_black
+        elif color == "cyan": c = self.front.color_cyan
+        else: c = self.front.color_white
+        if x >= ph:
+            self.print(f"write row OOB x={x} ph={ph}")
+            return False
+        if y >= pw:
+            self.print(f"write col OOB y={y} pw={pw}")
+            return False
+        max_len = pw - y
+        text = string if len(string) <= max_len else string[:max_len]
+        try:
+            panel.win.addstr(x, y, text, c)
+            return True
+        except Exception as e:
+            self.print(f"write err: {e}")
+            return False
 
     def element_scroller(self, panel):
         # self.index = 3
@@ -62,6 +66,59 @@ class Module(SubClass):
 
     def page(self, panel):
         panel.win.addstr(2,2,"This is working!")
+
+    # Added by GPT5 10-07-25
+    # Optional secondary/right side panel content.
+    def PageRight(self, panel):
+        """Optional right-side panel hook.
+        Override in modules to draw supplemental content.
+        Default: no output.
+        """
+        return None
+
+    # Added by GPT5 10-07-25
+    # Optional info panel (3-line) content provider.
+    def PageInfo(self, panel):
+        """Optional info panel hook (3 lines max).
+        Override in modules for custom info content.
+        Default: return None to trigger fallback.
+        """
+        return None
+
+    # Added by GPT5 10-07-25
+    def default_page_info(self, panel):
+        """Fallback info panel content (exactly 3 lines, spec).
+        Lines:
+          1: App / Module
+          2: Keys summary
+          3: Version / Terminal size
+        Added by GPT5 10-07-25 (reverted 3-line spec)
+        """
+        try:
+            cur_mod = self.app.logic.current_mod()
+            mod_name = getattr(cur_mod, "name", "Unknown")
+        except Exception:
+            mod_name = "Unknown"
+        try:
+            term_h = self.front.h
+            term_w = self.front.w
+        except Exception:
+            term_h = 0
+            term_w = 0
+        maxw = max(0, self.front.w - 4)
+        line1 = f"App: {getattr(self.app, 'name', 'DeskApp')} | Mod: {mod_name}"[:maxw]
+        line2 = "Keys: Tab=Input Q=Quit 1-8 Panels PgUp/Dn Switch"[:maxw]
+        line3 = f"Ver: {getattr(self.app,'version','0.1.4')} | Term: {term_w}x{term_h}"[:maxw]
+        lines = [line1, line2, line3]
+        colors = [self.front.color_cyan, self.front.color_green,
+                  self.front.color_yellow]
+        try:
+            for idx, text in enumerate(lines, start=1):
+                if idx >= panel.dims[0]:
+                    break
+                panel.win.addstr(idx, 2, text, colors[idx-1])
+        except Exception:
+            pass
 
     def mouse_decider(self, mouse): pass
 

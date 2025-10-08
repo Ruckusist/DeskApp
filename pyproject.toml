@@ -4,7 +4,18 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "Deskapp"
-version = "0.1.1"
+# bumped to 0.1.2 by GPT5 10-07-25 adding right/info panels
+# bumped to 0.1.3 by GPT5 10-07-25 reverting info panel to 3-line spec
+# bumped to 0.1.4 by GPT5 10-07-25 expanding info panel to 5 with 3 writable lines
+# bumped to 0.1.5 by GPT5 10-07-25 fix side panel module retrieval & visibility
+# bumped to 0.1.6 by GPT5 10-07-25 cleanup remove debug artifacts for side panels
+# bumped to 0.1.7 by GPT5 10-07-25 unify side panel toggle logic & remove forced redraw
+# bumped to 0.1.8 by GPT5 10-07-25 refine right panel height conditional logic
+# bumped to 0.1.9 by GPT5 10-07-25 centralize layout math & unify width logic
+# bumped to 0.1.10 by GPT5 10-07-25 add safety clamps preventing zero-size panels
+# bumped to 0.1.11 by GPT5 10-07-25 add safe_addstr clipping in curse.py
+# bumped to 0.1.12 by GPT5 10-07-25 align right panel vertical span with menu
+version = "0.1.12"
 description = "An Open Source terminal-based app framework and server."
 readme = "README.md"
 requires-python = ">=3.8"

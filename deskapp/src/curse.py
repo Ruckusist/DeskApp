@@ -37,6 +37,33 @@ class Curse:
         self.h = curses.LINES
         self.w = curses.COLS
 
+    # Added by GPT5 10-07-25 v0.1.11 safe addstr helper
+    def safe_addstr(self, win, y, x, text, color=None):
+        """Safely add a string inside window bounds.
+
+        Clips text horizontally and ignores draws outside vertical range.
+        """
+        try:
+            max_h, max_w = win.getmaxyx()
+            if y < 0 or y >= max_h:
+                return False
+            if x < 0:
+                # clip leading part
+                text = text[-x:]
+                x = 0
+            avail = max_w - x
+            if avail <= 0:
+                return False
+            if len(text) > avail:
+                text = text[:avail]
+            if color is not None:
+                win.addstr(y, x, text, color)
+            else:
+                win.addstr(y, x, text)
+            return True
+        except Exception:
+            return False
+
     def setup_color(self):
         """Load a custom theme."""
         curses.init_pair(1, curses.COLOR_WHITE, curses.COLOR_BLACK)
@@ -151,7 +178,9 @@ class Curse:
         if box:
             win.box()
         if banner:
-            win.addstr(0, 2, f"| {label} |"[:dims[1]-2])
+            # Use safe draw in case width shrinks unexpectedly
+            banner_text = f"| {label} |"
+            self.safe_addstr(win, 0, 2, banner_text[:max(0, dims[1]-2)])
 
         panel = panel_type( win, _panel, label, dims )
         return panel
@@ -193,7 +222,7 @@ class Curse:
         cycled = cycle([x for x in range(len(self.palette))])
         for x in range(self.h):
             if x == int(self.h/2):
-                splash.win.addstr(x, int(self.w/2)-7, " Deskapp.org")
+                self.safe_addstr(splash.win, x, int(self.w/2)-7, " Deskapp.org")
                 splash.win.refresh()
                 time.sleep(.95)
             else:
@@ -201,7 +230,7 @@ class Curse:
                 cycled_matrix = cycle([x for x in matrix])
                 for y in range(self.w):
                     if x == self.h-1 and y == self.w-1: break # hacks.
-                    splash.win.addstr(x, y, next(cycled_matrix), self.palette[next(cycled)] )
+                    self.safe_addstr(splash.win, x, y, next(cycled_matrix), self.palette[next(cycled)])
                     splash.win.refresh()
                     time.sleep(0.0001)
         time.sleep(2)
