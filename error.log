@@ -1,0 +1,127 @@
+╔══| Errors® |═[10/06/25 08:06PM]═[ruckus@anoobis]═[/home/ruckus/code/DeskApp]═══>>
+║ /home/ruckus/code/DeskApp/.venv/lib/python3.12/site-packages/deskapp/server/src/error.py :: p_func
+║ 	139: for outer_err, offender in zip(inspect.stack(), inspect.trace()):  -->
+║ ++ /home/ruckus/code/DeskApp/.venv/lib/python3.12/site-packages/deskapp/server/src/error.py :: Func: p_func()
+║ -->	125: return func(*args, **kwargs)
+║ [ERR] <class 'ValueError'>: password cannot be longer than 72 bytes, truncate manually if necessary (e.g. my_password[:72])
+╚══════════════════════════>>╔══| Errors® |═[10/06/25 08:06PM]═[ruckus@anoobis]═[/home/ruckus/code/DeskApp]═══>>
+║ /home/ruckus/code/DeskApp/.venv/lib/python3.12/site-packages/deskapp/server/src/engine.py :: callback
+║ 	102: good_login = self.login(session, message)  -->
+║ ++ /home/ruckus/code/DeskApp/.venv/lib/python3.12/site-packages/deskapp/server/src/engine.py :: Func: login()
+║ -->	81: if self.check_password(username, password):  # returning user
+║ [ERR] <class 'ValueError'>: password cannot be longer than 72 bytes, truncate manually if necessary (e.g. my_password[:72])
+╚══════════════════════════>>╔══| Errors® |═[10/06/25 08:06PM]═[ruckus@anoobis]═[/home/ruckus/code/DeskApp]═══>>
+║ /home/ruckus/code/DeskApp/.venv/lib/python3.12/site-packages/deskapp/server/src/server.py :: callback
+║ 	144: self.engine.callback(session, message)  -->
+║ ++ /home/ruckus/code/DeskApp/.venv/lib/python3.12/site-packages/deskapp/server/src/engine.py :: Func: check_password()
+║ -->	52: return self.hasher.verify(password, saved_password)
+║ [ERR] <class 'ValueError'>: password cannot be longer than 72 bytes, truncate manually if necessary (e.g. my_password[:72])
+╚══════════════════════════>>╔══| Errors® |═[10/06/25 08:06PM]═[ruckus@anoobis]═[/home/ruckus/code/DeskApp]═══>>
+║ /home/ruckus/code/DeskApp/.venv/lib/python3.12/site-packages/deskapp/server/src/session.py :: main_loop
+║ 	92: self.server.callback(self, message)  -->
+║ ++ /home/ruckus/code/DeskApp/.venv/lib/python3.12/site-packages/passlib/utils/handlers.py :: Func: verify()
+║ -->	792: return consteq(self._calc_checksum(secret), chk)
+║ [ERR] <class 'ValueError'>: password cannot be longer than 72 bytes, truncate manually if necessary (e.g. my_password[:72])
+╚══════════════════════════>>╔══| Errors® |═[10/06/25 08:06PM]═[ruckus@anoobis]═[/home/ruckus/code/DeskApp]═══>>
+║ /usr/lib/python3.12/threading.py :: run
+║ 	1010: self._target(*self._args, **self._kwargs)  -->
+║ ++ /home/ruckus/code/DeskApp/.venv/lib/python3.12/site-packages/passlib/handlers/bcrypt.py :: Func: _calc_checksum()
+║ -->	591: self._stub_requires_backend()
+║ [ERR] <class 'ValueError'>: password cannot be longer than 72 bytes, truncate manually if necessary (e.g. my_password[:72])
+╚══════════════════════════>>╔══| Errors® |═[10/06/25 08:06PM]═[ruckus@anoobis]═[/home/ruckus/code/DeskApp]═══>>
+║ /usr/lib/python3.12/threading.py :: _bootstrap_inner
+║ 	1073: self.run()  -->
+║ ++ /home/ruckus/code/DeskApp/.venv/lib/python3.12/site-packages/passlib/utils/handlers.py :: Func: _stub_requires_backend()
+║ -->	2254: cls.set_backend()
+║ [ERR] <class 'ValueError'>: password cannot be longer than 72 bytes, truncate manually if necessary (e.g. my_password[:72])
+╚══════════════════════════>>╔══| Errors® |═[10/06/25 08:06PM]═[ruckus@anoobis]═[/home/ruckus/code/DeskApp]═══>>
+║ /usr/lib/python3.12/threading.py :: _bootstrap
+║ 	1030: self._bootstrap_inner()  -->
+║ ++ /home/ruckus/code/DeskApp/.venv/lib/python3.12/site-packages/passlib/utils/handlers.py :: Func: set_backend()
+║ -->	2156: return owner.set_backend(name, dryrun=dryrun)
+║ [ERR] <class 'ValueError'>: password cannot be longer than 72 bytes, truncate manually if necessary (e.g. my_password[:72])
+╚══════════════════════════>>╔══| Errors® |═[10/06/25 08:07PM]═[ruckus@anoobis]═[/home/ruckus/code/DeskApp]═══>>
+║ /home/ruckus/code/DeskApp/.venv/lib/python3.12/site-packages/deskapp/server/src/error.py :: p_func
+║ 	139: for outer_err, offender in zip(inspect.stack(), inspect.trace()):  -->
+║ ++ /home/ruckus/code/DeskApp/.venv/lib/python3.12/site-packages/deskapp/server/src/error.py :: Func: p_func()
+║ -->	125: return func(*args, **kwargs)
+║ [ERR] <class 'ValueError'>: password cannot be longer than 72 bytes, truncate manually if necessary (e.g. my_password[:72])
+╚══════════════════════════>>╔══| Errors® |═[10/06/25 08:07PM]═[ruckus@anoobis]═[/home/ruckus/code/DeskApp]═══>>
+║ /home/ruckus/code/DeskApp/.venv/lib/python3.12/site-packages/deskapp/server/src/engine.py :: callback
+║ 	102: good_login = self.login(session, message)  -->
+║ ++ /home/ruckus/code/DeskApp/.venv/lib/python3.12/site-packages/deskapp/server/src/engine.py :: Func: login()
+║ -->	81: if self.check_password(username, password):  # returning user
+║ [ERR] <class 'ValueError'>: password cannot be longer than 72 bytes, truncate manually if necessary (e.g. my_password[:72])
+╚══════════════════════════>>╔══| Errors® |═[10/06/25 08:07PM]═[ruckus@anoobis]═[/home/ruckus/code/DeskApp]═══>>
+║ /home/ruckus/code/DeskApp/.venv/lib/python3.12/site-packages/deskapp/server/src/server.py :: callback
+║ 	144: self.engine.callback(session, message)  -->
+║ ++ /home/ruckus/code/DeskApp/.venv/lib/python3.12/site-packages/deskapp/server/src/engine.py :: Func: check_password()
+║ -->	52: return self.hasher.verify(password, saved_password)
+║ [ERR] <class 'ValueError'>: password cannot be longer than 72 bytes, truncate manually if necessary (e.g. my_password[:72])
+╚══════════════════════════>>╔══| Errors® |═[10/06/25 08:07PM]═[ruckus@anoobis]═[/home/ruckus/code/DeskApp]═══>>
+║ /home/ruckus/code/DeskApp/.venv/lib/python3.12/site-packages/deskapp/server/src/session.py :: main_loop
+║ 	92: self.server.callback(self, message)  -->
+║ ++ /home/ruckus/code/DeskApp/.venv/lib/python3.12/site-packages/passlib/utils/handlers.py :: Func: verify()
+║ -->	792: return consteq(self._calc_checksum(secret), chk)
+║ [ERR] <class 'ValueError'>: password cannot be longer than 72 bytes, truncate manually if necessary (e.g. my_password[:72])
+╚══════════════════════════>>╔══| Errors® |═[10/06/25 08:07PM]═[ruckus@anoobis]═[/home/ruckus/code/DeskApp]═══>>
+║ /usr/lib/python3.12/threading.py :: run
+║ 	1010: self._target(*self._args, **self._kwargs)  -->
+║ ++ /home/ruckus/code/DeskApp/.venv/lib/python3.12/site-packages/passlib/handlers/bcrypt.py :: Func: _calc_checksum()
+║ -->	591: self._stub_requires_backend()
+║ [ERR] <class 'ValueError'>: password cannot be longer than 72 bytes, truncate manually if necessary (e.g. my_password[:72])
+╚══════════════════════════>>╔══| Errors® |═[10/06/25 08:07PM]═[ruckus@anoobis]═[/home/ruckus/code/DeskApp]═══>>
+║ /usr/lib/python3.12/threading.py :: _bootstrap_inner
+║ 	1073: self.run()  -->
+║ ++ /home/ruckus/code/DeskApp/.venv/lib/python3.12/site-packages/passlib/utils/handlers.py :: Func: _stub_requires_backend()
+║ -->	2254: cls.set_backend()
+║ [ERR] <class 'ValueError'>: password cannot be longer than 72 bytes, truncate manually if necessary (e.g. my_password[:72])
+╚══════════════════════════>>╔══| Errors® |═[10/06/25 08:07PM]═[ruckus@anoobis]═[/home/ruckus/code/DeskApp]═══>>
+║ /usr/lib/python3.12/threading.py :: _bootstrap
+║ 	1030: self._bootstrap_inner()  -->
+║ ++ /home/ruckus/code/DeskApp/.venv/lib/python3.12/site-packages/passlib/utils/handlers.py :: Func: set_backend()
+║ -->	2156: return owner.set_backend(name, dryrun=dryrun)
+║ [ERR] <class 'ValueError'>: password cannot be longer than 72 bytes, truncate manually if necessary (e.g. my_password[:72])
+╚══════════════════════════>>╔══| Errors® |═[10/06/25 08:12PM]═[ruckus@anoobis]═[/home/ruckus/code/DeskApp]═══>>
+║ /home/ruckus/code/DeskApp/.venv/lib/python3.12/site-packages/deskapp/server/src/error.py :: p_func
+║ 	139: for outer_err, offender in zip(inspect.stack(), inspect.trace()):  -->
+║ ++ /home/ruckus/code/DeskApp/.venv/lib/python3.12/site-packages/deskapp/server/src/error.py :: Func: p_func()
+║ -->	125: return func(*args, **kwargs)
+║ [ERR] <class 'ValueError'>: password cannot be longer than 72 bytes, truncate manually if necessary (e.g. my_password[:72])
+╚══════════════════════════>>╔══| Errors® |═[10/06/25 08:12PM]═[ruckus@anoobis]═[/home/ruckus/code/DeskApp]═══>>
+║ /home/ruckus/code/DeskApp/.venv/lib/python3.12/site-packages/deskapp/server/src/engine.py :: callback
+║ 	102: good_login = self.login(session, message)  -->
+║ ++ /home/ruckus/code/DeskApp/.venv/lib/python3.12/site-packages/deskapp/server/src/engine.py :: Func: login()
+║ -->	81: if self.check_password(username, password):  # returning user
+║ [ERR] <class 'ValueError'>: password cannot be longer than 72 bytes, truncate manually if necessary (e.g. my_password[:72])
+╚══════════════════════════>>╔══| Errors® |═[10/06/25 08:12PM]═[ruckus@anoobis]═[/home/ruckus/code/DeskApp]═══>>
+║ /home/ruckus/code/DeskApp/.venv/lib/python3.12/site-packages/deskapp/server/src/server.py :: callback
+║ 	144: self.engine.callback(session, message)  -->
+║ ++ /home/ruckus/code/DeskApp/.venv/lib/python3.12/site-packages/deskapp/server/src/engine.py :: Func: check_password()
+║ -->	52: return self.hasher.verify(password, saved_password)
+║ [ERR] <class 'ValueError'>: password cannot be longer than 72 bytes, truncate manually if necessary (e.g. my_password[:72])
+╚══════════════════════════>>╔══| Errors® |═[10/06/25 08:12PM]═[ruckus@anoobis]═[/home/ruckus/code/DeskApp]═══>>
+║ /home/ruckus/code/DeskApp/.venv/lib/python3.12/site-packages/deskapp/server/src/session.py :: main_loop
+║ 	92: self.server.callback(self, message)  -->
+║ ++ /home/ruckus/code/DeskApp/.venv/lib/python3.12/site-packages/passlib/utils/handlers.py :: Func: verify()
+║ -->	792: return consteq(self._calc_checksum(secret), chk)
+║ [ERR] <class 'ValueError'>: password cannot be longer than 72 bytes, truncate manually if necessary (e.g. my_password[:72])
+╚══════════════════════════>>╔══| Errors® |═[10/06/25 08:12PM]═[ruckus@anoobis]═[/home/ruckus/code/DeskApp]═══>>
+║ /usr/lib/python3.12/threading.py :: run
+║ 	1010: self._target(*self._args, **self._kwargs)  -->
+║ ++ /home/ruckus/code/DeskApp/.venv/lib/python3.12/site-packages/passlib/handlers/bcrypt.py :: Func: _calc_checksum()
+║ -->	591: self._stub_requires_backend()
+║ [ERR] <class 'ValueError'>: password cannot be longer than 72 bytes, truncate manually if necessary (e.g. my_password[:72])
+╚══════════════════════════>>╔══| Errors® |═[10/06/25 08:12PM]═[ruckus@anoobis]═[/home/ruckus/code/DeskApp]═══>>
+║ /usr/lib/python3.12/threading.py :: _bootstrap_inner
+║ 	1073: self.run()  -->
+║ ++ /home/ruckus/code/DeskApp/.venv/lib/python3.12/site-packages/passlib/utils/handlers.py :: Func: _stub_requires_backend()
+║ -->	2254: cls.set_backend()
+║ [ERR] <class 'ValueError'>: password cannot be longer than 72 bytes, truncate manually if necessary (e.g. my_password[:72])
+╚══════════════════════════>>╔══| Errors® |═[10/06/25 08:12PM]═[ruckus@anoobis]═[/home/ruckus/code/DeskApp]═══>>
+║ /usr/lib/python3.12/threading.py :: _bootstrap
+║ 	1030: self._bootstrap_inner()  -->
+║ ++ /home/ruckus/code/DeskApp/.venv/lib/python3.12/site-packages/passlib/utils/handlers.py :: Func: set_backend()
+║ -->	2156: return owner.set_backend(name, dryrun=dryrun)
+║ [ERR] <class 'ValueError'>: password cannot be longer than 72 bytes, truncate manually if necessary (e.g. my_password[:72])
+╚══════════════════════════>>

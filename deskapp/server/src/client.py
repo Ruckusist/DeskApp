@@ -52,11 +52,11 @@ class ClientSession(Session):
 
     def add_sub(self, sub):
         self.data[sub] = {}
-        self.send_message(sub=sub)
+        self.SendMessage(sub=sub)
 
     def remove_sub(self, sub):
         del self.data[sub]
-        self.send_message(sub=sub, remove=True)
+        self.SendMessage(sub=sub, remove=True)
 
     def callback(self, session, message):
         # LOGIN PROTOCOL.
@@ -82,7 +82,7 @@ class ClientSession(Session):
                 counter += 1
                 if self.verbose: self.print(f"PING PONG!", end='\r')
                 if self.verbose: time.sleep(.5)
-                session.send_message(test=True)
+                session.SendMessage(test=True)
             else:
                 counter = 0
 
@@ -92,7 +92,7 @@ class ClientSession(Session):
 
     def login(self, username='Agent42', password='password'):
         self.username = username
-        self.send_message(
+        self.SendMessage(
             login=True,
             username=username,
             password=password
@@ -101,7 +101,7 @@ class ClientSession(Session):
     def logout(self):
         self.print(f"Logging out as {self.username}")
         self.logged_in = False
-        self.send_message(
+        self.SendMessage(
             login=True,
             logout=True
         )
@@ -110,7 +110,8 @@ class ClientSession(Session):
         if self.logged_in:
             self.logout()
         if self.connected:
-            self.disconnect()
+            # self.disconnect()
+            pass
         if self.verbose:
             self.print("Client Session ended Safely.")
 

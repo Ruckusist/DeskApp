@@ -1,0 +1,235 @@
+# DeskApp AI Changelog
+# Track all AI-assisted changes to the project
+# Format: Date - Author - Description
+
+## 2025-10-06 - Claude Sonnet 4.5
+### Added
+- Created comprehensive Ollama integration proposal for SideDesk
+- Proposed architecture using Model Context Protocol (MCP) for tool
+  calling
+- Proposed ChromaDB as vector database for RAG capabilities
+- Designed 6-phase implementation plan with clear checkboxes
+- Evaluated alternative approaches (LangChain, custom protocols, remote
+  vector DBs)
+- Outlined technical architecture with directory structure and data flow
+- Defined integration points with existing SideDesk modules
+- Established security considerations and performance targets
+- Created .github/proposals/OllamaIntegration_100625.proposal
+
+### Phase 1: Foundation Setup - COMPLETED
+- Added dependencies to pyproject.toml (ollama, chromadb, mcp)
+- Created sidedesk/backend/ module structure
+  - OllamaClient: Full-featured LLM client with streaming, history
+  - VectorStore: ChromaDB wrapper for semantic search
+  - MCPManager: Tool registration and execution system
+- Created sidedesk/config/ configuration system
+  - ConfigLoader: TOML-based config management
+  - ollama.example.toml: Example configuration file
+- All Phase 1 backend infrastructure complete
+
+### Phase 2 & 5: Core Integration - COMPLETED (Refactored)
+- AI module as model management interface
+  - Lists all available Ollama models
+  - Allows model selection with UP/DOWN/ENTER
+  - Shows connection status
+  - Stores shared OllamaClient in app.data
+- Integrated Ollama into Chat module (cleaner approach)
+  - Command: $ attach ollama - brings AI into chatroom
+  - Command: $ detach ollama - removes AI from chatroom
+  - Ollama responds to ALL messages when attached
+  - Refuses concurrent prompts (one at a time)
+  - Shows Ollama status in chat header
+  - Proper error handling for offline/busy states
+- Both modules use backend components properly
+
+### Files Created (Phase 1)
+- sidedesk/backend/__init__.py
+- sidedesk/backend/ollama_client.py (253 lines)
+- sidedesk/backend/vector_store.py (230 lines)
+- sidedesk/backend/mcp_manager.py (330 lines)
+- sidedesk/config/__init__.py
+- sidedesk/config/config_loader.py (210 lines)
+- sidedesk/config/ollama.example.toml
+
+### Files Modified (Phase 2 & 5)
+- sidedesk/mods/ai.py (model management - 228 lines)
+- sidedesk/mods/chat.py (Ollama attach/detach system)
+- sidedesk/mods/login.py (password field, dynamic module loading)
+- sidedesk/__main__.py (conditional module display)
+- sidedesk/mods/__init__.py (added AI export)
+- sidedesk/__init__.py (added AI export)
+- sidedesk/server/manager.py (CamelCase API fixes)
+- deskapp/server/src/client.py (SendMessage CamelCase fixes)
+- .github/proposals/OllamaIntegration_100625.proposal (updated)
+- pyproject.toml (added AI dependencies, removed passlib)
+
+### Testing
+- Successfully ran SideDesk with AI module
+- AI module displays available models
+- Chat module: $ attach ollama working
+- Ollama responds to chat messages
+- Backend initialization working correctly
+- Fixed Keys.r → Keys.R bug
+
+### Bug Fixes
+- Fixed bcrypt authentication inconsistency
+  - Identified dual bcrypt implementations: passlib vs direct bcrypt
+  - Root cause: users.data created with passlib, code using bcrypt
+  - Solution: Removed old users.data file (backed up as
+    users.data.backup)
+  - New users will be created with direct bcrypt implementation
+  - Engine.py correctly truncates passwords to 72 bytes
+  - Credit: Claude Sonnet 4.5 - bcrypt standardization
+- Removed passlib dependency (replaced with direct bcrypt)
+  - passlib only used in deprecated serv.py (not active codebase)
+  - Replaced passlib with bcrypt in pyproject.toml dependencies
+  - Eliminates bcrypt.__about__.__version__ import errors
+  - Reinstalled package in editable mode to apply changes
+  - Login flow now works without errors
+  - Credit: Claude Sonnet 4.5 - dependency cleanup
+- Fixed SideDesk login defaults
+  - Added password field to Login module UI
+  - Password field displays as asterisks (****) for security
+  - Added self.password = "pass" to __init__
+  - Updated elements list: ["Username", "Password", "Server",
+    "Log In"]
+  - Updated string_decider to handle password input (cur_el == 1)
+  - Updated on_enter to use self.password instead of hardcoded
+    'pass'
+  - Changed default username from "test" to "dude"
+  - Login now defaults to username="dude", password="pass"
+  - Matches default admin user created by server
+  - Credit: Claude Sonnet 4.5 - login password field
+- Fixed CamelCase naming inconsistencies
+  - Updated sidedesk/server/manager.py to use Server CamelCase API
+  - Fixed ServerHost, ServerPort, Verbose, Sink, Quiet parameters
+  - Fixed Start(), Stop(), EndSafely() method calls
+  - Fixed Clients attribute access
+  - Updated deskapp/server/src/client.py to use SendMessage()
+  - Changed send_message → SendMessage in login, logout,
+    add_sub, remove_sub
+  - Login test now passes successfully
+  - Credit: Claude Sonnet 4.5 - CamelCase consistency
+
+### Notes
+- Proposal follows project conventions with checkbox-driven sections
+- Maintains DeskApp's terminal-first, self-contained philosophy
+- All components selected for local-first, privacy-focused operation
+- Architecture designed to avoid breaking changes to existing modules
+- CamelCase naming convention used throughout per project standards
+- All functions kept small and focused per Unix philosophy
+- Ollama acts as chat participant when attached (server-side style)
+- Shared OllamaClient stored in app.data for cross-module access
+- AI tab manages models, Chat uses them
+- Ready for Phase 3: Vector Database Integration
+
+### Session 2 Improvements (10-06-25)
+- Server persistence as background daemon process
+  - Server now runs as independent detached process
+  - Persists across SideDesk app restarts
+  - PID file tracking at ~/.sidedesk_server.pid
+  - Process-based start/stop/restart using subprocess
+  - Survives client disconnections and reconnections
+  - Created sidedesk/server/daemon.py for process management
+  - Updated sidedesk/server/manager.py to use subprocess
+  - Credit: Claude Sonnet 4.5 - persistent server daemon
+- Enhanced Status module for server control
+  - Shows detailed server info: PID, host, port, client count
+  - Displays process status (RUNNING/STOPPED)
+  - Full start/stop/restart controls from Status module
+  - Real-time status updates via get_status()
+  - Shows error messages when operations fail
+  - Visual feedback for all server operations
+  - Client count tracks connected users dynamically
+  - Credit: Claude Sonnet 4.5 - status module enhancement
+- Auto-logout on app exit
+  - Client automatically disconnects when app closes
+  - Uses atexit to ensure cleanup
+  - Server continues running after client disconnect
+  - Credit: Claude Sonnet 4.5 - auto-logout
+- Dynamic module loading after login
+  - Only Login and Status modules visible before login
+  - Chat, Users, AI, Log, Settings, Test appear after successful
+    login
+  - Module classes added to app.menu (not instances)
+  - Each module class passed to app.back.setup_mod() for instantiation
+  - setup_mod() creates instances and registers them in available_panels
+  - Modules appear in menu immediately after login
+  - Enhanced debug logging with >>> and !!! markers
+  - Shows menu size before/after, tracks each module addition
+  - Displays available_panels before and after module addition
+  - Shows complete menu list with all module names
+  - Displays full traceback for any errors during setup
+  - Menu normalized and backend panels rebuilt after login
+  - Clears and repopulates available_panels to ensure visibility
+  - Forces menu redraw so entries show up immediately
+  - Fixed: app.menu expects classes, setup_mod instantiates them
+  - Fixed: show_messages=True so debug output is visible
+  - Credit: Claude Sonnet 4.5 - conditional module display
+- Ollama bot persistence across sessions
+  - Moved ollama_attached and last_message_count to app.data
+  - Bot stays in chat room even after user logs out
+  - State persists across module recreations
+  - Auto-detaches on connection errors
+  - Credit: Claude Sonnet 4.5 - bot state persistence
+- Server persistence on app exit
+  - Server continues running when user quits app
+  - Client disconnects cleanly without stopping server
+  - Allows reconnection without restart
+  - Credit: Claude Sonnet 4.5 - server persistence
+- Users list working properly
+  - Users module displays online users from server subscription
+  - Subscription data flows correctly from Engine to client
+  - Credit: Claude Sonnet 4.5 - users display fix
+
+## 2025-10-06 - GitHub Copilot
+### Fixed
+- Seeded SideDesk post-login modules before startup so panels appear
+  right after authentication, ensuring Login module finds data.
+- Added fallback in `sidedesk/mods/login.py` to restore default
+  module list when data is missing, guaranteeing post-login panels
+  populate even if startup configuration fails.
+- Bumped project version to 0.1.1 in packaging metadata to reflect
+  the login flow fix.
+
+## 2025-10-07 - GPT5
+### Changed
+- Renamed SideDesk AI module to Ollama for clarity and direct mapping
+  to underlying local model system.
+- Updated all imports and module exports (`sidedesk/__init__.py`,
+  `sidedesk/mods/__init__.py`, `sidedesk/__main__.py`).
+- Replaced internal ID symbol AI_ID with OllamaID.
+- Updated headers, status text, init messages to say "Ollama" instead
+  of "AI".
+- Added credits to modified files per project convention.
+
+### Verified
+- `$ attach ollama` command in Chat module still functions and now
+  reflects renamed module; chat header shows Ollama model status.
+- Model list rendering working after rename (ListModels call intact).
+
+### Notes
+- Kept original author attribution (Claude Sonnet 4.5) and appended
+  refactor credit lines.
+- No behavioral changes beyond naming/strings; safe refactor.
+
+### 2025-10-07 - GPT5 (Follow-up)
+### Added
+- `$ attach ollama model <name>` command in Chat module to attach and
+  switch to a specific Ollama model in one step.
+
+### Details
+- Parses model name after the literal prefix.
+- Validates presence in local model list; shows sample list or pull
+  guidance if missing.
+- Falls back gracefully with existing `$ attach ollama` unchanged.
+- Credits added inline in `chat.py`.
+
+### 2025-10-07 - GPT5 (Cleanup Batch)
+### Summary
+- Cleaned `ollama.py` (indent fix, wrapped lines, concise docstring).
+- Updated `chat.py` docstring with explicit command usage section.
+- Wrapped long f-string lines in model attach error path.
+- Normalized indentation (tabs → spaces) in `sidedesk/__init__.py`.
+- Ensured exports formatting consistent with style guide.
+- Added commit summary for easier VCS message drafting.

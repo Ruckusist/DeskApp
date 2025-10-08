@@ -1,5 +1,11 @@
+"""Client manager helpers.
+
+Updated 2025-10-06 by GitHub Copilot to defer subscriptions until the
+server confirms login so modules (for example Users) receive data.
+"""
+
 import threading
-from typing import Optional, Callable, Dict, Any
+from typing import Any, Callable, Dict, Optional
 
 from deskapp.server import ClientSession
 
@@ -14,6 +20,8 @@ class _ClientManager:
         self._username: Optional[str] = None
         self._app_sink: Optional[Callable[[str], None]] = None
         self._app_data: Optional[Dict[str, Any]] = None
+        self._pending_subs = set()
+        self._active_subs = set()
 
     def init_app(self, sink: Callable[[str], None], data: Dict[str, Any]):
         self._app_sink = sink
@@ -24,6 +32,13 @@ class _ClientManager:
         data.setdefault('users', [])
 
     def _on_message(self, client: ClientSession, session, message):
+        login_flag = message.get('login')
+        if login_flag is not None:
+            if login_flag:
+                self._subscribe_pending()
+            else:
+                self._last_error = "Login failed"
+
         # Update users subscription if present
         if message.get('sub') == 'users':
             try:
@@ -32,14 +47,31 @@ class _ClientManager:
             except Exception:
                 pass
 
+    def _subscribe_pending(self) -> None:
+        if not self._client:
+            return
+        for sub in list(self._pending_subs):
+            try:
+                self._client.add_sub(sub)
+                self._pending_subs.remove(sub)
+                self._active_subs.add(sub)
+            except Exception:
+                break
+
     def login(self, host: str, port: int, username: str, password: str = 'password'):
         with self._lock:
             if self._client and self._client.logged_in:
                 return True, None
             self._host, self._port = host, port
             self._username = username
+            self._pending_subs = {"users"}
+            self._active_subs.clear()
             try:
-                self._client = ClientSession(SERVER_HOST=host, SERVER_PORT=port, VERBOSE=False)
+                self._client = ClientSession(
+                    SERVER_HOST=host,
+                    SERVER_PORT=port,
+                    VERBOSE=False
+                )
                 if not self._client.connect():
                     self._last_error = f"Unable to connect to {host}:{port}"
                     self._client = None
@@ -48,8 +80,6 @@ class _ClientManager:
                 self._client.register_callback(self._on_message)
                 # Send login message
                 self._client.login(username=username, password=password)
-                # Subscribe to users list to drive Users module
-                self._client.add_sub('users')
                 return True, None
             except Exception as e:
                 self._last_error = str(e)
@@ -63,6 +93,8 @@ class _ClientManager:
             try:
                 self._client.end_safely()
                 self._client = None
+                self._pending_subs.clear()
+                self._active_subs.clear()
                 return True, None
             except Exception as e:
                 self._last_error = str(e)
@@ -86,11 +118,10 @@ class _ClientManager:
         }
 
     def add_sub(self, sub: str):
-        if self._client:
-            try:
-                self._client.add_sub(sub)
-            except Exception:
-                pass
+        with self._lock:
+            self._pending_subs.add(sub)
+            if self._client and self._client.logged_in:
+                self._subscribe_pending()
 
     def send_chat_local(self, username: str, text: str):
         # Local-only chat log entry

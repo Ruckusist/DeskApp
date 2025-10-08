@@ -1,3 +1,9 @@
+"""
+Status Module - Server Control and Monitoring
+Provides full control over persistent SideDesk server daemon.
+Shows detailed server status including PID and process state.
+Credit: Claude Sonnet 4.5 - Status module with daemon control
+"""
 import random
 from deskapp import Module, callback, Keys
 from sidedesk.server import (
@@ -29,14 +35,34 @@ class Status(Module):
         host = status.get("host")
         port = status.get("port")
         clients = status.get("clients")
-        self.write(
-            panel,
-            self.index,
-            4,
-            f"Server: {'RUNNING' if running else 'STOPPED'} @ {host}:{port} | clients: {clients}",
-            "green" if running else "red",
-        )
-        self.index += 2
+        pid = status.get("pid")
+        error = status.get("error")
+
+        # Server status line
+        status_text = f"Server: {'RUNNING' if running else 'STOPPED'}"
+        if running:
+            status_text += f" @ {host}:{port}"
+        status_color = "green" if running else "red"
+        self.write(panel, self.index, 4, status_text, status_color)
+        self.index += 1
+
+        # PID and clients info
+        if running and pid:
+            self.write(
+                panel,
+                self.index,
+                4,
+                f"PID: {pid} | Clients: {clients}",
+                "cyan"
+            )
+            self.index += 1
+
+        # Error info if present
+        if error:
+            self.write(panel, self.index, 4, f"Error: {error}", "red")
+            self.index += 1
+
+        self.index += 1
         for i, el in enumerate(self.elements):
             color = "green" if self.cur_el == i else "white"
             self.write(panel, self.index, 4, el, color)
@@ -73,6 +99,17 @@ class Status(Module):
 
     def on_open(self):
         status = get_status()
-        self.print(
-            f"[Server] {'RUNNING' if status.get('running') else 'STOPPED'} @ {status.get('host')}:{status.get('port')} clients={status.get('clients')}"
-        )
+        running = status.get("running")
+        host = status.get("host")
+        port = status.get("port")
+        clients = status.get("clients")
+        pid = status.get("pid")
+
+        msg = f"[Server] {'RUNNING' if running else 'STOPPED'}"
+        if running:
+            msg += f" @ {host}:{port}"
+            if pid:
+                msg += f" | PID={pid}"
+            msg += f" | clients={clients}"
+
+        self.print(msg)

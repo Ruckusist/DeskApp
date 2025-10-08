@@ -253,4 +253,5 @@ virtual environment: source .venv/bin/activate
     - always follow the above conventions.
     - leave the documentation to another bot. dont do it. just keep working.
     - always roll the version.
+    - DONT EVER change a file in the venv folder. wtf.
 
