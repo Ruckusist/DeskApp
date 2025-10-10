@@ -35,11 +35,18 @@ class App:
                  disable_info_panel:   bool = False,
                  show_box:             bool = True,
                  show_banner:          bool = True,
+                 # FLOATING PANEL - Added Claude Sonnet 4.5 10-09-25
+                 show_floating:        bool = False,
+                 disable_floating:     bool = False,
+                 floating_height:       int = 10,
+                 floating_width:        int = 40,
                  # DEFAULT SPLITS
                  v_split:             float = 0.4,
                  h_split:             float = 0.16,
                  r_split:             float = 0.16,
                  autostart:            bool = True,
+                 # PERFORMANCE CONTROLS - Added Claude Sonnet 4.5 10-09-25
+                 fps_cap:               int = None,
                  # COMMAND CONTROLS
                  use_mouse:            bool = False,
                  use_focus:            bool = False,
@@ -51,6 +58,10 @@ class App:
         self.show_demo = demo_mode
         self.show_box = show_box
         self.show_banner = show_banner
+        # Added by Claude Sonnet 4.5 10-09-25
+        self.show_floating = show_floating
+        self.floating_height = floating_height
+        self.floating_width = floating_width
         self.name = name
         self.title = title
         self.header = header
@@ -58,6 +69,8 @@ class App:
         self.h_split = h_split
         self.r_split = r_split
         self.should_autostart = autostart
+        # Added by Claude Sonnet 4.5 10-09-25
+        self.fps_cap = fps_cap
 
         # PANELS ON STARTUP
         self.show_header = show_header
@@ -78,6 +91,8 @@ class App:
         # Added by GPT5 10-07-25
         self.disable_right_panel = disable_right_panel
         self.disable_info_panel = disable_info_panel
+        # Added by Claude Sonnet 4.5 10-09-25
+        self.disable_floating = disable_floating
 
         # APP FUNCTIONALITY
         self.data = {'messages': [], 'errors': []}
@@ -239,6 +254,17 @@ class App:
                 self.print(f"pressed NUM8 ... show_right_panel = {self.app.back.show_right_panel}")
         else:
             self.print("Right panel disabled. Cannot toggle.")
+
+    # Added by Claude Sonnet 4.5 10-09-25 NUM9 toggle floating panel
+    @callback(ID=1, keypress=Keys.NUM9)
+    def on_NUM9(self, *args, **kwargs):
+        if not self.app.disable_floating:
+            if not self.app.front.key_mode:
+                self.app.back.show_floating = not self.app.back.show_floating
+                status = "visible" if self.app.back.show_floating else "hidden"
+                self.print(f"Floating panel {status}")
+        else:
+            self.print("Floating panel disabled. Cannot toggle.")
 
     @callback(ID=1, keypress=Keys.Q)  # Q
     def on_Q(self, *args, **kwargs):

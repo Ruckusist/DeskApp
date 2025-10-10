@@ -1,9 +1,14 @@
 """
 Deskapp 1.0
 curse.py
-last updated: 10-2-23
-updated by: Ruckusist
+last updated: 10-9-25
+updated by: Claude Sonnet 4.5
 State: Good. Stable.
+
+Added by Claude Sonnet 4.5 10-09-25:
+- Added make_floating_panel() for centered overlay panels
+- Supports absolute and centered positioning with offsets
+- Automatic boundary clamping and resize handling
 """
 
 
@@ -29,7 +34,9 @@ class Curse:
         curses.cbreak()
         self.screen.keypad(1)
         self.screen.nodelay(1)
-        curses.mousemask(curses.ALL_MOUSE_EVENTS | curses.REPORT_MOUSE_POSITION)
+        curses.mousemask(
+            curses.ALL_MOUSE_EVENTS | curses.REPORT_MOUSE_POSITION
+        )
         curses.mouseinterval(0)
         self.key_mode = False
         self.key_buffer = ""
@@ -153,7 +160,8 @@ class Curse:
             # RETURN ON ENTER PUSH, THIS SHOULD BE COMMON.
             if push == Keys.ENTER:
                 self.key_mode = False
-                return self.key_buffer  # any string will trigger the end of this.
+                # any string will trigger the end of this.
+                return self.key_buffer
 
             # ADDED FUNCTIONALITY TO HANDLE BACKSPACE
             if push == 263:  # backspace
@@ -184,6 +192,54 @@ class Curse:
 
         panel = panel_type( win, _panel, label, dims )
         return panel
+
+    def make_floating_panel(self, height, width, label="Float",
+                           center=True, x_offset=0, y_offset=0,
+                           box=True, banner=True):
+        """Create a floating/overlay panel with positioning.
+
+        Args:
+            height: Panel height
+            width: Panel width
+            label: Panel title for banner
+            center: If True, center panel and apply offsets from center
+            x_offset: Horizontal offset from position
+            y_offset: Vertical offset from position
+            box: Draw border box
+            banner: Show title banner
+
+        Returns:
+            Panel namedtuple with calculated absolute position
+
+        Added by: Claude Sonnet 4.5 10-09-25
+        """
+        # Clamp dimensions to screen bounds
+        max_h = min(height, self.h - 2)
+        max_w = min(width, self.w - 2)
+        if max_h < 3:
+            max_h = 3
+        if max_w < 10:
+            max_w = 10
+
+        # Calculate position
+        if center:
+            # Center with offsets
+            pos_y = max(0, (self.h - max_h) // 2 + y_offset)
+            pos_x = max(0, (self.w - max_w) // 2 + x_offset)
+        else:
+            # Absolute position with boundary clamp
+            pos_y = max(0, min(y_offset, self.h - max_h))
+            pos_x = max(0, min(x_offset, self.w - max_w))
+
+        # Ensure panel stays within screen bounds
+        if pos_y + max_h > self.h:
+            pos_y = self.h - max_h
+        if pos_x + max_w > self.w:
+            pos_x = self.w - max_w
+
+        dims = [max_h, max_w, pos_y, pos_x]
+        return self.make_panel(dims, label, scroll=False,
+                              box=box, banner=banner)
 
     def end_safely(self):
         """Return control to the shell."""
@@ -222,15 +278,22 @@ class Curse:
         cycled = cycle([x for x in range(len(self.palette))])
         for x in range(self.h):
             if x == int(self.h/2):
-                self.safe_addstr(splash.win, x, int(self.w/2)-7, " Deskapp.org")
+                self.safe_addstr(
+                    splash.win, x, int(self.w/2)-7, " Deskapp.org"
+                )
                 splash.win.refresh()
                 time.sleep(.95)
             else:
                 matrix = ["&", "^", "&", "$", "R", "\\", "|", "/", "-"]
                 cycled_matrix = cycle([x for x in matrix])
                 for y in range(self.w):
-                    if x == self.h-1 and y == self.w-1: break # hacks.
-                    self.safe_addstr(splash.win, x, y, next(cycled_matrix), self.palette[next(cycled)])
+                    # hacks.
+                    if x == self.h-1 and y == self.w-1:
+                        break
+                    self.safe_addstr(
+                        splash.win, x, y, next(cycled_matrix),
+                        self.palette[next(cycled)]
+                    )
                     splash.win.refresh()
                     time.sleep(0.0001)
         time.sleep(2)

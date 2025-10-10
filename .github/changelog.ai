@@ -1,5 +1,38 @@
 # DeskApp Changelog (AI Managed)
 
+## 0.1.21 - 2025-10-10
+- CRITICAL FIX: Floating panel z-order corrected.
+- Moved floating_panel.panel.top() call to END of render sequence.
+- Ensures floating panel always displays above all other panels.
+- Previously, main module panel .top() was overriding floating z-order.
+- Version bumped to 0.1.21.
+- Fix credited to Claude Sonnet 4.5 10-10-25.
+
+## 0.1.20 - 2025-10-09
+- Added floating panel overlay system for dialogs and notifications.
+- Implemented make_floating_panel() in curse.py with centering and offsets.
+- Added show_floating, floating_height, floating_width to App parameters.
+- Created draw_floating_panel() and update_floating() in Backend.
+- Floating panel renders with .top() for proper z-order above all panels.
+- Added NUM9 keyboard toggle for floating panel visibility.
+- Automatic boundary clamping and resize handling for floating position.
+- Added PageFloat(panel) optional hook to Module base class.
+- Created examples/ex_floating_test.py with menu, dialog, notification.
+- Version bumped to 0.1.20.
+- All changes credited to Claude Sonnet 4.5 10-09-25.
+
+## 0.1.19 - 2025-10-09
+- Added FPS tracking system with rolling 30-frame average calculation.
+- Implemented time.perf_counter() based frame timing in Backend.loop().
+- Added app.data['fps'] and app.data['frame_time'] metrics for module access.
+- Implemented optional fps_cap parameter in App (default: None/unlimited).
+- FPS limiter enforces target frame rate when fps_cap is set.
+- Updated default PageInfo to display FPS and frame time in info panel.
+- Created examples/ex_fps_test.py to demonstrate FPS tracking and cap.
+- FPS updates once per second with smooth rolling average display.
+- Version bumped to 0.1.19.
+- All changes credited to Claude Sonnet 4.5 10-09-25.
+
 ## 0.1.2 - 2025-10-07
 - Added optional Right Panel (toggle NUM7) rendering module PageRight(panel) when provided.
 - Added optional Info Panel (fixed 3 lines, toggle NUM8) rendering module PageInfo(panel) or fallback default.

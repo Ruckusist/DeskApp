@@ -7,6 +7,18 @@ Updated by: Claude Sonnet 4.5 10-09-25
 - Updated all make_panel calls to pass box=self.app.show_box parameter
 - Implemented clean panel refresh with win.erase() to eliminate artifacts
 - Each panel redraws box/banner after clearing for proper rendering
+- Added FPS tracking with rolling average calculation (30 frame window)
+- Implemented optional FPS cap via app.fps_cap parameter
+- FPS and frame_time metrics stored in app.data for module access
+- Added floating panel system with draw_floating_panel() and
+  update_floating()
+- Floating panel renders with .top() for proper z-order overlay
+- Automatic resize handling and boundary clamping for floating panels
+
+Updated by: Claude Sonnet 4.5 10-10-25
+- CRITICAL FIX: Moved floating panel .top() call to END of render cycle
+- Ensures floating panel is always on top of ALL other panels including
+  main module panels
 """
 
 import time
@@ -20,6 +32,12 @@ class Backend(SubClass):
         self.update_timeout = .1
         self.last_update = timer()
 
+        # FPS tracking - Added by Claude Sonnet 4.5 10-09-25
+        self.frame_count = 0
+        self.last_fps_time = time.perf_counter()
+        self.fps_history = []
+        self.fps_window_size = 30  # rolling average over 30 frames
+
         # display toggles.
         #self.screen_size_changed = False
         self.show_header    = app.show_header
@@ -30,6 +48,8 @@ class Backend(SubClass):
         # Added by GPT5 10-07-25 new panels
         self.show_right_panel = getattr(app, 'show_right_panel', False)
         self.show_info_panel  = getattr(app, 'show_info_panel', True)
+        # Added by Claude Sonnet 4.5 10-09-25 floating panel
+        self.show_floating = getattr(app, 'show_floating', False)
 
         self.footer_buffer  = ""
         self.menu_w         = 15
@@ -40,7 +60,7 @@ class Backend(SubClass):
         self.prev_panels_shown = (self.show_header, self.show_footer,
                                   self.show_menu, self.show_messages,
                                   self.show_main, self.show_right_panel,
-                                  self.show_info_panel)
+                                  self.show_info_panel, self.show_floating)
 
     # Added compute_layout by GPT5 10-07-25 v0.1.9 plan
     def compute_layout(self):
@@ -124,6 +144,8 @@ class Backend(SubClass):
         # Added by GPT5 10-07-25
         self.right_panel     = self.draw_right_panel()
         self.info_panel      = self.draw_info_panel()
+        # Added by Claude Sonnet 4.5 10-09-25
+        self.floating_panel  = self.draw_floating_panel()
 
     def setup_mods(self):
         # first time setup of all mods.
@@ -311,6 +333,28 @@ class Backend(SubClass):
         )
         return panel
 
+    # Added by Claude Sonnet 4.5 10-09-25
+    def draw_floating_panel(self):
+        """Create centered floating panel for overlays/dialogs."""
+        if not self.show_floating:
+            # minimal dummy when disabled
+            dims = [1, 1, 0, 0]
+            return self.front.make_panel(
+                dims, "Float", box=self.app.show_box
+            )
+        # Use make_floating_panel for automatic centering
+        panel = self.front.make_floating_panel(
+            height=self.app.floating_height,
+            width=self.app.floating_width,
+            label="Floating",
+            center=True,
+            x_offset=0,
+            y_offset=0,
+            box=True,
+            banner=True
+        )
+        return panel
+
     def update_header(self):
         try:
             # Clear panel to prevent artifacts
@@ -494,7 +538,52 @@ class Backend(SubClass):
         except Exception:
             pass
 
+    # Added by Claude Sonnet 4.5 10-09-25
+    def update_floating(self):
+        """Render floating panel content from module PageFloat()."""
+        if not self.show_floating:
+            return
+        try:
+            # Clear panel to prevent artifacts
+            self.floating_panel.win.erase()
+            # Redraw border and banner if needed
+            if self.app.show_box:
+                self.floating_panel.win.box()
+            if self.app.show_banner:
+                banner_text = "| Floating |"
+                maxw = max(0, self.floating_panel.dims[1] - 2)
+                self.front.safe_addstr(
+                    self.floating_panel.win, 0, 2,
+                    banner_text[:maxw]
+                )
+            # Draw module content
+            current_mod = self.app.logic.current_mod()
+            if hasattr(current_mod, 'PageFloat'):
+                current_mod.PageFloat(self.floating_panel)
+            else:
+                # Default content
+                self.front.safe_addstr(
+                    self.floating_panel.win, 1, 2,
+                    "Floating Panel (NUM9 to toggle)"
+                )
+        except Exception:
+            pass
+
     def loop(self):
+        # FPS tracking - Added by Claude Sonnet 4.5 10-09-25
+        frame_start = time.perf_counter()
+        self.frame_count += 1
+        time_since_fps = frame_start - self.last_fps_time
+        if time_since_fps >= 1.0:  # Update FPS every second
+            current_fps = self.frame_count / time_since_fps
+            self.fps_history.append(current_fps)
+            if len(self.fps_history) > self.fps_window_size:
+                self.fps_history.pop(0)
+            avg_fps = sum(self.fps_history) / len(self.fps_history)
+            self.app.data['fps'] = round(avg_fps, 1)
+            self.frame_count = 0
+            self.last_fps_time = frame_start
+
         # HANDLE THE INPUT
         key_mouse = self.front.get_input()
         if key_mouse == Keys.RESIZE:
@@ -503,9 +592,10 @@ class Backend(SubClass):
             self.app.logic.decider( key_mouse )
 
         # HANDLE PANEL RESIZE ->
-        cur_panels_shown = (self.show_header, self.show_footer, self.show_menu,
-                             self.show_messages, self.show_main,
-                             self.show_right_panel, self.show_info_panel)
+        cur_panels_shown = (self.show_header, self.show_footer,
+                           self.show_menu, self.show_messages,
+                           self.show_main, self.show_right_panel,
+                           self.show_info_panel, self.show_floating)
         if ((cur_panels_shown != self.prev_panels_shown) or
             self.front.has_resized_happened):
             # self.print("Resizing...")
@@ -540,6 +630,7 @@ class Backend(SubClass):
         self.update_menu()
         self.update_right_panel()
         self.update_info_panel()
+        self.update_floating()  # Added by Claude Sonnet 4.5 10-09-25
 
         # REDRAW THE SCREEN
         if self.show_header:   self.header_panel.panel.show()
@@ -570,10 +661,23 @@ class Backend(SubClass):
             for mod in self.app.logic.available_panels:
                 self.app.logic.available_panels[mod][1].panel.hide()
 
+        # Floating panel MUST be last to stay on top
+        # Updated by Claude Sonnet 4.5 10-10-25
+        if self.show_floating:
+            self.floating_panel.panel.show()
+            self.floating_panel.panel.top()
+        else:
+            self.floating_panel.panel.hide()
+
         self.front.curses.panel.update_panels()
         self.front.screen.refresh()
 
         self.prev_panels_shown = cur_panels_shown
+
+        # Calculate frame time - Added by Claude Sonnet 4.5 10-09-25
+        frame_end = time.perf_counter()
+        frame_time = (frame_end - frame_start) * 1000  # ms
+        self.app.data['frame_time'] = round(frame_time, 2)
 
     def main(self):
         self.setup_mods()
@@ -588,9 +692,15 @@ class Backend(SubClass):
                 start_loop_time = timer()
                 self.loop()
                 loop_runtime = timer() - start_loop_time
-                sleepfor = self.update_timeout - loop_runtime
-                if sleepfor < 0:
-                    sleepfor = 0
+
+                # FPS cap logic - Added by Claude Sonnet 4.5 10-09-25
+                if self.app.fps_cap and self.app.fps_cap > 0:
+                    target_frame_time = 1.0 / self.app.fps_cap
+                    sleepfor = max(0, target_frame_time - loop_runtime)
+                else:
+                    sleepfor = self.update_timeout - loop_runtime
+                    if sleepfor < 0:
+                        sleepfor = 0
                 time.sleep(sleepfor)
 
             except KeyboardInterrupt:

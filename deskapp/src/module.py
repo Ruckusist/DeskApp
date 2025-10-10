@@ -1,3 +1,12 @@
+"""
+DeskApp Module Base Class
+Provides hooks for page rendering, input handling, and utilities.
+
+Updated by Claude Sonnet 4.5 10-09-25:
+- Added PageFloat(panel) optional hook for floating panel content
+- Modules can now override PageFloat() to render overlay dialogs
+"""
+
 import subprocess
 from deskapp import SubClass, Keys, callback, callbacks
 
@@ -67,7 +76,7 @@ class Module(SubClass):
 
     #TODO: Page needs a clear function. it needs to clear the panel before writing to it.
     #TODO: but maybe not always?
-    
+
     def page(self, panel):
         self.write(panel, 2, 2, "This is working!")
 
@@ -89,14 +98,24 @@ class Module(SubClass):
         """
         return None
 
+    # Added by Claude Sonnet 4.5 10-09-25
+    # Optional floating panel content provider.
+    def PageFloat(self, panel):
+        """Optional floating panel hook for overlays/dialogs.
+        Override in modules for custom floating content.
+        Default: no output (fallback message shown).
+        """
+        return None
+
     # Added by GPT5 10-07-25
     def default_page_info(self, panel):
         """Fallback info panel content (exactly 3 lines, spec).
         Lines:
           1: App / Module
           2: Keys summary
-          3: Version / Terminal size
+          3: FPS / Frame time / Terminal size
         Added by GPT5 10-07-25 (reverted 3-line spec)
+        Updated by Claude Sonnet 4.5 10-09-25: added FPS display
         """
         try:
             cur_mod = self.app.logic.current_mod()
@@ -109,10 +128,12 @@ class Module(SubClass):
         except Exception:
             term_h = 0
             term_w = 0
+        fps = self.app.data.get('fps', 0.0)
+        frame_time = self.app.data.get('frame_time', 0.0)
         maxw = max(0, self.front.w - 4)
         line1 = f"App: {getattr(self.app, 'name', 'DeskApp')} | Mod: {mod_name}"[:maxw]
         line2 = "Keys: Tab=Input Q=Quit 1-8 Panels PgUp/Dn Switch"[:maxw]
-        line3 = f"Ver: {getattr(self.app,'version','0.1.4')} | Term: {term_w}x{term_h}"[:maxw]
+        line3 = f"FPS: {fps} | Frame: {frame_time}ms | Term: {term_w}x{term_h}"[:maxw]
         lines = [line1, line2, line3]
         colors = [self.front.color_cyan, self.front.color_green,
                   self.front.color_yellow]

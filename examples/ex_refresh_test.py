@@ -21,6 +21,7 @@ class RefreshTest(Module):
         super().__init__(app, RefreshTest_ID)
         self.counter = 0
         self.start_time = time.time()
+        self.dialog_dismissed = False
 
     def page(self, panel):
         """Render constantly changing content."""
@@ -65,6 +66,11 @@ class RefreshTest(Module):
             panel, self.index, 2,
             "Resize window to test refresh", "green"
         )
+        self.index += 1
+        self.write(
+            panel, self.index, 2,
+            "NUM9: Toggle floating confirmation", "green"
+        )
         self.index += 2
 
         # Moving indicator
@@ -87,6 +93,28 @@ class RefreshTest(Module):
             f"Clean refresh - Frame {self.counter}", "cyan"
         )
 
+    def PageFloat(self, panel):
+        """Render floating confirmation dialog."""
+        # Title
+        self.write(panel, 1, 2, "Confirmation Dialog", "yellow")
+
+        # Message
+        self.write(panel, 3, 2, "This is a test floating panel", "white")
+        self.write(panel, 4, 2, "demonstrating overlay dialogs.", "white")
+
+        # Status
+        if self.dialog_dismissed:
+            self.write(panel, 6, 2, "Dialog accepted!", "green")
+        else:
+            self.write(panel, 6, 2, "Press ENTER to accept", "cyan")
+
+    @callback(RefreshTest_ID, keypress=Keys.ENTER)
+    def on_enter_accept(self, *args, **kwargs):
+        """Accept and dismiss the floating dialog."""
+        if self.app.back.show_floating:
+            self.dialog_dismissed = True
+            self.print("Floating dialog accepted!")
+
 
 if __name__ == "__main__":
     print("\nTesting panel refresh behavior...")
@@ -103,6 +131,9 @@ if __name__ == "__main__":
         show_box=True,
         show_right_panel=True,
         show_info_panel=True,
+        show_floating=False,
+        floating_height=10,
+        floating_width=40,
         autostart=False
     )
     app.start()
