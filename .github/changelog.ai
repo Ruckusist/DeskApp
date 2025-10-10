@@ -141,3 +141,25 @@
 - Version bumped to 0.1.16.
 - Changes credited to GitHub Copilot 10-09-25.
 
+## 0.1.17 - 2025-10-09
+- Fixed global box parameter: all panels (header, footer, menu,
+	messages, right, info) now respect app.show_box setting.
+- Updated backend.py to pass box=self.app.show_box to all make_panel
+	calls for consistent border rendering.
+- Added examples/ex_box_test.py to demonstrate borderless mode.
+- Ensured 79-character line limit compliance in modified code.
+- Version bumped to 0.1.17.
+- Changes credited to Claude Sonnet 4.5 10-09-25.
+
+## 0.1.18 - 2025-10-09
+- Implemented clean panel refresh to eliminate visual artifacts and
+	ghosting.
+- Added win.erase() at start of all update methods before redrawing.
+- Each panel now properly redraws box and banner after clearing.
+- Replaced manual space-padding cleanup with proper erase() calls.
+- Module panels erase before page() call in main rendering loop.
+- Created examples/ex_refresh_test.py with fast-updating content to
+	demonstrate artifact-free rendering.
+- Improved visual quality with no performance degradation.
+- Version bumped to 0.1.18.
+- Changes credited to Claude Sonnet 4.5 10-09-25.

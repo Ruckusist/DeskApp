@@ -19,7 +19,9 @@ name = "Deskapp"
 # bumped to 0.1.14 by GitHub Copilot 10-09-25 typing indicator + Home/End
 # bumped to 0.1.15 by GitHub Copilot 10-09-25 add Ollama profile scroller
 # bumped to 0.1.16 by GitHub Copilot 10-09-25 chat paging + spacing
-version = "0.1.16"
+# bumped to 0.1.17 by Claude Sonnet 4.5 10-09-25 global box parameter fix
+# bumped to 0.1.18 by Claude Sonnet 4.5 10-09-25 clean panel refresh
+version = "0.1.18"
 description = "An Open Source terminal-based app framework and server."
 readme = "README.md"
 requires-python = ">=3.8"
