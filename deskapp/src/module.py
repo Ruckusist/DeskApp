@@ -64,8 +64,12 @@ class Module(SubClass):
     def register_module(self):
         self.app.menu.append(self)
 
+
+    #TODO: Page needs a clear function. it needs to clear the panel before writing to it.
+    #TODO: but maybe not always?
+    
     def page(self, panel):
-        panel.win.addstr(2,2,"This is working!")
+        self.write(panel, 2, 2, "This is working!")
 
     # Added by GPT5 10-07-25
     # Optional secondary/right side panel content.

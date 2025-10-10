@@ -2,184 +2,205 @@
 
 ## Project Overview
 
-DeskApp is an open-source, terminal-first app framework and multiplayer server for building rich TUI (Terminal User Interface) applications, games, and services. The project enables developers to create cross-platform terminal applications that can run locally or over the network with real-time multiplayer capabilities.
+DeskApp is a terminal-first app framework for building rich TUI applications with composable modules. The framework includes multiplayer capabilities, chat systems, AWS integration, and a companion SideDesk runtime system.
 
-### Key Architecture Components
+### Core Architecture
 
-- **Framework Core**: Terminal UI framework with composable modules (`deskapp/src/`)
-- **Server System**: Socket-based multiplayer server with authentication (`deskapp/server/`)
-- **Chat System**: Real-time messaging capabilities (`deskapp/deskchat/`)
-- **AWS Integration**: Cloud deployment utilities (`deskapp/aws/`)
-- **SideDesk**: Companion runtime system (`sidedesk/`)
-- **Web Interface**: Planned web connectivity (`deskapp/webapp/`)
+- **`deskapp/src/`**: Framework core (App, Module, Backend, Curse, Logic)
+- **`deskapp/mods/`**: Built-in modules (About, Buttons, Fire, etc.)
+- **`deskapp/server/`**: Socket-based multiplayer server
+- **`deskapp/deskchat/`**: Chat system with client/server components
+- **`sidedesk/`**: AI-enabled companion runtime with Ollama integration
+- **`deskapp/aws/`**: Cloud deployment utilities
 
-## Code Style and Standards
+## Critical Conventions ⚠️
 
-### Python Standards
-- **Python Version**: Minimum Python 3.8+ (target compatibility)
-- **Formatter**: Use Ruff for code formatting (configured in `pyproject.toml`)
-- **Linting**: Follow Ruff rules: E, F, I, B, UP, S (pycodestyle, pyflakes, isort, bugbear, pyupgrade, bandit)
-- **Line Length**: Maximum 100 characters
-- **Quote Style**: Double quotes preferred
-- **Imports**: Use isort-compliant import ordering
+### Code Style (STRICTLY ENFORCED)
+- **79 character line limit** - absolutely enforced, fix violations immediately
+- **4 spaces indentation** - never tabs
+- **Double quotes** for strings - never single quotes
+- **CamelCase** for functions and variables (NOT snake_case despite some existing code)
+- **No leading underscores** on functions/variables
+- **PascalCase** for classes
 
-### Naming Conventions
-- **Classes**: PascalCase (e.g., `App`, `Backend`, `Module`)
-- **Functions/Methods**: snake_case (e.g., `setup_mod`, `should_stop`)
-- **Variables**: snake_case (e.g., `show_header`, `user_modules`)
-- **Constants**: UPPER_SNAKE_CASE (e.g., `COMMAND_KEYS`)
-- **Files**: snake_case.py (e.g., `app.py`, `backend.py`)
+- Functions: `setup_mod()`, `should_stop`, `current_mod()`
+- Variables: `show_header`, `user_modules`, `class_id`
+- Files: `app.py`, `backend.py`, `module.py`
 
-### File Organization
-```
-deskapp/
-├── __init__.py           # Package initialization
-├── __main__.py           # CLI entry point
-├── src/                  # Core framework code
-│   ├── app.py           # Main App class
-│   ├── backend.py       # Backend logic
-│   ├── curse.py         # Terminal interface
-│   ├── logic.py         # Business logic
-│   └── module.py        # Module base class
-├── mods/                # Built-in modules
-├── server/              # Multiplayer server
-├── deskchat/           # Chat system
-├── aws/                # AWS integrations
-└── webapp/             # Web interface
-```
+## Essential Architecture Patterns
 
-## Framework Patterns
-
-### App Initialization Pattern
+### 1. App Initialization Pattern
 ```python
-class App:
-    def __init__(self,
-                 modules: list = [],
-                 demo_mode: bool = True,
-                 title: str = "Deskapp",
-                 # ... panel controls
-                 show_header: bool = True,
-                 disable_header: bool = False,
-                 # ... other options
-                ):
-        # Initialize with sensible defaults
-        # Setup core modules: Curse, Logic, Backend
-        # Auto-start if configured
+# Actual pattern from deskapp/src/app.py
+app = App(
+    modules=[Login, Status],
+    demo_mode=False,  # True shows About/Buttons/Fire
+    title="MyApp",
+    show_header=True,
+    disable_header=False,  # Prevents toggle
+    v_split=0.4,  # Menu width ratio
+    h_split=0.16,  # Message height ratio
+    autostart=True  # False requires app.start()
+)
 ```
 
-### Module Development Pattern
-- All modules should inherit from the base `Module` class
-- Modules are self-contained with their own logic and rendering
-- Use the callback decorator system for key bindings
-- Follow the composable architecture pattern
-
-### Callback System Pattern
+### 2. Module System (CRITICAL PATTERN)
 ```python
-@callback(ID=1, keypress=Keys.TAB)
-def on_tab(self, *args, **kwargs):
-    # Handle key events
-    self.print("Tab pressed")
+# All modules inherit from Module and use random ID
+import random
+from deskapp import Module, callback, Keys
+
+MyModule_ID = random.random()  # Unique callback namespace
+
+class MyModule(Module):
+    name = "Module Name"  # Required for UI
+
+    def __init__(self, app):
+        super().__init__(app, MyModule_ID)
+
+    def page(self, panel):  # Main content rendering
+        panel.win.addstr(1, 1, "Content", self.front.color_white)
+
+    def PageRight(self, panel):  # Optional right panel
+        panel.win.addstr(1, 1, "Right content")
+
+    def PageInfo(self, panel):  # Optional info panel (3 lines)
+        panel.win.addstr(1, 1, "Info line 1")
+
+    @callback(MyModule_ID, Keys.ENTER)
+    def on_enter(self, *args, **kwargs):
+        self.print("Module-specific handler")
 ```
 
-## Development Guidelines
+### 3. Panel Management System
+**Panel States**: All panels have `show_*` and `disable_*` flags
+- `NUM1-8`: Toggle specific panels (header, footer, menu, main, messages, etc.)
+- `NUM6`: Show all / hide all toggle
+- Each panel respects its `disable_*` flag to prevent toggling
 
-### When Adding New Features
-1. **Maintain Backward Compatibility**: Don't break existing module APIs
-2. **Terminal-First Design**: Prioritize terminal UX over other interfaces
-3. **Modular Architecture**: New features should be modular and composable
-4. **Cross-Platform**: Ensure compatibility with Linux, macOS, and Windows terminals
-5. **Performance**: Keep the main rendering loop responsive
+### 4. Callback Architecture
+- Global callbacks use `ID=1` (app-level)
+- Module callbacks use unique random IDs
+- Callbacks stored in global `callbacks` list, processed by Backend.loop()
 
-### Error Handling
-- Use the built-in `app.error()` and `app.print()` methods for user feedback
-- Graceful degradation for optional features
-- Proper exception handling in network operations
-- Log errors to the message system for user visibility
-
-### Testing Considerations
-- Test terminal rendering across different terminal emulators
-- Verify keyboard input handling works correctly
-- Test multiplayer functionality with multiple clients
-- Ensure AWS integration doesn't break without credentials
-
-## CLI Entry Points
-Maintain these CLI commands as defined in `pyproject.toml`:
-- `deskapp` → `deskapp.__main__:main`
-- `sidedesk` → `sidedesk.__main__:main`
-- `deskchat` → `deskapp.deskchat.__main__:main`
-- `deskapp-aws` → `deskapp.aws.__main__:main`
-
-## Dependencies and Imports
-### Core Dependencies
-- `passlib` - Password hashing for authentication
-- `boto3` - AWS services integration
-- `flask` - Web server capabilities
-
-### Internal Import Structure
 ```python
-from deskapp import Curse, Logic, Backend, Module, Keys, callback
-from deskapp.mods import About, Buttons, Fire  # Built-in modules
+@callback(ID=1, keypress=Keys.Q)  # Global quit
+@callback(ModuleID, keypress=Keys.ENTER)  # Module-specific
 ```
 
-## Security Considerations
-- Always use proper password hashing (passlib)
-- Validate user inputs in network operations
-- Secure socket communications
-- Follow bandit security linting recommendations
-- Be cautious with AWS credentials and permissions
+## Development Workflow
 
-## Performance Guidelines
-- Keep the main rendering loop under 60fps for smooth experience
-- Minimize I/O operations in the render cycle
-- Use efficient terminal drawing techniques
-- Cache computed values when possible
-- Limit message history to prevent memory leaks (current limit: 300 messages)
+### Project Focus & Boundaries
+- **Work within**: `deskapp/` directory only
+- **Never modify**: `.venv/` folder contents
+- **Always credit**: Changes in file headers and `.github/changelog.ai`
 
-## Documentation Standards
-- Include docstrings for all public methods and classes
-- Document complex algorithms and business logic
-- Keep README.md updated with new features
-- Use type hints where beneficial for clarity
-- Comment keyboard shortcuts and their purposes
+### Proposal-Driven Development
+1. **Create proposal** in `.github/proposals/` using pattern `IdeaTitle_MMDDYY.proposal`
+2. **Start from clean state** - commit proposals before implementing
+3. **Execute with checkboxes** - mark progress as you go
+4. **Implementation follows** - update changelog and version
+
+### Proposal File Format
+```
+IdeaTitle_MMDDYY
+Last Updated: MM/DD/YY
+
+Originating Prompt:
+[user request here]
+
+Interpretation:
+[AI understanding of the request]
+
+Full Proposal:
+[ ] Actionable item 1
+[ ] Actionable item 2
+...
+```
 
 ## Common Patterns to Follow
 
-### Panel Management
+### Version Management
 ```python
-# Standard panel visibility toggles
-self.app.back.show_header = not self.app.back.show_header
-self.print(f"show_header = {self.app.back.show_header}")
+# In pyproject.toml - always bump patch version
+version = "0.1.12"  # Format: major.minor.patch
+# Add comment explaining change:
+# bumped to 0.1.13 by [AI] [date] [description]
 ```
 
-### Message Handling
+### Message System
 ```python
-# Prevent message spam
+# Prevent spam in app.print()
 prev_message = self.data['messages'][-1] if len(self.data['messages']) > 0 else ""
 if message != prev_message:
     self.data['messages'].append(message)
+# Messages capped at 300 to prevent memory leaks
 ```
+
+### Panel Bounds Checking
+```python
+# Always check bounds in drawing code
+if x >= panel_height or y >= panel_width:
+    return False
+max_len = panel_width - y
+text = string[:max_len] if len(string) > max_len else string
+```
+
+## CLI Entry Points & Configuration
+```toml
+# pyproject.toml defines these commands:
+deskapp = "deskapp.__main__:main"
+sidedesk = "sidedesk.__main__:main"
+deskchat = "deskapp.deskchat.__main__:main"
+deskapp-aws = "deskapp.aws.__main__:main"
+```
+
+### Key Dependencies
+- `bcrypt` - Password hashing
+- `boto3` - AWS integration
+- `flask` - Web server
+- `ollama` - AI integration (SideDesk)
+- `chromadb` - Vector storage
+- `mcp` - Model Context Protocol
+
+## Critical Implementation Details
+
+### Drawing Safety
+- Use bounds checking: `if x >= h or y >= w: return`
+- Truncate strings: `text = string[:max_width]`
+- Wrap in try/except for terminal edge cases
 
 ### Module Integration
 ```python
-# Adding new modules
+# Adding modules to demo mode (app.py)
 if self.show_demo:
     self.menu.extend([About, Buttons, Fire])
+
+# SideDesk post-login pattern
+app.data["post_login_modules"] = [Users, Chat, Ollama]
 ```
 
-## Roadmap Awareness
-Be aware of planned features when making changes:
-- **Games**: DeskSnake, Desk2042, DeskType, etc.
-- **Web Integration**: Browser-based client connectivity
-- **Enhanced Mouse Support**: Improved mouse handling
-- **Regex Callbacks**: Pattern-based event handling
-- **Cross-Language Ports**: Maintaining API compatibility
+### Panel Layout Math
+- Menu width: `app.v_split * total_width`
+- Message height: `app.h_split * total_height`
+- Right panel: `app.r_split * total_width`
+- Always subtract panel widths from available space
 
-## Common Gotchas
-- **Demo Mode**: When `demo_mode=False` and no modules provided, the app may fail to start
-- **Terminal Resizing**: Handle terminal resize events properly
-- **Key Mode**: Tab key toggles special input mode - handle this state carefully
-- **Message Limits**: Messages are capped at 300 to prevent memory issues
-- **Panel Dependencies**: Some panels depend on others being visible
+## Debugging & Common Issues
+
+### Demo Mode Gotcha
+- `demo_mode=False` with empty `modules=[]` causes app failure
+- Always provide at least one module or use demo_mode
+
+### Terminal Compatibility
+- Test across Linux, macOS, Windows terminals
+- Handle resize events in Backend.loop()
+- Mouse support optional (`use_mouse=True`)
+
+### Key Mode System
+- `TAB` toggles special input mode (`front.key_mode = True`)
+- Footer shows when in key mode for text input
+- `ENTER` processes input and exits key mode
 
 # Instructions for GitHub Copilot
 # copilot-instructions.md

@@ -6,7 +6,7 @@ Date: 10-06-25
 """
 
 import os
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, List
 
 
 class ConfigLoader:
@@ -54,7 +54,7 @@ class ConfigLoader:
             import tomllib
         except ImportError:
             try:
-                import tomli as tomllib
+                import tomli as tomllib  # type: ignore[import-not-found]
             except ImportError:
                 self.config = self.GetDefaults()
                 return False
@@ -77,10 +77,17 @@ class ConfigLoader:
         """
         return {
             "ollama": {
-                "host": "http://localhost:11434",
-                "default_model": "llama3.2",
-                "temperature": 0.7,
-                "context_window": 4096
+                # "host": "http://10.5.5.133:11434",  # big pc
+                # "default_model": "gemma3:1b",
+
+                # "host": "http://localhost:11434",
+                # "default_model": "gpt-oss:latest",
+
+                "host": "http://10.5.5.40:11434",
+                "default_model": "gemma3:4b",
+
+                "temperature": 0.325,
+                "context_window": 48096
             },
             "vector_store": {
                 "persist_directory": "~/.sidedesk/embeddings",
@@ -154,7 +161,7 @@ class ConfigLoader:
             True if successful
         """
         try:
-            import tomli_w
+            import tomli_w  # type: ignore[import-not-found]
         except ImportError:
             return False
 
@@ -204,3 +211,29 @@ class ConfigLoader:
             AI config dict
         """
         return self.Get("ai", default={})
+
+    @staticmethod
+    def ListOllamaProfiles() -> List[Dict[str, str]]:
+        """Return curated Ollama connection profiles for quick swap."""
+        return [
+            {
+                "name": "Big PC",
+                "host": "http://10.5.5.133:11434",
+                "default_model": "gemma3:1b",
+            },
+            {
+                "name": "Local",
+                "host": "http://localhost:11434",
+                "default_model": "gpt-oss:latest",
+            },
+            {
+                "name": "Lab",
+                "host": "http://10.5.5.40:11434",
+                "default_model": "gemma3:4b",
+            },
+            {
+                "name": "Custom",
+                "host": "",
+                "default_model": "",
+            }
+        ]

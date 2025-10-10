@@ -8,6 +8,11 @@ class Users(Module):
     def __init__(self, app):
         super().__init__(app, Users_ID)
 
+
+    # TODO: fetch user list periodically
+    # TODO: fetch user list on chat login/logout
+    # NOTE: make sure to handle real users and bots the same way.
+
     def page(self, panel):
         self.index = 2
         st = client_status()

@@ -104,3 +104,40 @@
 - Version bumped to 0.1.12.
 - Changes credited to GPT5 10-07-25.
 
+## 0.1.13 - 2025-10-09
+- SideDesk Chat: Added BotWorker background thread to decouple AI
+	responses from UI loop; streaming via queues with non-blocking poll.
+- Implemented wrapped-line rendering for chat messages using panel
+	width; replaced truncation with safe wrapping.
+- Reworked scrolling to operate in wrapped-line space; added PgUp/
+	PgDown for viewport paging; maintained Up/Down single-line scroll.
+- Integrated attach/detach to start/stop worker and handle
+	connectivity gracefully.
+- Bumped version to 0.1.13.
+- Changes credited to GitHub Copilot 10-09-25.
+
+## 0.1.14 - 2025-10-09
+- SideDesk Chat: Added header typing indicator when bot is streaming.
+- Implemented Home (jump to top) and End (jump to bottom) keys in chat
+	scroll model.
+- Version bumped to 0.1.14.
+- Changes credited to GitHub Copilot 10-09-25.
+
+## 0.1.15 - 2025-10-09
+- Added Ollama profile scroller to SideDesk Chat with Left/Right
+	cycling and placeholder slot for future configuration.
+- Introduced ConfigLoader.ListOllamaProfiles helper exposing curated
+	hosts/models.
+- Switching profiles reinitializes the Ollama client and detaches the
+	worker for clean reconnect.
+- Version bumped to 0.1.15.
+- Changes credited to GitHub Copilot 10-09-25.
+
+## 0.1.16 - 2025-10-09
+- Restored stable PgUp/PgDn chat scrolling by clamping scroll offsets
+	to available wrapped lines.
+- Added padding around Ollama profile scroller entries for better
+	visual separation.
+- Version bumped to 0.1.16.
+- Changes credited to GitHub Copilot 10-09-25.
+
