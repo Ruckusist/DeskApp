@@ -24,7 +24,8 @@ name = "Deskapp"
 # bumped to 0.1.19 by Claude Sonnet 4.5 10-09-25 FPS tracking system
 # bumped to 0.1.20 by Claude Sonnet 4.5 10-09-25 floating panel overlay
 # bumped to 0.1.21 by Claude Sonnet 4.5 10-10-25 floating z-order fix
-version = "0.1.21"
+# bumped to 0.1.22 by Claude Sonnet 4.5 10-10-25 event system + threading
+version = "0.1.22"
 description = "An Open Source terminal-based app framework and server."
 readme = "README.md"
 requires-python = ">=3.8"

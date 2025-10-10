@@ -4,11 +4,15 @@ app.py
 last updated: 6-10-23
 updated by: Ruckusist
 State: Good. Stable.
+
+Updated by: Claude Sonnet 4.5 10-10-25
+- Added EventBus integration for event system
 """
 
 
 from deskapp import Curse, Logic, Backend, Module, Keys, callback, callbacks
 from deskapp.mods import About, Buttons, Fire
+from deskapp.src.events import EventBus
 
 class App:
     def __init__(self,
@@ -96,6 +100,10 @@ class App:
 
         # APP FUNCTIONALITY
         self.data = {'messages': [], 'errors': []}
+        
+        # EVENT SYSTEM - Added by Claude Sonnet 4.5 10-10-25
+        self.events = EventBus()
+        
         self.menu = self.user_modules
         if self.show_demo:
             self.menu.extend([About, Buttons, Fire])  # , Deskhunter
@@ -148,6 +156,44 @@ class App:
 
     def set_header(self, message: str):
         self.header = message
+
+    ## EVENT SYSTEM CONVENIENCE METHODS
+    ## Added by: Claude Sonnet 4.5 10-10-25
+    
+    def emit(self, event_type: str, data: dict = None,
+             source: str = "app") -> bool:
+        """Emit an event to the event bus.
+        
+        Args:
+            event_type: Event identifier (e.g., 'data.update')
+            data: Event payload dictionary
+            source: Event source (default: 'app')
+            
+        Returns:
+            True if queued, False if dropped
+        """
+        return self.events.emit(event_type, data, source)
+    
+    def on(self, event_type: str, handler) -> None:
+        """Register event listener.
+        
+        Args:
+            event_type: Event to listen for
+            handler: Callback function(event) -> None
+        """
+        self.events.on(event_type, handler)
+    
+    def off(self, event_type: str, handler) -> bool:
+        """Unregister event listener.
+        
+        Args:
+            event_type: Event type
+            handler: Handler to remove
+            
+        Returns:
+            True if removed, False if not found
+        """
+        return self.events.off(event_type, handler)
 
     ## CALLBACKS
 

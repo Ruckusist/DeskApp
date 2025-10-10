@@ -151,6 +151,12 @@ class Backend(SubClass):
         # first time setup of all mods.
         for mod in self.app.menu:
             self.setup_mod(mod)
+        
+        # Emit system init event - Added by Claude Sonnet 4.5 10-10-25
+        self.app.emit('system.init', {
+            'module_count': len(self.app.menu),
+            'terminal_size': (self.front.w, self.front.h)
+        }, source='system')
 
     def _calc_main_dims(self):
         layout = self.compute_layout()
@@ -583,11 +589,35 @@ class Backend(SubClass):
             self.app.data['fps'] = round(avg_fps, 1)
             self.frame_count = 0
             self.last_fps_time = frame_start
+            # Emit FPS update event - Added by Claude Sonnet 4.5 10-10-25
+            self.app.emit('system.fps_update', {
+                'fps': round(avg_fps, 1),
+                'frame_time': self.app.data.get('frame_time', 0.0)
+            }, source='system')
+
+        # EVENT PROCESSING - Added by Claude Sonnet 4.5 10-10-25
+        # Process events BEFORE rendering to ensure data updates first
+        events_processed = self.app.events.process_events(
+            max_events=10,
+            max_time_ms=5.0
+        )
+        if events_processed > 0:
+            event_metrics = self.app.events.get_metrics()
+            self.app.data['event_count'] = events_processed
+            self.app.data['event_queue_size'] = event_metrics['queue_size']
+            self.app.data['event_process_time'] = (
+                event_metrics['last_process_time_ms']
+            )
 
         # HANDLE THE INPUT
         key_mouse = self.front.get_input()
         if key_mouse == Keys.RESIZE:
             self.front.resized()
+            # Emit resize event - Added by Claude Sonnet 4.5 10-10-25
+            self.app.emit('system.resize', {
+                'width': self.front.w,
+                'height': self.front.h
+            }, source='system')
         else:
             self.app.logic.decider( key_mouse )
 
@@ -711,6 +741,8 @@ class Backend(SubClass):
                     self.print(f"Error off main loop: {e} ** carrying on **")
                 raise
 
-
+        # Clean shutdown - Added by Claude Sonnet 4.5 10-10-25
+        self.app.emit('system.shutdown', {}, source='system')
+        self.app.events.shutdown()
         self.front.end_safely()
     # Avoid direct console print on shutdown to keep screen clean

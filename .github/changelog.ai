@@ -1,5 +1,24 @@
 # DeskApp Changelog (AI Managed)
 
+## 0.1.22 - 2025-10-10
+- MAJOR FEATURE: Event system and threading model.
+- Added EventBus class (deskapp/src/events.py) for thread-safe event passing.
+- Implemented queue-based pub/sub with bounded processing (10 events/frame, 5ms max).
+- Integrated EventBus into App and Backend.loop() for event processing.
+- Added app.emit(), app.on(), app.off() convenience methods.
+- Added module.emit_event(), module.on_event(), module.off_event() helpers.
+- Automatic event listener cleanup on module teardown.
+- Created BaseWorker class (deskapp/src/worker.py) for background threads.
+- Workers emit events, main thread processes and updates UI (curses-safe).
+- Implemented CounterWorker, TimerWorker, PeriodicWorker built-in patterns.
+- Added system events: system.init, system.shutdown, system.resize, system.fps_update.
+- Backend emits system events at key lifecycle points.
+- Created comprehensive THREADING.md guide with patterns and best practices.
+- Examples: test_events.py (unit tests), ex_event_basic.py, ex_worker_test.py, ex_async_fetch.py.
+- 100% backward compatible - event system is opt-in.
+- Version bumped to 0.1.22.
+- All changes credited to Claude Sonnet 4.5 10-10-25.
+
 ## 0.1.21 - 2025-10-10
 - CRITICAL FIX: Floating panel z-order corrected.
 - Moved floating_panel.panel.top() call to END of render sequence.

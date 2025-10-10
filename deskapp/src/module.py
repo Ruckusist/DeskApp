@@ -5,6 +5,10 @@ Provides hooks for page rendering, input handling, and utilities.
 Updated by Claude Sonnet 4.5 10-09-25:
 - Added PageFloat(panel) optional hook for floating panel content
 - Modules can now override PageFloat() to render overlay dialogs
+
+Updated by Claude Sonnet 4.5 10-10-25:
+- Added event system convenience methods
+- emit_event(), on_event(), off_event() helpers
 """
 
 import subprocess
@@ -25,6 +29,10 @@ class Module(SubClass):
         self.mouse_input = None
         # Generic per-module storage to reduce boilerplate in mods
         self.context = {}
+        
+        # Event listeners registered by this module
+        # Added by Claude Sonnet 4.5 10-10-25
+        self._event_handlers = []
 
     @property
     def h(self):
@@ -72,6 +80,62 @@ class Module(SubClass):
 
     def register_module(self):
         self.app.menu.append(self)
+
+    ## EVENT SYSTEM HELPERS
+    ## Added by: Claude Sonnet 4.5 10-10-25
+    
+    def emit_event(self, event_type: str, data: dict = None) -> bool:
+        """Emit an event from this module.
+        
+        Automatically includes source=self.name.
+        
+        Args:
+            event_type: Event identifier (e.g., 'data.update')
+            data: Event payload
+            
+        Returns:
+            True if queued, False if dropped
+        """
+        return self.app.emit(event_type, data, source=self.name)
+    
+    def on_event(self, event_type: str, handler) -> None:
+        """Register event listener for this module.
+        
+        Tracks handlers for cleanup on module teardown.
+        
+        Args:
+            event_type: Event to listen for
+            handler: Callback function(event) -> None
+        """
+        self.app.on(event_type, handler)
+        self._event_handlers.append((event_type, handler))
+    
+    def off_event(self, event_type: str, handler) -> bool:
+        """Unregister event listener.
+        
+        Args:
+            event_type: Event type
+            handler: Handler to remove
+            
+        Returns:
+            True if removed, False if not found
+        """
+        result = self.app.off(event_type, handler)
+        if result:
+            try:
+                self._event_handlers.remove((event_type, handler))
+            except ValueError:
+                pass
+        return result
+    
+    def cleanup_events(self) -> None:
+        """Remove all event listeners registered by this module.
+        
+        Called automatically on module teardown.
+        """
+        for event_type, handler in self._event_handlers:
+            self.app.off(event_type, handler)
+        self._event_handlers.clear()
 
 
     #TODO: Page needs a clear function. it needs to clear the panel before writing to it.
@@ -156,7 +220,12 @@ class Module(SubClass):
         except Exception as e:
             self.print(f"Error handling text input: {e}")
 
-    def end_safely(self): pass
+    def end_safely(self):
+        """Module cleanup on shutdown.
+        
+        Updated by Claude Sonnet 4.5 10-10-25: cleanup event listeners
+        """
+        self.cleanup_events()
 
     # Convenience hooks and helpers for building modules
     def handle_text(self, input_string: str):

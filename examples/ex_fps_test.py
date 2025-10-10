@@ -5,6 +5,10 @@ Tests FPS calculation, display, and optional limiter.
 Created by: Claude Sonnet 4.5 on 10/09/25
 """
 
+import sys
+import os
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
+
 from deskapp import App, Module, callback, Keys
 import random
 import time
