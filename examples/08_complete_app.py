@@ -34,28 +34,28 @@ StatusID = random.random()
 
 class TaskFetcher(BaseWorker):
     """Background worker that simulates fetching tasks."""
-    
+
     def work(self):
         """Simulate task fetching with progress updates."""
         # Emit started event
         self.emit("fetch.started", {})
-        
+
         # Simulate fetching 5 tasks
         tasks = []
         for i in range(5):
             if self.should_stop:
                 break
-            
+
             # Emit progress
             self.emit("fetch.progress", {
                 "current": i + 1,
                 "total": 5,
                 "percent": ((i + 1) / 5) * 100
             })
-            
+
             # Simulate network delay
             time.sleep(0.5)
-            
+
             # Create fake task
             task = {
                 "id": i + 1,
@@ -65,7 +65,7 @@ class TaskFetcher(BaseWorker):
                 "priority": random.choice(["high", "medium", "low"])
             }
             tasks.append(task)
-        
+
         # Emit completed event
         if not self.should_stop:
             self.emit("fetch.completed", {"tasks": tasks})
@@ -79,7 +79,7 @@ class TaskList(Module):
 
     def __init__(self, app):
         super().__init__(app, TaskListID)
-        
+
         # Initialize shared data
         if "tasks" not in self.app.data:
             self.app.data["tasks"] = []
@@ -87,10 +87,10 @@ class TaskList(Module):
             self.app.data["selected_task"] = 0
         if "fetch_progress" not in self.app.data:
             self.app.data["fetch_progress"] = 0
-        
+
         # Worker
         self.fetcher = None
-        
+
         # Event listeners
         self.on_event("fetch.started", self.on_fetch_started)
         self.on_event("fetch.progress", self.on_fetch_progress)
@@ -99,52 +99,52 @@ class TaskList(Module):
 
     def page(self, panel):
         """Display task list."""
-        h, w = panel.h, panel.w
+        h, w = self.h, self.w
         tasks = self.app.data.get("tasks", [])
         selected = self.app.data.get("selected_task", 0)
-        
+
         # Title
-        panel.win.addstr(1, 2, "Task Manager", 
+        panel.win.addstr(1, 2, "Task Manager",
                         self.front.color_white)
-        
+
         # Task count
-        panel.win.addstr(2, 2, f"Tasks: {len(tasks)}", 
+        panel.win.addstr(2, 2, f"Tasks: {len(tasks)}",
                         self.front.color_cyan)
-        
+
         # Controls
         y = 4
-        panel.win.addstr(y, 2, "Controls:", 
+        panel.win.addstr(y, 2, "Controls:",
                         self.front.color_yellow)
         y += 1
-        panel.win.addstr(y, 4, "SPACE - Fetch tasks", 
+        panel.win.addstr(y, 4, "SPACE - Fetch tasks",
                         self.front.color_white)
         y += 1
-        panel.win.addstr(y, 4, "R - Refresh", 
+        panel.win.addstr(y, 4, "R - Refresh",
                         self.front.color_white)
         y += 1
-        panel.win.addstr(y, 4, "ENTER - Complete task", 
+        panel.win.addstr(y, 4, "ENTER - Complete task",
                         self.front.color_white)
         y += 1
-        panel.win.addstr(y, 4, "UP/DOWN - Navigate", 
+        panel.win.addstr(y, 4, "UP/DOWN - Navigate",
                         self.front.color_white)
-        
+
         # Task list
         y += 2
-        panel.win.addstr(y, 2, "Tasks:", 
+        panel.win.addstr(y, 2, "Tasks:",
                         self.front.color_yellow)
         y += 1
-        
+
         if not tasks:
-            panel.win.addstr(y, 4, "No tasks. Press SPACE to fetch.", 
+            panel.win.addstr(y, 4, "No tasks. Press SPACE to fetch.",
                             self.front.color_white)
         else:
             for i, task in enumerate(tasks):
                 if y >= h - 2:
                     break
-                
+
                 # Selection marker
                 marker = ">" if i == selected else " "
-                
+
                 # Status indicator
                 if task["status"] == "completed":
                     status = "✓"
@@ -155,7 +155,7 @@ class TaskList(Module):
                 else:
                     status = "✗"
                     color = self.front.color_red
-                
+
                 # Priority color
                 if task["priority"] == "high":
                     prio_color = self.front.color_red
@@ -163,67 +163,67 @@ class TaskList(Module):
                     prio_color = self.front.color_yellow
                 else:
                     prio_color = self.front.color_cyan
-                
+
                 # Draw task
                 task_line = f"{marker} {status} {task['title']}"
                 max_len = w - 6
                 task_line = task_line[:max_len]
-                
+
                 if i == selected:
-                    panel.win.addstr(y, 4, task_line, 
+                    panel.win.addstr(y, 4, task_line,
                                     self.front.color_white)
                 else:
                     panel.win.addstr(y, 4, task_line, color)
-                
+
                 y += 1
 
     def PageRight(self, panel):
         """Show task details."""
         tasks = self.app.data.get("tasks", [])
         selected = self.app.data.get("selected_task", 0)
-        
+
         if not tasks or selected >= len(tasks):
-            panel.win.addstr(1, 2, "No task selected", 
+            panel.win.addstr(1, 2, "No task selected",
                             self.front.color_white)
             return
-        
+
         task = tasks[selected]
-        
-        panel.win.addstr(1, 2, "Task Details", 
+
+        panel.win.addstr(1, 2, "Task Details",
                         self.front.color_white)
-        panel.win.addstr(3, 2, f"ID: {task['id']}", 
+        panel.win.addstr(3, 2, f"ID: {task['id']}",
                         self.front.color_cyan)
-        panel.win.addstr(4, 2, f"Title:", 
+        panel.win.addstr(4, 2, f"Title:",
                         self.front.color_white)
-        panel.win.addstr(5, 2, task['title'], 
+        panel.win.addstr(5, 2, task['title'],
                         self.front.color_green)
-        panel.win.addstr(7, 2, "Description:", 
+        panel.win.addstr(7, 2, "Description:",
                         self.front.color_white)
-        panel.win.addstr(8, 2, task['description'], 
+        panel.win.addstr(8, 2, task['description'],
                         self.front.color_cyan)
-        panel.win.addstr(10, 2, f"Status: {task['status']}", 
+        panel.win.addstr(10, 2, f"Status: {task['status']}",
                         self.front.color_yellow)
-        panel.win.addstr(11, 2, f"Priority: {task['priority']}", 
+        panel.win.addstr(11, 2, f"Priority: {task['priority']}",
                         self.front.color_magenta)
 
     def PageInfo(self, panel):
         """Show app status."""
         tasks = self.app.data.get("tasks", [])
         progress = self.app.data.get("fetch_progress", 0)
-        
+
         completed = sum(1 for t in tasks if t["status"] == "completed")
-        
+
         panel.win.addstr(0, 2, f"Tasks: {len(tasks)} | Done: "
-                              f"{completed}", 
+                              f"{completed}",
                         self.front.color_white)
-        panel.win.addstr(1, 2, f"Progress: {progress}%", 
+        panel.win.addstr(1, 2, f"Progress: {progress}%",
                         self.front.color_cyan)
-        
-        worker_status = "RUNNING" if (self.fetcher and 
+
+        worker_status = "RUNNING" if (self.fetcher and
                                      self.fetcher.is_running) \
                                   else "IDLE"
-        panel.win.addstr(2, 2, f"Worker: {worker_status}", 
-                        self.front.color_green if worker_status == "IDLE" 
+        panel.win.addstr(2, 2, f"Worker: {worker_status}",
+                        self.front.color_green if worker_status == "IDLE"
                         else self.front.color_yellow)
 
     # =========================================================================
@@ -262,7 +262,7 @@ class TaskList(Module):
         if self.fetcher and self.fetcher.is_running:
             self.print("Already fetching...")
             return
-        
+
         self.fetcher = TaskFetcher(self.app.events)
         self.fetcher.start()
 
@@ -276,10 +276,10 @@ class TaskList(Module):
         """ENTER marks task as complete."""
         tasks = self.app.data.get("tasks", [])
         selected = self.app.data.get("selected_task", 0)
-        
+
         if not tasks or selected >= len(tasks):
             return
-        
+
         task = tasks[selected]
         if task["status"] == "completed":
             task["status"] = "pending"
@@ -293,7 +293,7 @@ class TaskList(Module):
         """DOWN navigates down."""
         tasks = self.app.data.get("tasks", [])
         selected = self.app.data.get("selected_task", 0)
-        
+
         if selected < len(tasks) - 1:
             self.app.data["selected_task"] = selected + 1
 
@@ -301,7 +301,7 @@ class TaskList(Module):
     def move_up(self, *args, **kwargs):
         """UP navigates up."""
         selected = self.app.data.get("selected_task", 0)
-        
+
         if selected > 0:
             self.app.data["selected_task"] = selected - 1
 
@@ -312,7 +312,7 @@ class TaskList(Module):
         if self.fetcher and self.fetcher.is_running:
             self.print("Stopping worker...")
             self.fetcher.stop()
-        
+
         self.logic.should_stop = True
 
 
@@ -320,7 +320,7 @@ if __name__ == "__main__":
     app = App(
         modules=[TaskList],
         title="Task Manager",
-        show_right=True,
-        show_info=True,
+        show_right_panel=True,
+        show_info_panel=True,
         r_split=0.3,
     )

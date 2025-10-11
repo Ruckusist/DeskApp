@@ -1,5 +1,15 @@
 # DeskApp Changelog (AI Managed)
 
+## 0.1.24 - 2025-10-10
+- BUGFIX: Variable reference verification in tutorial examples.
+- Fixed incorrect panel.h/panel.w references to use self.h/self.w.
+- Corrected examples: 01_panels.py, 02_module.py, 03_callbacks.py,
+  04_layouts.py, 05_styling.py, 07_events.py, 08_complete_app.py.
+- Module properties (self.h, self.w) correctly call app.logic.current_dims().
+- All tutorial examples now use consistent, correct property access pattern.
+- Version bumped to 0.1.24.
+- Changes credited to Claude Sonnet 4.5 10-10-25.
+
 ## 0.1.23 - 2025-10-10
 - MAJOR DOCUMENTATION: Comprehensive tutorial example suite.
 - Created 9-tutorial series (00-08) teaching DeskApp from scratch.
@@ -13,7 +23,7 @@
 - Updated main README.md with tutorial callouts and next steps.
 - All examples pass 79-character line limit validation.
 - Examples demonstrate: modules, panels, callbacks, events, workers, colors.
-- 08_complete_app.py shows production patterns: background fetching, 
+- 08_complete_app.py shows production patterns: background fetching,
   progress updates, error handling, clean shutdown.
 - Version bumped to 0.1.23.
 - All changes credited to Claude Sonnet 4.5 10-10-25.

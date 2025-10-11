@@ -31,12 +31,12 @@ class StyleDemo(Module):
 
     def __init__(self, app):
         super().__init__(app, StyleID)
-        
+
         # Current color scheme
         self.color_num = 1
         self.show_borders = True
         self.show_titles = True
-        
+
         # Color names for display
         self.colors = [
             ("white", self.front.color_white),
@@ -52,74 +52,74 @@ class StyleDemo(Module):
 
     def page(self, panel):
         """Display color samples and formatting examples."""
-        h, w = panel.h, panel.w
-        
+        h, w = self.h, self.w
+
         # Title with current color
         title = "Color & Styling Tutorial"
         _, color = self.colors[self.color_num % len(self.colors)]
         panel.win.addstr(1, 2, title, color)
-        
+
         # Color palette
         y = 3
-        panel.win.addstr(y, 2, "Available Colors:", 
+        panel.win.addstr(y, 2, "Available Colors:",
                         self.front.color_white)
         y += 1
-        
+
         for i, (name, color) in enumerate(self.colors):
             if y >= h - 2:
                 break
-            
+
             # Show color name in that color
             marker = ">>>" if i == self.color_num % len(self.colors) \
                           else "   "
             panel.win.addstr(y, 4, f"{marker} {name}", color)
             y += 1
-        
+
         # Formatting examples
         y += 1
         if y < h - 2:
-            panel.win.addstr(y, 2, "Text Formatting:", 
+            panel.win.addstr(y, 2, "Text Formatting:",
                             self.front.color_yellow)
             y += 1
-        
+
         # Different styles
         if y < h - 2:
-            panel.win.addstr(y, 4, "Normal text", 
+            panel.win.addstr(y, 4, "Normal text",
                             self.front.color_white)
             y += 1
         if y < h - 2:
-            panel.win.addstr(y, 4, "Highlighted text", 
+            panel.win.addstr(y, 4, "Highlighted text",
                             self.front.color_green)
             y += 1
         if y < h - 2:
-            panel.win.addstr(y, 4, "Error text", 
+            panel.win.addstr(y, 4, "Error text",
                             self.front.color_red)
             y += 1
         if y < h - 2:
-            panel.win.addstr(y, 4, "Warning text", 
+            panel.win.addstr(y, 4, "Warning text",
                             self.front.color_yellow)
             y += 1
         if y < h - 2:
-            panel.win.addstr(y, 4, "Info text", 
+            panel.win.addstr(y, 4, "Info text",
                             self.front.color_cyan)
             y += 1
-        
+
         # Controls
         y += 1
         if y < h - 2:
-            panel.win.addstr(y, 2, "Controls:", 
+            panel.win.addstr(y, 2, "Controls:",
                             self.front.color_yellow)
             y += 1
         if y < h - 2:
-            panel.win.addstr(y, 4, "1-9 - Change color scheme", 
+            panel.win.addstr(y, 4, "1-9 - Change color scheme",
                             self.front.color_white)
             y += 1
         if y < h - 2:
-            panel.win.addstr(y, 4, "B - Toggle borders", 
+            panel.win.addstr(y, 4, "B - Toggle borders",
                             self.front.color_white)
             y += 1
         if y < h - 2:
-            panel.win.addstr(y, 4, "T - Toggle title banner", 
+            panel.win.addstr(y, 4, "T - Toggle title banner",
                             self.front.color_white)
 
     def PageRight(self, panel):
@@ -135,10 +135,10 @@ class StyleDemo(Module):
             self.front.color_purple,
             self.front.color_magenta,
         ]
-        
+
         panel.win.addstr(1, 2, "Rainbow", self.front.color_white)
         panel.win.addstr(2, 2, "Panel", self.front.color_white)
-        
+
         y = 4
         for i, color in enumerate(colors):
             if y >= panel.h - 1:
@@ -151,12 +151,12 @@ class StyleDemo(Module):
         name, color = self.colors[self.color_num % len(self.colors)]
         panel.win.addstr(0, 2, f"Color: {name}", color)
         panel.win.addstr(1, 2, f"Borders: "
-                              f"{'ON' if self.show_borders else 'OFF'}", 
-                        self.front.color_green if self.show_borders 
+                              f"{'ON' if self.show_borders else 'OFF'}",
+                        self.front.color_green if self.show_borders
                         else self.front.color_red)
         panel.win.addstr(2, 2, f"Titles: "
-                              f"{'ON' if self.show_titles else 'OFF'}", 
-                        self.front.color_green if self.show_titles 
+                              f"{'ON' if self.show_titles else 'OFF'}",
+                        self.front.color_green if self.show_titles
                         else self.front.color_red)
 
     # =========================================================================
@@ -208,8 +208,8 @@ if __name__ == "__main__":
     app = App(
         modules=[StyleDemo],
         title="Styling Tutorial",
-        show_right=True,
-        show_info=True,
+        show_right_panel=True,
+        show_info_panel=True,
         show_box=True,      # Enable panel borders
         show_banner=True,   # Enable title banners
     )

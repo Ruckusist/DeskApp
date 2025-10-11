@@ -34,88 +34,88 @@ class PanelDemo(Module):
 
     def page(self, panel):
         """Main panel - primary content area."""
-        h, w = panel.h, panel.w
-        
+        h, w = self.h, self.w
+
         # Title
-        panel.win.addstr(1, 2, "DeskApp Panel System", 
+        panel.win.addstr(1, 2, "DeskApp Panel System",
                         self.front.color_white)
-        
+
         # Instructions
         y = 3
-        panel.win.addstr(y, 2, "Press NUM1-9 to toggle panels:", 
+        panel.win.addstr(y, 2, "Press NUM1-9 to toggle panels:",
                         self.front.color_cyan)
         y += 2
-        panel.win.addstr(y, 4, "NUM1 - Header (top)", 
+        panel.win.addstr(y, 4, "NUM1 - Header (top)",
                         self.front.color_white)
         y += 1
-        panel.win.addstr(y, 4, "NUM2 - Footer (bottom)", 
+        panel.win.addstr(y, 4, "NUM2 - Footer (bottom)",
                         self.front.color_white)
         y += 1
-        panel.win.addstr(y, 4, "NUM3 - Menu (left)", 
+        panel.win.addstr(y, 4, "NUM3 - Menu (left)",
                         self.front.color_white)
         y += 1
-        panel.win.addstr(y, 4, "NUM4 - Main (this panel)", 
+        panel.win.addstr(y, 4, "NUM4 - Main (this panel)",
                         self.front.color_white)
         y += 1
-        panel.win.addstr(y, 4, "NUM5 - Messages (bottom log)", 
+        panel.win.addstr(y, 4, "NUM5 - Messages (bottom log)",
                         self.front.color_white)
         y += 1
-        panel.win.addstr(y, 4, "NUM6 - Show/Hide All", 
+        panel.win.addstr(y, 4, "NUM6 - Show/Hide All",
                         self.front.color_yellow)
         y += 1
-        panel.win.addstr(y, 4, "NUM7 - Right (sidebar)", 
+        panel.win.addstr(y, 4, "NUM7 - Right (sidebar)",
                         self.front.color_white)
         y += 1
-        panel.win.addstr(y, 4, "NUM8 - Info (status)", 
+        panel.win.addstr(y, 4, "NUM8 - Info (status)",
                         self.front.color_white)
         y += 1
-        panel.win.addstr(y, 4, "NUM9 - Floating (overlay)", 
+        panel.win.addstr(y, 4, "NUM9 - Floating (overlay)",
                         self.front.color_white)
-        
+
         # Counter demo
         y += 3
         panel.win.addstr(y, 2, f"Press SPACE to increment: "
-                              f"{self.counter}", 
+                              f"{self.counter}",
                         self.front.color_green)
 
     def PageRight(self, panel):
         """Right panel - optional sidebar content."""
-        panel.win.addstr(1, 2, "Right Panel", 
+        panel.win.addstr(1, 2, "Right Panel",
                         self.front.color_white)
-        panel.win.addstr(3, 2, "This sidebar", 
+        panel.win.addstr(3, 2, "This sidebar",
                         self.front.color_cyan)
-        panel.win.addstr(4, 2, "appears when", 
+        panel.win.addstr(4, 2, "appears when",
                         self.front.color_cyan)
-        panel.win.addstr(5, 2, "you toggle", 
+        panel.win.addstr(5, 2, "you toggle",
                         self.front.color_cyan)
         panel.win.addstr(6, 2, "NUM7", self.front.color_yellow)
-        panel.win.addstr(8, 2, "Width set by", 
+        panel.win.addstr(8, 2, "Width set by",
                         self.front.color_cyan)
-        panel.win.addstr(9, 2, "app.r_split", 
+        panel.win.addstr(9, 2, "app.r_split",
                         self.front.color_cyan)
 
     def PageInfo(self, panel):
         """Info panel - 3-line status area."""
-        panel.win.addstr(0, 2, "Info Panel (3 lines max)", 
+        panel.win.addstr(0, 2, "Info Panel (3 lines max)",
                         self.front.color_white)
-        panel.win.addstr(1, 2, f"Counter: {self.counter}", 
+        panel.win.addstr(1, 2, f"Counter: {self.counter}",
                         self.front.color_green)
-        panel.win.addstr(2, 2, "Press NUM8 to toggle", 
+        panel.win.addstr(2, 2, "Press NUM8 to toggle",
                         self.front.color_cyan)
 
     def PageFloat(self, panel):
         """Floating panel - overlay on top of main."""
-        h, w = panel.h, panel.w
-        
-        panel.win.addstr(1, 2, "Floating Overlay Panel", 
+        h, w = self.h, self.w
+
+        panel.win.addstr(1, 2, "Floating Overlay Panel",
                         self.front.color_yellow)
-        panel.win.addstr(3, 2, "This panel floats over", 
+        panel.win.addstr(3, 2, "This panel floats over",
                         self.front.color_white)
-        panel.win.addstr(4, 2, "the main content area.", 
+        panel.win.addstr(4, 2, "the main content area.",
                         self.front.color_white)
-        panel.win.addstr(6, 2, "Toggle with NUM9", 
+        panel.win.addstr(6, 2, "Toggle with NUM9",
                         self.front.color_cyan)
-        panel.win.addstr(8, 2, f"Size: {h}x{w}", 
+        panel.win.addstr(8, 2, f"Size: {h}x{w}",
                         self.front.color_green)
 
     @callback(PanelID, Keys.SPACE)
@@ -135,7 +135,7 @@ if __name__ == "__main__":
     app = App(
         modules=[PanelDemo],
         title="Panel System Demo",
-        show_right=True,   # Right panel visible on start
-        show_info=True,    # Info panel visible on start
+        show_right_panel=True,   # Right panel visible on start
+        show_info_panel=True,    # Info panel visible on start
         r_split=0.25,      # Right panel uses 25% of width
     )

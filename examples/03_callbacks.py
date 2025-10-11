@@ -29,7 +29,7 @@ class CallbackDemo(Module):
 
     def __init__(self, app):
         super().__init__(app, CallbackID)
-        
+
         # Track keypresses
         self.last_key = "None"
         self.key_count = 0
@@ -38,78 +38,78 @@ class CallbackDemo(Module):
 
     def page(self, panel):
         """Display callback information and status."""
-        h, w = panel.h, panel.w
-        
+        h, w = self.h, self.w
+
         # Title
-        panel.win.addstr(1, 2, "Callback System Tutorial", 
+        panel.win.addstr(1, 2, "Callback System Tutorial",
                         self.front.color_white)
-        
+
         # Status
         y = 3
-        panel.win.addstr(y, 2, f"Last key: {self.last_key}", 
+        panel.win.addstr(y, 2, f"Last key: {self.last_key}",
                         self.front.color_green)
         y += 1
-        panel.win.addstr(y, 2, f"Total keys pressed: {self.key_count}", 
+        panel.win.addstr(y, 2, f"Total keys pressed: {self.key_count}",
                         self.front.color_cyan)
-        
+
         # Instructions
         y += 2
-        panel.win.addstr(y, 2, "Keyboard Callbacks:", 
+        panel.win.addstr(y, 2, "Keyboard Callbacks:",
                         self.front.color_yellow)
         y += 1
-        panel.win.addstr(y, 4, "A - Trigger callback A", 
+        panel.win.addstr(y, 4, "A - Trigger callback A",
                         self.front.color_white)
         y += 1
-        panel.win.addstr(y, 4, "B - Trigger callback B", 
+        panel.win.addstr(y, 4, "B - Trigger callback B",
                         self.front.color_white)
         y += 1
-        panel.win.addstr(y, 4, "H - Say hello", 
+        panel.win.addstr(y, 4, "H - Say hello",
                         self.front.color_white)
         y += 1
-        panel.win.addstr(y, 4, "SPACE - Increment counter", 
+        panel.win.addstr(y, 4, "SPACE - Increment counter",
                         self.front.color_white)
-        
+
         # String input mode
         y += 2
-        panel.win.addstr(y, 2, "String Input Mode:", 
+        panel.win.addstr(y, 2, "String Input Mode:",
                         self.front.color_yellow)
         y += 1
-        panel.win.addstr(y, 4, "TAB - Enter input mode", 
+        panel.win.addstr(y, 4, "TAB - Enter input mode",
                         self.front.color_white)
         y += 1
-        
+
         # Show input mode status
         if self.front.key_mode:
-            panel.win.addstr(y, 4, "Status: INPUT MODE ACTIVE", 
+            panel.win.addstr(y, 4, "Status: INPUT MODE ACTIVE",
                             self.front.color_green)
             y += 1
-            panel.win.addstr(y, 4, f"Current: {self.input_text}", 
+            panel.win.addstr(y, 4, f"Current: {self.input_text}",
                             self.front.color_cyan)
             y += 1
-            panel.win.addstr(y, 4, "ENTER - Submit | ESC - Cancel", 
+            panel.win.addstr(y, 4, "ENTER - Submit | ESC - Cancel",
                             self.front.color_yellow)
         else:
-            panel.win.addstr(y, 4, "Status: Normal mode", 
+            panel.win.addstr(y, 4, "Status: Normal mode",
                             self.front.color_white)
-        
+
         # Last submitted text
         if self.submitted_text:
             y += 2
-            panel.win.addstr(y, 2, "Last submitted:", 
+            panel.win.addstr(y, 2, "Last submitted:",
                             self.front.color_yellow)
             y += 1
             max_len = w - 6
             display = self.submitted_text[:max_len]
-            panel.win.addstr(y, 4, display, 
+            panel.win.addstr(y, 4, display,
                             self.front.color_green)
 
     def PageInfo(self, panel):
         """Show callback system info."""
-        panel.win.addstr(0, 2, "Callback System", 
+        panel.win.addstr(0, 2, "Callback System",
                         self.front.color_white)
-        panel.win.addstr(1, 2, f"Module ID: {CallbackID:.6f}", 
+        panel.win.addstr(1, 2, f"Module ID: {CallbackID:.6f}",
                         self.front.color_cyan)
-        panel.win.addstr(2, 2, f"Keys: {self.key_count}", 
+        panel.win.addstr(2, 2, f"Keys: {self.key_count}",
                         self.front.color_green)
 
     # =========================================================================
@@ -149,7 +149,7 @@ class CallbackDemo(Module):
     def enter_input_mode(self, *args, **kwargs):
         """
         TAB toggles string input mode.
-        
+
         In input mode:
         - Footer panel appears for typing
         - Regular callbacks are disabled
@@ -158,7 +158,7 @@ class CallbackDemo(Module):
         """
         self.last_key = "TAB"
         self.key_count += 1
-        
+
         if not self.front.key_mode:
             # Enter input mode
             self.front.key_mode = True
@@ -173,22 +173,22 @@ class CallbackDemo(Module):
     def submit_input(self, *args, **kwargs):
         """
         ENTER in input mode processes the text.
-        
+
         The input string is available in:
         self.logic.data["str_to_use"]
         """
         self.last_key = "ENTER"
         self.key_count += 1
-        
+
         if self.front.key_mode:
             # Get the input string
             text = self.logic.data.get("str_to_use", "")
             self.submitted_text = text
             self.input_text = ""
-            
+
             # Exit input mode
             self.front.key_mode = False
-            
+
             if text:
                 self.print(f"Submitted: {text}")
             else:
@@ -199,7 +199,7 @@ class CallbackDemo(Module):
         """ESC cancels input mode."""
         self.last_key = "ESC"
         self.key_count += 1
-        
+
         if self.front.key_mode:
             self.front.key_mode = False
             self.input_text = ""
@@ -215,5 +215,5 @@ if __name__ == "__main__":
     app = App(
         modules=[CallbackDemo],
         title="Callback System",
-        show_info=True,
+        show_info_panel=True,
     )

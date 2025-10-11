@@ -125,14 +125,14 @@ HelloID = random.random()
 
 class Hello(Module):
     name = "Hello"
-    
+
     def __init__(self, app):
         super().__init__(app, HelloID)
-    
+
     def page(self, panel):
-        panel.win.addstr(2, 2, "Hello, DeskApp!", 
+        panel.win.addstr(2, 2, "Hello, DeskApp!",
                         self.front.color_white)
-    
+
     @callback(HelloID, Keys.Q)
     def quit(self, *args, **kwargs):
         self.logic.should_stop = True

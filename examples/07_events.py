@@ -31,23 +31,23 @@ EventID = random.random()
 
 class SimpleWorker(BaseWorker):
     """Background worker that counts and emits events."""
-    
+
     def work(self):
         """Main work loop - runs in background thread."""
         counter = 0
-        
+
         while not self.should_stop:
             counter += 1
-            
+
             # Emit event from worker thread
             self.emit("worker.tick", {
                 "count": counter,
                 "timestamp": time.time()
             })
-            
+
             # Wait 1 second
             time.sleep(1)
-        
+
         # Emit stopped event
         self.emit("worker.stopped", {"final_count": counter})
 
@@ -58,94 +58,94 @@ class EventDemo(Module):
 
     def __init__(self, app):
         super().__init__(app, EventID)
-        
+
         # Event tracking
         self.ping_count = 0
         self.data_count = 0
         self.worker_ticks = 0
         self.last_data = None
-        
+
         # Worker instance
         self.worker = None
-        
+
         # Register event listeners using self.on_event()
         # This automatically tracks handlers for cleanup
         self.on_event("ping", self.on_ping)
         self.on_event("data", self.on_data)
         self.on_event("worker.tick", self.on_worker_tick)
         self.on_event("worker.stopped", self.on_worker_stopped)
-        
+
         # System events
         self.on_event("system.init", self.on_system_init)
         self.on_event("system.resize", self.on_system_resize)
 
     def page(self, panel):
         """Display event system status."""
-        h, w = panel.h, panel.w
-        
+        h, w = self.h, self.w
+
         # Title
-        panel.win.addstr(1, 2, "Event System Tutorial", 
+        panel.win.addstr(1, 2, "Event System Tutorial",
                         self.front.color_white)
-        
+
         # Event counts
         y = 3
-        panel.win.addstr(y, 2, "Event Statistics:", 
+        panel.win.addstr(y, 2, "Event Statistics:",
                         self.front.color_yellow)
         y += 1
-        panel.win.addstr(y, 4, f"Ping events: {self.ping_count}", 
+        panel.win.addstr(y, 4, f"Ping events: {self.ping_count}",
                         self.front.color_white)
         y += 1
-        panel.win.addstr(y, 4, f"Data events: {self.data_count}", 
+        panel.win.addstr(y, 4, f"Data events: {self.data_count}",
                         self.front.color_white)
         y += 1
-        panel.win.addstr(y, 4, f"Worker ticks: {self.worker_ticks}", 
+        panel.win.addstr(y, 4, f"Worker ticks: {self.worker_ticks}",
                         self.front.color_white)
-        
+
         # Last data
         if self.last_data:
             y += 2
-            panel.win.addstr(y, 2, "Last Data Event:", 
+            panel.win.addstr(y, 2, "Last Data Event:",
                             self.front.color_yellow)
             y += 1
-            panel.win.addstr(y, 4, str(self.last_data)[:w-6], 
+            panel.win.addstr(y, 4, str(self.last_data)[:w-6],
                             self.front.color_cyan)
-        
+
         # Worker status
         y += 2
-        worker_running = (self.worker is not None and 
+        worker_running = (self.worker is not None and
                          self.worker.is_running)
         status = "RUNNING" if worker_running else "STOPPED"
-        color = (self.front.color_green if worker_running 
+        color = (self.front.color_green if worker_running
                 else self.front.color_red)
         panel.win.addstr(y, 2, f"Worker Status: {status}", color)
-        
+
         # Controls
         y += 2
-        panel.win.addstr(y, 2, "Controls:", 
+        panel.win.addstr(y, 2, "Controls:",
                         self.front.color_yellow)
         y += 1
-        panel.win.addstr(y, 4, "P - Emit ping event", 
+        panel.win.addstr(y, 4, "P - Emit ping event",
                         self.front.color_white)
         y += 1
-        panel.win.addstr(y, 4, "D - Emit data event", 
+        panel.win.addstr(y, 4, "D - Emit data event",
                         self.front.color_white)
         y += 1
-        panel.win.addstr(y, 4, "S - Start worker", 
+        panel.win.addstr(y, 4, "S - Start worker",
                         self.front.color_white)
         y += 1
-        panel.win.addstr(y, 4, "X - Stop worker", 
+        panel.win.addstr(y, 4, "X - Stop worker",
                         self.front.color_white)
 
     def PageInfo(self, panel):
         """Show event queue metrics."""
         metrics = self.app.events.get_metrics()
-        
-        panel.win.addstr(0, 2, f"Events: {metrics['total_events']}", 
+
+        panel.win.addstr(0, 2, f"Events: {metrics['total_events']}",
                         self.front.color_white)
-        panel.win.addstr(1, 2, f"Queue: {metrics['queue_size']}", 
+        panel.win.addstr(1, 2, f"Queue: {metrics['queue_size']}",
                         self.front.color_cyan)
-        panel.win.addstr(2, 2, 
-                        f"Listeners: {metrics['listener_count']}", 
+        panel.win.addstr(2, 2,
+                        f"Listeners: {metrics['listener_count']}",
                         self.front.color_green)
 
     # =========================================================================
@@ -208,7 +208,7 @@ class EventDemo(Module):
         if self.worker and self.worker.is_running:
             self.print("Worker already running")
             return
-        
+
         # Create and start worker
         self.worker = SimpleWorker(self.app.events)
         self.worker.start()
@@ -220,7 +220,7 @@ class EventDemo(Module):
         if not self.worker or not self.worker.is_running:
             self.print("No worker running")
             return
-        
+
         self.worker.stop()
         self.worker = None
         self.print("Stopping worker...")
@@ -231,7 +231,7 @@ class EventDemo(Module):
         # Clean up worker
         if self.worker and self.worker.is_running:
             self.worker.stop()
-        
+
         self.logic.should_stop = True
 
 
@@ -239,5 +239,5 @@ if __name__ == "__main__":
     app = App(
         modules=[EventDemo],
         title="Event System",
-        show_info=True,
+        show_info_panel=True,
     )

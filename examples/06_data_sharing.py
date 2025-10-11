@@ -35,7 +35,7 @@ class Counter(Module):
 
     def __init__(self, app):
         super().__init__(app, CounterID)
-        
+
         # Initialize shared data if not present
         if "counter_value" not in self.app.data:
             self.app.data["counter_value"] = 0
@@ -47,30 +47,30 @@ class Counter(Module):
         # Read from shared data
         value = self.app.data["counter_value"]
         auto = self.app.data["auto_increment"]
-        
-        panel.win.addstr(1, 2, "Counter Module", 
+
+        panel.win.addstr(1, 2, "Counter Module",
                         self.front.color_white)
-        panel.win.addstr(3, 2, f"Current Value: {value}", 
+        panel.win.addstr(3, 2, f"Current Value: {value}",
                         self.front.color_green)
         panel.win.addstr(5, 2, f"Auto-increment: "
-                              f"{'ON' if auto else 'OFF'}", 
-                        self.front.color_yellow if auto 
+                              f"{'ON' if auto else 'OFF'}",
+                        self.front.color_yellow if auto
                         else self.front.color_white)
-        
-        panel.win.addstr(7, 2, "Controls:", 
+
+        panel.win.addstr(7, 2, "Controls:",
                         self.front.color_yellow)
-        panel.win.addstr(8, 4, "+ - Increment", 
+        panel.win.addstr(8, 4, "+ - Increment",
                         self.front.color_white)
-        panel.win.addstr(9, 4, "- - Decrement", 
+        panel.win.addstr(9, 4, "- - Decrement",
                         self.front.color_white)
-        panel.win.addstr(10, 4, "R - Reset to 0", 
+        panel.win.addstr(10, 4, "R - Reset to 0",
                         self.front.color_white)
-        
-        panel.win.addstr(12, 2, "Switch to Display or Settings", 
+
+        panel.win.addstr(12, 2, "Switch to Display or Settings",
                         self.front.color_cyan)
-        panel.win.addstr(13, 2, "with PgUp/PgDn", 
+        panel.win.addstr(13, 2, "with PgUp/PgDn",
                         self.front.color_cyan)
-        
+
         # Auto-increment logic
         if auto:
             self.app.data["counter_value"] += 1
@@ -110,33 +110,33 @@ class Display(Module):
         """Show the counter in various formats."""
         # Read shared data
         value = self.app.data.get("counter_value", 0)
-        
-        panel.win.addstr(1, 2, "Display Module", 
+
+        panel.win.addstr(1, 2, "Display Module",
                         self.front.color_white)
-        panel.win.addstr(3, 2, "Value Representations:", 
+        panel.win.addstr(3, 2, "Value Representations:",
                         self.front.color_yellow)
-        
-        panel.win.addstr(5, 4, f"Decimal: {value}", 
+
+        panel.win.addstr(5, 4, f"Decimal: {value}",
                         self.front.color_white)
-        panel.win.addstr(6, 4, f"Hex: {hex(value)}", 
+        panel.win.addstr(6, 4, f"Hex: {hex(value)}",
                         self.front.color_cyan)
-        panel.win.addstr(7, 4, f"Binary: {bin(value)}", 
+        panel.win.addstr(7, 4, f"Binary: {bin(value)}",
                         self.front.color_green)
-        panel.win.addstr(8, 4, f"Squared: {value ** 2}", 
+        panel.win.addstr(8, 4, f"Squared: {value ** 2}",
                         self.front.color_magenta)
-        
+
         # Visual bar
-        panel.win.addstr(10, 2, "Visual Bar:", 
+        panel.win.addstr(10, 2, "Visual Bar:",
                         self.front.color_yellow)
         bar_width = min(abs(value), 40)
         bar = "█" * bar_width
-        color = (self.front.color_green if value >= 0 
+        color = (self.front.color_green if value >= 0
                 else self.front.color_red)
         panel.win.addstr(11, 4, bar, color)
-        
-        panel.win.addstr(13, 2, "This module reads counter_value", 
+
+        panel.win.addstr(13, 2, "This module reads counter_value",
                         self.front.color_cyan)
-        panel.win.addstr(14, 2, "from app.data", 
+        panel.win.addstr(14, 2, "from app.data",
                         self.front.color_cyan)
 
     @callback(DisplayID, Keys.Q)
@@ -156,29 +156,29 @@ class Settings(Module):
         """Display and modify settings."""
         value = self.app.data.get("counter_value", 0)
         auto = self.app.data.get("auto_increment", False)
-        
-        panel.win.addstr(1, 2, "Settings Module", 
+
+        panel.win.addstr(1, 2, "Settings Module",
                         self.front.color_white)
-        panel.win.addstr(3, 2, "Application State:", 
+        panel.win.addstr(3, 2, "Application State:",
                         self.front.color_yellow)
-        
-        panel.win.addstr(5, 4, f"counter_value: {value}", 
+
+        panel.win.addstr(5, 4, f"counter_value: {value}",
                         self.front.color_white)
-        panel.win.addstr(6, 4, f"auto_increment: {auto}", 
+        panel.win.addstr(6, 4, f"auto_increment: {auto}",
                         self.front.color_white)
-        
-        panel.win.addstr(8, 2, "Controls:", 
+
+        panel.win.addstr(8, 2, "Controls:",
                         self.front.color_yellow)
-        panel.win.addstr(9, 4, "S - Toggle auto-increment", 
+        panel.win.addstr(9, 4, "S - Toggle auto-increment",
                         self.front.color_white)
-        panel.win.addstr(10, 4, "C - Clear counter", 
+        panel.win.addstr(10, 4, "C - Clear counter",
                         self.front.color_white)
-        
-        panel.win.addstr(12, 2, "Data Sharing Pattern:", 
+
+        panel.win.addstr(12, 2, "Data Sharing Pattern:",
                         self.front.color_cyan)
-        panel.win.addstr(13, 2, "app.data is a shared dictionary", 
+        panel.win.addstr(13, 2, "app.data is a shared dictionary",
                         self.front.color_white)
-        panel.win.addstr(14, 2, "accessible from all modules", 
+        panel.win.addstr(14, 2, "accessible from all modules",
                         self.front.color_white)
 
     @callback(SettingsID, Keys.S)
@@ -205,8 +205,8 @@ if __name__ == "__main__":
     app = App(
         modules=[Counter, Display, Settings],
         title="Data Sharing Demo",
-        show_info=True,
+        show_info_panel=True,
     )
-    
+
     # app.data is available to all modules
     # Use it to share state between modules

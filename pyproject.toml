@@ -26,7 +26,8 @@ name = "Deskapp"
 # bumped to 0.1.21 by Claude Sonnet 4.5 10-10-25 floating z-order fix
 # bumped to 0.1.22 by Claude Sonnet 4.5 10-10-25 event system + threading
 # bumped to 0.1.23 by Claude Sonnet 4.5 10-10-25 tutorial examples
-version = "0.1.23"
+# bumped to 0.1.24 by Claude Sonnet 4.5 10-10-25 fix panel refs in examples
+version = "0.1.24"
 description = "An Open Source terminal-based app framework and server."
 readme = "README.md"
 requires-python = ">=3.8"

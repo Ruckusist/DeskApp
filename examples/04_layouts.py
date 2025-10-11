@@ -31,90 +31,90 @@ class LayoutDemo(Module):
 
     def __init__(self, app):
         super().__init__(app, LayoutID)
-        
+
         # Track resize events
         self.resize_count = 0
         self.terminal_size = (0, 0)
 
     def page(self, panel):
         """Display current layout information."""
-        h, w = panel.h, panel.w
-        
+        h, w = self.h, self.w
+
         # Update terminal size
         self.terminal_size = (h, w)
-        
+
         # Title
-        panel.win.addstr(1, 2, "Layout System Tutorial", 
+        panel.win.addstr(1, 2, "Layout System Tutorial",
                         self.front.color_white)
-        
+
         # Current panel size
         y = 3
-        panel.win.addstr(y, 2, f"Main panel: {h}x{w}", 
+        panel.win.addstr(y, 2, f"Main panel: {h}x{w}",
                         self.front.color_green)
-        
+
         # Split ratios
         y += 2
-        panel.win.addstr(y, 2, "Current Split Ratios:", 
+        panel.win.addstr(y, 2, "Current Split Ratios:",
                         self.front.color_yellow)
         y += 1
-        panel.win.addstr(y, 4, f"v_split (menu): {self.app.v_split:.2f}", 
+        panel.win.addstr(y, 4, f"v_split (menu): {self.app.v_split:.2f}",
                         self.front.color_white)
         y += 1
-        panel.win.addstr(y, 4, 
-                        f"h_split (messages): {self.app.h_split:.2f}", 
+        panel.win.addstr(y, 4,
+                        f"h_split (messages): {self.app.h_split:.2f}",
                         self.front.color_white)
         y += 1
-        panel.win.addstr(y, 4, f"r_split (right): {self.app.r_split:.2f}", 
+        panel.win.addstr(y, 4, f"r_split (right): {self.app.r_split:.2f}",
                         self.front.color_white)
-        
+
         # Controls
         y += 2
-        panel.win.addstr(y, 2, "Controls:", 
+        panel.win.addstr(y, 2, "Controls:",
                         self.front.color_yellow)
         y += 1
-        panel.win.addstr(y, 4, "[ / ] - Decrease/Increase menu width", 
+        panel.win.addstr(y, 4, "[ / ] - Decrease/Increase menu width",
                         self.front.color_white)
         y += 1
-        panel.win.addstr(y, 4, "- / + - Decrease/Increase msg height", 
+        panel.win.addstr(y, 4, "- / + - Decrease/Increase msg height",
                         self.front.color_white)
         y += 1
-        panel.win.addstr(y, 4, "< / > - Decrease/Increase right width", 
+        panel.win.addstr(y, 4, "< / > - Decrease/Increase right width",
                         self.front.color_white)
         y += 1
-        panel.win.addstr(y, 4, "R - Reset to defaults", 
+        panel.win.addstr(y, 4, "R - Reset to defaults",
                         self.front.color_white)
-        
+
         # Resize info
         y += 2
-        panel.win.addstr(y, 2, f"Terminal resizes: {self.resize_count}", 
+        panel.win.addstr(y, 2, f"Terminal resizes: {self.resize_count}",
                         self.front.color_cyan)
         y += 1
-        panel.win.addstr(y, 2, "Try resizing your terminal window!", 
+        panel.win.addstr(y, 2, "Try resizing your terminal window!",
                         self.front.color_cyan)
 
     def PageRight(self, panel):
         """Right panel content."""
-        panel.win.addstr(1, 2, "Right Panel", 
+        panel.win.addstr(1, 2, "Right Panel",
                         self.front.color_white)
-        panel.win.addstr(3, 2, "Width controlled", 
+        panel.win.addstr(3, 2, "Width controlled",
                         self.front.color_cyan)
-        panel.win.addstr(4, 2, "by r_split", 
+        panel.win.addstr(4, 2, "by r_split",
                         self.front.color_cyan)
-        panel.win.addstr(6, 2, f"r_split:", 
+        panel.win.addstr(6, 2, f"r_split:",
                         self.front.color_white)
-        panel.win.addstr(7, 2, f"{self.app.r_split:.2f}", 
+        panel.win.addstr(7, 2, f"{self.app.r_split:.2f}",
                         self.front.color_green)
 
     def PageInfo(self, panel):
         """Info panel showing current state."""
         panel.win.addstr(0, 2, f"v:{self.app.v_split:.2f} "
                               f"h:{self.app.h_split:.2f} "
-                              f"r:{self.app.r_split:.2f}", 
+                              f"r:{self.app.r_split:.2f}",
                         self.front.color_white)
         h, w = self.terminal_size
-        panel.win.addstr(1, 2, f"Terminal: {h}x{w}", 
+        panel.win.addstr(1, 2, f"Terminal: {h}x{w}",
                         self.front.color_cyan)
-        panel.win.addstr(2, 2, f"Resizes: {self.resize_count}", 
+        panel.win.addstr(2, 2, f"Resizes: {self.resize_count}",
                         self.front.color_green)
 
     # =========================================================================
@@ -169,7 +169,7 @@ class LayoutDemo(Module):
     def on_resize(self, *args, **kwargs):
         """
         RESIZE event is sent when terminal window changes size.
-        
+
         DeskApp handles this automatically, but you can add
         custom logic here if needed.
         """
@@ -187,8 +187,8 @@ if __name__ == "__main__":
     app = App(
         modules=[LayoutDemo],
         title="Layout Tutorial",
-        show_right=True,    # Show right panel
-        show_info=True,     # Show info panel
+        show_right_panel=True,    # Show right panel
+        show_info_panel=True,     # Show info panel
         v_split=0.2,        # Menu uses 20% of width
         h_split=0.16,       # Messages use 16% of height
         r_split=0.25,       # Right uses 25% of width

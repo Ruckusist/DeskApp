@@ -30,9 +30,9 @@ class Hello(Module):
         """Main rendering - called every frame."""
         # panel.win is the curses window object
         # self.front.color_white is a color pair
-        panel.win.addstr(2, 2, "Hello, DeskApp!", 
+        panel.win.addstr(2, 2, "Hello, DeskApp!",
                         self.front.color_white)
-        panel.win.addstr(4, 2, "Press Q to quit", 
+        panel.win.addstr(4, 2, "Press Q to quit",
                         self.front.color_cyan)
 
     @callback(HelloID, Keys.Q)
