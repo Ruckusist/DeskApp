@@ -26,17 +26,17 @@ AsyncFetch_ID = random.random()
 
 class DataFetchWorker(BaseWorker):
     """Worker that simulates async data fetching with progress."""
-    
+
     def __init__(self, app, fetch_id: int, duration: float = 3.0):
         super().__init__(app, name=f"Fetch{fetch_id}")
         self.fetch_id = fetch_id
         self.duration = duration
         self.steps = 5
-        
+
     def work(self):
         """Simulate multi-step data fetch process."""
         step_duration = self.duration / self.steps
-        
+
         for step in range(self.steps):
             if self.should_stop:
                 self.emit('fetch.cancelled', {
@@ -44,7 +44,7 @@ class DataFetchWorker(BaseWorker):
                     'step': step
                 })
                 return
-            
+
             # Emit progress
             progress = ((step + 1) / self.steps) * 100
             self.emit('fetch.progress', {
@@ -53,10 +53,10 @@ class DataFetchWorker(BaseWorker):
                 'total_steps': self.steps,
                 'progress': progress
             })
-            
+
             # Simulate work
             time.sleep(step_duration)
-        
+
         # Simulate success/failure (90% success rate)
         if random.random() < 0.9:
             self.emit('fetch.complete', {
@@ -82,7 +82,7 @@ class AsyncFetch(Module):
         self.fetch_status = {}  # {fetch_id: {'status': ..., 'progress': ...}}
         self.next_fetch_id = 1
         self.completed_fetches = []
-        
+
         # Register event listeners
         self.on_event('fetch.progress', self.on_progress)
         self.on_event('fetch.complete', self.on_complete)
@@ -181,21 +181,21 @@ class AsyncFetch(Module):
         if self.fetch_status:
             self.write(panel, self.index, 2, "Fetch Progress:", "cyan")
             self.index += 1
-            
+
             # Show last 8 fetches
             for fetch_id in sorted(self.fetch_status.keys())[-8:]:
                 if self.index >= self.h - 6:
                     break
-                    
+
                 status = self.fetch_status[fetch_id]
                 status_text = status['status']
                 progress = status.get('progress', 0)
-                
+
                 # Progress bar
                 bar_width = 20
                 filled = int((progress / 100) * bar_width)
                 bar = '█' * filled + '░' * (bar_width - filled)
-                
+
                 # Color based on status
                 if status_text == 'complete':
                     color = "green"
@@ -205,14 +205,14 @@ class AsyncFetch(Module):
                     color = "yellow"
                 else:
                     color = "cyan"
-                
+
                 line = f"  #{fetch_id}: [{bar}] {progress:.0f}% {status_text}"
                 self.write(panel, self.index, 2, line, color)
                 self.index += 1
         else:
             self.write(panel, self.index, 2, "  (no fetches yet)", "white")
             self.index += 1
-        
+
         self.index += 1
 
         # Completed fetches
@@ -239,11 +239,11 @@ class AsyncFetch(Module):
             1 for s in self.fetch_status.values()
             if s['status'] == 'error'
         )
-        
+
         line1 = f"Total: {total} | Complete: {complete} | Errors: {errors}"
         line2 = f"Active workers: {len(self.workers)}"
         line3 = "Event-driven async pattern"
-        
+
         try:
             maxw = max(0, panel.dims[1] - 4)
             panel.win.addstr(1, 2, line1[:maxw], self.front.color_cyan)
@@ -257,11 +257,11 @@ class AsyncFetch(Module):
         """Start new fetch."""
         fetch_id = self.next_fetch_id
         self.next_fetch_id += 1
-        
+
         worker = DataFetchWorker(self.app, fetch_id, duration=3.0)
         self.workers[fetch_id] = worker
         worker.start()
-        
+
         self.fetch_status[fetch_id] = {
             'status': 'starting',
             'progress': 0

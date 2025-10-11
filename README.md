@@ -113,20 +113,36 @@ Run the main app:
 deskapp
 ```
 
-Create a minimal module:
+**Try the tutorials!** Learn DeskApp in ~2 hours with our step-by-step
+examples:
 
 ```python
-from deskapp import App
+# Your first DeskApp in 20 lines
+from deskapp import App, Module, callback, Keys
+import random
 
-app = App(title="Hello, Deskapp!")
+HelloID = random.random()
 
-@app.on_render
-def render(screen):
-    screen.print(2, 2, "Hello from Deskapp 👋")
+class Hello(Module):
+    name = "Hello"
+    
+    def __init__(self, app):
+        super().__init__(app, HelloID)
+    
+    def page(self, panel):
+        panel.win.addstr(2, 2, "Hello, DeskApp!", 
+                        self.front.color_white)
+    
+    @callback(HelloID, Keys.Q)
+    def quit(self, *args, **kwargs):
+        self.logic.should_stop = True
 
 if __name__ == "__main__":
-    app.run()
+    app = App(modules=[Hello], title="Hello World")
 ```
+
+**Next steps**: See [examples/README.md](examples/README.md) for the
+complete tutorial series (00_hello.py through 08_complete_app.py).
 
 ## CLI entry points
 - `deskapp` — launch the primary Deskapp runtime
@@ -140,7 +156,31 @@ if __name__ == "__main__":
 ## Examples
 Browse the examples folder for progressively more complex samples.
 
-- examples/ — quick demos and gameplay prototypes
+**📚 Tutorial Series** (Start here!):
+- **00_hello.py** - Minimal "Hello World" (5 min)
+- **01_panels.py** - Panel system tour (10 min)
+- **02_module.py** - Module basics (15 min)
+- **03_callbacks.py** - Event handling (15 min)
+- **04_layouts.py** - Split ratios & resizing (10 min)
+- **05_styling.py** - Colors & formatting (10 min)
+- **06_data_sharing.py** - Module communication (15 min)
+- **07_events.py** - Event system & workers (20 min)
+- **08_complete_app.py** - Full application (30 min)
+
+**Total**: ~2 hours from beginner to production-ready apps!
+
+See [examples/README.md](examples/README.md) for the complete learning
+path with detailed explanations.
+
+**Additional Examples**:
+- **ex_fps_test.py** - FPS tracking demo
+- **ex_floating_test.py** - Floating panel overlay
+- **ex_event_basic.py** - Event system basics
+- **ex_async_fetch.py** - Advanced async patterns
+- **deskhunter.py** - Complete game example
+- **THREADING.md** - Threading guide
+
+**Legacy Examples**:
 
 ```bash
 python examples/ex_0.py   # sanity check
@@ -148,6 +188,7 @@ python examples/ex_1.py   # basic printing
 python examples/ex_2.py   # horizontal scroller
 python examples/ex_3.py   # Arduino-style event loop
 python examples/ex_4.py   # minimal game (Math_Game)
+```
 python examples/ex_5.py   # server + deskapp user profile demo (WIP)
 ```
 

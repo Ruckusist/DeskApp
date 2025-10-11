@@ -24,7 +24,7 @@ class EventBasic(Module):
         super().__init__(app, EventBasic_ID)
         self.event_log = []
         self.counter = 0
-        
+
         # Register event listeners using module helpers
         self.on_event('test.ping', self.on_ping)
         self.on_event('test.data', self.on_data)
@@ -120,7 +120,7 @@ class EventBasic(Module):
     def PageInfo(self, panel):
         """Show event bus metrics in info panel."""
         metrics = self.app.events.get_metrics()
-        
+
         line1 = (
             f"Events: {metrics['events_emitted']} emitted, "
             f"{metrics['events_processed']} processed"
@@ -133,7 +133,7 @@ class EventBasic(Module):
             f"Errors: {metrics['handler_errors']} | "
             f"Listeners: {metrics['listener_count']}"
         )
-        
+
         try:
             maxw = max(0, panel.dims[1] - 4)
             panel.win.addstr(1, 2, line1[:maxw], self.front.color_cyan)

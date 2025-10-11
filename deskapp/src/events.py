@@ -32,15 +32,15 @@ System Events:
 Usage:
     # In app initialization
     app.events = EventBus()
-    
+
     # Emit an event
     app.events.emit('data.update', {'value': 42}, source='MyModule')
-    
+
     # Register listener
     def on_data_update(event):
         print(f"Got data: {event['data']}")
     app.events.on('data.update', on_data_update)
-    
+
     # Process events (in main loop)
     app.events.process_events(max_events=10)
 
@@ -55,57 +55,57 @@ from typing import Callable, Dict, List, Any, Optional
 
 class EventBus:
     """Thread-safe event bus for DeskApp framework.
-    
+
     Provides pub/sub event system with queued delivery.
     All event processing happens on main thread for curses safety.
     """
-    
+
     def __init__(self, max_queue_size: int = 1000):
         """Initialize event bus.
-        
+
         Args:
             max_queue_size: Maximum events in queue before dropping
         """
         # Thread-safe event queue
         self.event_queue = queue.Queue(maxsize=max_queue_size)
-        
+
         # Event listeners: {event_type: [handler_fn, ...]}
         self.listeners: Dict[str, List[Callable]] = {}
-        
+
         # Lock for listener dict modifications
         self.listener_lock = threading.Lock()
-        
+
         # Metrics
         self.events_emitted = 0
         self.events_processed = 0
         self.events_dropped = 0
         self.handler_errors = 0
-        
+
         # Performance tracking
         self.last_process_time = 0.0
-        
+
     def emit(self, event_type: str, data: Optional[Dict[str, Any]] = None,
              source: str = "unknown") -> bool:
         """Emit an event to the queue.
-        
+
         Args:
             event_type: Event identifier (e.g., 'data.update')
             data: Event payload (default: empty dict)
             source: Event source (module name or 'system')
-            
+
         Returns:
             True if queued, False if queue full (dropped)
         """
         if data is None:
             data = {}
-            
+
         event = {
             'type': event_type,
             'source': source,
             'data': data,
             'timestamp': time.time()
         }
-        
+
         try:
             # Non-blocking put - drop if queue full
             self.event_queue.put_nowait(event)
@@ -115,10 +115,10 @@ class EventBus:
             # Queue overflow - drop event
             self.events_dropped += 1
             return False
-    
+
     def on(self, event_type: str, handler: Callable) -> None:
         """Register event listener.
-        
+
         Args:
             event_type: Event to listen for (e.g., 'data.update')
             handler: Callback function(event) -> None
@@ -128,14 +128,14 @@ class EventBus:
                 self.listeners[event_type] = []
             if handler not in self.listeners[event_type]:
                 self.listeners[event_type].append(handler)
-    
+
     def off(self, event_type: str, handler: Callable) -> bool:
         """Unregister event listener.
-        
+
         Args:
             event_type: Event type
             handler: Handler function to remove
-            
+
         Returns:
             True if removed, False if not found
         """
@@ -148,62 +148,62 @@ class EventBus:
                         del self.listeners[event_type]
                     return True
         return False
-    
+
     def process_events(self, max_events: int = 10,
                       max_time_ms: float = 5.0) -> int:
         """Process queued events in main thread.
-        
+
         Calls registered handlers for each event.
         Limits processing to prevent UI stutter.
-        
+
         Args:
             max_events: Maximum events to process this call
             max_time_ms: Max processing time in milliseconds
-            
+
         Returns:
             Number of events processed
         """
         start_time = time.perf_counter()
         processed = 0
-        
+
         for _ in range(max_events):
             # Check time budget
             elapsed_ms = (time.perf_counter() - start_time) * 1000
             if elapsed_ms >= max_time_ms:
                 break
-                
+
             # Get next event (non-blocking)
             try:
                 event = self.event_queue.get_nowait()
             except queue.Empty:
                 break
-            
+
             # Dispatch to handlers
             self._dispatch_event(event)
             processed += 1
             self.events_processed += 1
-        
+
         # Track processing time
         self.last_process_time = (
             (time.perf_counter() - start_time) * 1000
         )
-        
+
         return processed
-    
+
     def _dispatch_event(self, event: Dict[str, Any]) -> None:
         """Dispatch event to registered handlers.
-        
+
         Handles exceptions to prevent one bad handler crashing loop.
-        
+
         Args:
             event: Event dict to dispatch
         """
         event_type = event['type']
-        
+
         # Get handlers (with lock for thread safety)
         with self.listener_lock:
             handlers = self.listeners.get(event_type, []).copy()
-        
+
         # Call each handler
         for handler in handlers:
             try:
@@ -223,10 +223,10 @@ class EventBus:
                         },
                         source='event_bus'
                     )
-    
+
     def get_metrics(self) -> Dict[str, Any]:
         """Get event bus metrics.
-        
+
         Returns:
             Dict with emitted, processed, dropped counts, etc.
         """
@@ -241,10 +241,10 @@ class EventBus:
                 len(handlers) for handlers in self.listeners.values()
             )
         }
-    
+
     def clear(self) -> int:
         """Clear all pending events from queue.
-        
+
         Returns:
             Number of events cleared
         """
@@ -256,7 +256,7 @@ class EventBus:
             except queue.Empty:
                 break
         return cleared
-    
+
     def shutdown(self) -> None:
         """Clean shutdown - clear queue and listeners."""
         self.clear()

@@ -35,7 +35,7 @@ class WorkerTest(Module):
         self.worker_events = []
         self.counter_worker = None
         self.timer_worker = None
-        
+
         # Register event listeners
         self.on_event('counter.tick', self.on_counter_tick)
         self.on_event('timer.done', self.on_timer_done)
@@ -108,7 +108,7 @@ class WorkerTest(Module):
         timer_status = "RUNNING" if (
             self.timer_worker and self.timer_worker.is_running
         ) else "STOPPED"
-        
+
         self.write(panel, self.index, 2, "Worker Status:", "cyan")
         self.index += 1
         self.write(
@@ -151,11 +151,11 @@ class WorkerTest(Module):
         """Show threading info."""
         import threading
         active_count = threading.active_count()
-        
+
         line1 = f"Active threads: {active_count}"
         line2 = f"Counter: {self.counter_value}"
         line3 = f"Events: {len(self.worker_events)}"
-        
+
         try:
             maxw = max(0, panel.dims[1] - 4)
             panel.win.addstr(1, 2, line1[:maxw], self.front.color_cyan)
@@ -170,7 +170,7 @@ class WorkerTest(Module):
         if self.counter_worker and self.counter_worker.is_running:
             self.print("Counter already running")
             return
-        
+
         self.counter_worker = CounterWorker(self.app, interval=1.0)
         self.counter_worker.start()
         self.print("Started counter worker")
@@ -181,7 +181,7 @@ class WorkerTest(Module):
         if not self.counter_worker or not self.counter_worker.is_running:
             self.print("Counter not running")
             return
-        
+
         self.counter_worker.stop()
         self.print("Stopped counter worker")
 
@@ -191,7 +191,7 @@ class WorkerTest(Module):
         if self.timer_worker and self.timer_worker.is_running:
             self.print("Timer already running")
             return
-        
+
         self.timer_fired = False
         self.timer_worker = TimerWorker(
             self.app,

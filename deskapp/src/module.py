@@ -29,7 +29,7 @@ class Module(SubClass):
         self.mouse_input = None
         # Generic per-module storage to reduce boilerplate in mods
         self.context = {}
-        
+
         # Event listeners registered by this module
         # Added by Claude Sonnet 4.5 10-10-25
         self._event_handlers = []
@@ -83,40 +83,40 @@ class Module(SubClass):
 
     ## EVENT SYSTEM HELPERS
     ## Added by: Claude Sonnet 4.5 10-10-25
-    
+
     def emit_event(self, event_type: str, data: dict = None) -> bool:
         """Emit an event from this module.
-        
+
         Automatically includes source=self.name.
-        
+
         Args:
             event_type: Event identifier (e.g., 'data.update')
             data: Event payload
-            
+
         Returns:
             True if queued, False if dropped
         """
         return self.app.emit(event_type, data, source=self.name)
-    
+
     def on_event(self, event_type: str, handler) -> None:
         """Register event listener for this module.
-        
+
         Tracks handlers for cleanup on module teardown.
-        
+
         Args:
             event_type: Event to listen for
             handler: Callback function(event) -> None
         """
         self.app.on(event_type, handler)
         self._event_handlers.append((event_type, handler))
-    
+
     def off_event(self, event_type: str, handler) -> bool:
         """Unregister event listener.
-        
+
         Args:
             event_type: Event type
             handler: Handler to remove
-            
+
         Returns:
             True if removed, False if not found
         """
@@ -127,10 +127,10 @@ class Module(SubClass):
             except ValueError:
                 pass
         return result
-    
+
     def cleanup_events(self) -> None:
         """Remove all event listeners registered by this module.
-        
+
         Called automatically on module teardown.
         """
         for event_type, handler in self._event_handlers:
@@ -222,7 +222,7 @@ class Module(SubClass):
 
     def end_safely(self):
         """Module cleanup on shutdown.
-        
+
         Updated by Claude Sonnet 4.5 10-10-25: cleanup event listeners
         """
         self.cleanup_events()

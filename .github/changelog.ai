@@ -1,5 +1,23 @@
 # DeskApp Changelog (AI Managed)
 
+## 0.1.23 - 2025-10-10
+- MAJOR DOCUMENTATION: Comprehensive tutorial example suite.
+- Created 9-tutorial series (00-08) teaching DeskApp from scratch.
+- Beginner tier: 00_hello.py, 01_panels.py, 02_module.py.
+- Intermediate tier: 03_callbacks.py, 04_layouts.py, 05_styling.py.
+- Advanced tier: 06_data_sharing.py, 07_events.py, 08_complete_app.py.
+- Each tutorial < 150 lines, extensively commented, progressive difficulty.
+- Total learning time: ~2 hours from zero to production-ready apps.
+- Completely rewrote examples/README.md with learning path guide.
+- Added quick reference table mapping examples to concepts and time.
+- Updated main README.md with tutorial callouts and next steps.
+- All examples pass 79-character line limit validation.
+- Examples demonstrate: modules, panels, callbacks, events, workers, colors.
+- 08_complete_app.py shows production patterns: background fetching, 
+  progress updates, error handling, clean shutdown.
+- Version bumped to 0.1.23.
+- All changes credited to Claude Sonnet 4.5 10-10-25.
+
 ## 0.1.22 - 2025-10-10
 - MAJOR FEATURE: Event system and threading model.
 - Added EventBus class (deskapp/src/events.py) for thread-safe event passing.

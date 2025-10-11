@@ -151,7 +151,7 @@ class Backend(SubClass):
         # first time setup of all mods.
         for mod in self.app.menu:
             self.setup_mod(mod)
-        
+
         # Emit system init event - Added by Claude Sonnet 4.5 10-10-25
         self.app.emit('system.init', {
             'module_count': len(self.app.menu),

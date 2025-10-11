@@ -33,7 +33,7 @@ DeskApp v0.1.22+ includes a robust event system and threading model for backgrou
 1. **ALL curses operations MUST happen on main thread**
    - Drawing, panels, windows, colors, input
    - Workers NEVER touch curses directly
-   
+
 2. **Workers communicate via events ONLY**
    - Use `worker.emit(event_type, data)`
    - Main loop calls `app.events.process_events()`
@@ -107,10 +107,10 @@ class MyWorker(BaseWorker):
         while not self.should_stop:
             # Do background work
             result = expensive_operation()
-            
+
             # Emit event for UI update
             self.emit('work.done', {'result': result})
-            
+
             # Sleep to avoid busy-wait
             time.sleep(1.0)
 
@@ -173,30 +173,30 @@ class DataWorker(BaseWorker):
 
 class MyModule(Module):
     name = "Worker Demo"
-    
+
     def __init__(self, app):
         super().__init__(app, random.random())
         self.data_count = 0
         self.worker = None
-        
+
         # Listen for events
         self.on_event('data.ready', self.on_data)
-    
+
     def on_data(self, event):
         # This runs in MAIN thread - safe to update UI vars
         self.data_count = event['data']['count']
-    
+
     def page(self, panel):
         # Render UI using worker data
         self.write(panel, 1, 2, f"Count: {self.data_count}", "cyan")
-    
+
     @callback(ID, keypress=Keys.S)
     def on_s(self, *args, **kwargs):
         # Start worker
         if not self.worker:
             self.worker = DataWorker(self.app, name="DataWorker")
             self.worker.start()
-    
+
     def end_safely(self):
         # Clean shutdown
         if self.worker:

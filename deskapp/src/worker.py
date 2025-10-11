@@ -17,7 +17,7 @@ Usage:
                 # Emit event for main thread
                 self.emit('data.ready', {'result': result})
                 time.sleep(1)
-    
+
     # In module
     worker = MyWorker(app)
     worker.start()
@@ -34,17 +34,17 @@ from typing import Optional, Dict, Any
 
 class BaseWorker(threading.Thread):
     """Base class for background worker threads.
-    
+
     Provides:
     - Clean start/stop lifecycle
     - Event emission to main thread
     - Error handling and reporting
     - Standard worker patterns
     """
-    
+
     def __init__(self, app, name: str = "Worker"):
         """Initialize worker.
-        
+
         Args:
             app: DeskApp App instance
             name: Worker name for identification
@@ -55,17 +55,17 @@ class BaseWorker(threading.Thread):
         self.should_stop = False
         self.is_running = False
         self.error = None
-        
+
     def emit(self, event_type: str, data: Optional[Dict[str, Any]] = None
             ) -> bool:
         """Emit event from worker thread.
-        
+
         Thread-safe wrapper for app.emit().
-        
+
         Args:
             event_type: Event identifier
             data: Event payload
-            
+
         Returns:
             True if queued, False if dropped
         """
@@ -73,15 +73,15 @@ class BaseWorker(threading.Thread):
             data = {}
         return self.app.emit(event_type, data,
                             source=f"worker.{self.worker_name}")
-    
+
     def run(self) -> None:
         """Thread entry point.
-        
+
         DO NOT OVERRIDE - override work() instead.
         """
         self.is_running = True
         self.emit('worker.started', {'name': self.worker_name})
-        
+
         try:
             self.work()
         except Exception as e:
@@ -93,12 +93,12 @@ class BaseWorker(threading.Thread):
         finally:
             self.is_running = False
             self.emit('worker.stopped', {'name': self.worker_name})
-    
+
     def work(self) -> None:
         """Worker main loop - OVERRIDE THIS.
-        
+
         Check self.should_stop periodically and return to exit cleanly.
-        
+
         Example:
             def work(self):
                 while not self.should_stop:
@@ -107,13 +107,13 @@ class BaseWorker(threading.Thread):
                     time.sleep(1)
         """
         raise NotImplementedError("Override work() in subclass")
-    
+
     def stop(self, timeout: float = 2.0) -> bool:
         """Signal worker to stop and wait.
-        
+
         Args:
             timeout: Max seconds to wait for clean shutdown
-            
+
         Returns:
             True if stopped cleanly, False if timeout
         """
@@ -124,15 +124,15 @@ class BaseWorker(threading.Thread):
 
 class CounterWorker(BaseWorker):
     """Example worker that counts in background.
-    
+
     Demonstrates basic worker pattern with periodic events.
     """
-    
+
     def __init__(self, app, interval: float = 1.0):
         super().__init__(app, name="Counter")
         self.interval = interval
         self.count = 0
-        
+
     def work(self) -> None:
         """Count and emit events periodically."""
         while not self.should_stop:
@@ -146,17 +146,17 @@ class CounterWorker(BaseWorker):
 
 class TimerWorker(BaseWorker):
     """Worker that triggers event after delay.
-    
+
     One-shot timer that emits event when time expires.
     """
-    
+
     def __init__(self, app, delay: float, event_type: str,
                  event_data: Optional[Dict] = None):
         super().__init__(app, name="Timer")
         self.delay = delay
         self.event_type = event_type
         self.event_data = event_data or {}
-        
+
     def work(self) -> None:
         """Wait for delay then emit event."""
         start = time.time()
@@ -171,15 +171,15 @@ class TimerWorker(BaseWorker):
 
 class PeriodicWorker(BaseWorker):
     """Worker that calls function periodically.
-    
+
     Useful for polling, monitoring, or periodic updates.
     """
-    
+
     def __init__(self, app, interval: float, callback, name: str = "Periodic"):
         super().__init__(app, name=name)
         self.interval = interval
         self.callback = callback
-        
+
     def work(self) -> None:
         """Call callback periodically."""
         while not self.should_stop:
@@ -190,5 +190,5 @@ class PeriodicWorker(BaseWorker):
                     self.emit('periodic.result', {'result': result})
             except Exception as e:
                 self.emit('periodic.error', {'error': str(e)})
-            
+
             time.sleep(self.interval)
