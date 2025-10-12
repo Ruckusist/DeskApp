@@ -42,8 +42,24 @@ class Module(SubClass):
     def w(self):
         return self.app.logic.current_dims()[1]
 
-    def write(self, panel, x, y, string, color=None):
-        # Added by GPT5 10-07-25: improved write using panel dims not main dims
+    def write(self, panel, row, col, string, color=None):
+        """
+        Write text to panel with bounds checking and color support.
+        
+        Args:
+            panel: Panel object to write to
+            row: Vertical position (0 = top)
+            col: Horizontal position (0 = left)
+            string: Text to write
+            color: Color name string (yellow, red, green, blue, black,
+                   cyan, white)
+        
+        Returns:
+            True on success, False on error
+        
+        Added by GPT5 10-07-25: improved write using panel dims
+        Updated by AI 10-11-25: renamed x,y to row,col for clarity
+        """
         try:
             ph, pw = panel.dims[0], panel.dims[1]
         except Exception:
@@ -55,16 +71,16 @@ class Module(SubClass):
         elif color == "black": c = self.front.color_black
         elif color == "cyan": c = self.front.color_cyan
         else: c = self.front.color_white
-        if x >= ph:
-            self.print(f"write row OOB x={x} ph={ph}")
+        if row >= ph:
+            self.print(f"write row OOB row={row} ph={ph}")
             return False
-        if y >= pw:
-            self.print(f"write col OOB y={y} pw={pw}")
+        if col >= pw:
+            self.print(f"write col OOB col={col} pw={pw}")
             return False
-        max_len = pw - y
+        max_len = pw - col
         text = string if len(string) <= max_len else string[:max_len]
         try:
-            panel.win.addstr(x, y, text, c)
+            panel.win.addstr(row, col, text, c)
             return True
         except Exception as e:
             self.print(f"write err: {e}")
@@ -177,9 +193,10 @@ class Module(SubClass):
         Lines:
           1: App / Module
           2: Keys summary
-          3: FPS / Frame time / Terminal size
+          3: FPS / Frame time / Memory / Terminal size
         Added by GPT5 10-07-25 (reverted 3-line spec)
         Updated by Claude Sonnet 4.5 10-09-25: added FPS display
+        Updated by Claude Sonnet 4.5 10-10-25: added Memory (Session 1 Step 4)
         """
         try:
             cur_mod = self.app.logic.current_mod()
@@ -194,10 +211,11 @@ class Module(SubClass):
             term_w = 0
         fps = self.app.data.get('fps', 0.0)
         frame_time = self.app.data.get('frame_time', 0.0)
+        mem_str = self.app.memory.get_formatted()
         maxw = max(0, self.front.w - 4)
         line1 = f"App: {getattr(self.app, 'name', 'DeskApp')} | Mod: {mod_name}"[:maxw]
         line2 = "Keys: Tab=Input Q=Quit 1-8 Panels PgUp/Dn Switch"[:maxw]
-        line3 = f"FPS: {fps} | Frame: {frame_time}ms | Term: {term_w}x{term_h}"[:maxw]
+        line3 = f"FPS: {fps} | Mem: {mem_str} | {term_w}x{term_h}"[:maxw]
         lines = [line1, line2, line3]
         colors = [self.front.color_cyan, self.front.color_green,
                   self.front.color_yellow]

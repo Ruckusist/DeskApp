@@ -595,6 +595,32 @@ class Backend(SubClass):
                 'frame_time': self.app.data.get('frame_time', 0.0)
             }, source='system')
 
+        # Memory tracking - Added Session 1 Step 5
+        current_time = time.time()
+        if not hasattr(self, 'last_memory_update'):
+            self.last_memory_update = 0
+
+        if current_time - self.last_memory_update >= 2.0:
+            self.app.data['memory']['current'] = (
+                self.app.memory.get_current()
+            )
+            self.last_memory_update = current_time
+
+        # Leak detection - Added Session 3 Step 2
+        if not hasattr(self, 'last_leak_check'):
+            self.last_leak_check = 0
+
+        if current_time - self.last_leak_check >= 10.0:
+            is_leak, growth = self.app.memory.check_leak()
+            if is_leak:
+                msg = f"WARNING: Potential leak (+{growth:.1f}MB in 60s)"
+                # Prevent duplicate warnings
+                prev_msg = (self.app.data['messages'][-1]
+                           if self.app.data['messages'] else "")
+                if msg != prev_msg:
+                    self.app.data['messages'].append(msg)
+            self.last_leak_check = current_time
+
         # EVENT PROCESSING - Added by Claude Sonnet 4.5 10-10-25
         # Process events BEFORE rendering to ensure data updates first
         events_processed = self.app.events.process_events(

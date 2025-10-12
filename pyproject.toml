@@ -27,7 +27,10 @@ name = "Deskapp"
 # bumped to 0.1.22 by Claude Sonnet 4.5 10-10-25 event system + threading
 # bumped to 0.1.23 by Claude Sonnet 4.5 10-10-25 tutorial examples
 # bumped to 0.1.24 by Claude Sonnet 4.5 10-10-25 fix panel refs in examples
-version = "0.1.24"
+# bumped to 0.2.1 by Claude Sonnet 4.5 10-10-25 memory monitoring (Proposal 11 S1)
+# bumped to 0.2.2 by Claude Sonnet 4.5 10-10-25 memory viewer module (Proposal 11 S2)
+# bumped to 0.2.3 by Claude Sonnet 4.5 10-10-25 leak detection (Proposal 11 S3)
+version = "0.2.3"
 description = "An Open Source terminal-based app framework and server."
 readme = "README.md"
 requires-python = ">=3.8"
@@ -45,7 +48,8 @@ dependencies = [
     "flask",
     "ollama",
     "chromadb",
-    "mcp"
+    "mcp",
+    "psutil"
 ]
 
 [project.urls]

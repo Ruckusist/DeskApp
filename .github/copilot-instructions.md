@@ -236,6 +236,9 @@ virtual environment: source .venv/bin/activate
    3. update the changelog
 
 -) Guidelines for Proposals
+    - proposals should be numbered sequentially (Proposal 8, 10, 11, 12, etc.)
+    - proposal numbers should match the feature/idea being implemented
+    - keep a running list of proposal numbers to avoid conflicts
     - proposals should start every section with a checkbox.
     - proposals should be execututed using the checkboxes. mark them as you go.
     - proposals should be general and architectural.

@@ -13,6 +13,7 @@ Updated by: Claude Sonnet 4.5 10-10-25
 from deskapp import Curse, Logic, Backend, Module, Keys, callback, callbacks
 from deskapp.mods import About, Buttons, Fire
 from deskapp.src.events import EventBus
+from deskapp.src.memory import MemoryTracker  # Added Session 1 Step 3
 
 class App:
     def __init__(self,
@@ -103,6 +104,13 @@ class App:
 
         # EVENT SYSTEM - Added by Claude Sonnet 4.5 10-10-25
         self.events = EventBus()
+
+        # MEMORY TRACKING - Added Session 1 Step 3
+        self.memory = MemoryTracker()
+        self.data['memory'] = {
+            'current': 0,
+            'baseline': self.memory.baseline
+        }
 
         self.menu = self.user_modules
         if self.show_demo:

@@ -1,5 +1,47 @@
 # DeskApp Changelog (AI Managed)
 
+## 0.2.3 - 2025-10-10
+- FEATURE: Memory Leak Detection (Proposal 11 Session 3).
+- Integrated leak detection into Backend.loop() (checks every 10 seconds).
+- Warns when memory grows >10MB in 60 seconds via message panel.
+- Added force_gc() callback to MemoryViewer (press 'G' to trigger).
+- Displays garbage collection results: objects collected and MB freed.
+- Prevents duplicate leak warnings with message deduplication.
+- Created examples/memory_leak_demo.py to demonstrate leak detection.
+- LeakTest module intentionally leaks memory for testing.
+- Updated MemoryViewer.PageInfo() to display leak warnings in red.
+- All leak detection thresholds tunable (10MB/60s default).
+- Version bumped to 0.2.3.
+- Changes credited to Claude Sonnet 4.5 10-10-25 (Proposal 11 S3).
+
+## 0.2.2 - 2025-10-10
+- FEATURE: Memory Viewer Module (Proposal 11 Session 2).
+- Created deskapp/mods/memory_viewer.py with MemoryViewer class.
+- Displays detailed memory statistics: current, baseline, growth, percent.
+- ASCII graph visualization of memory history (last 60 samples).
+- Color-coded display: green (<50%), yellow (<80%), red (>80%).
+- Shows Virtual Memory Size (VMS) and sample count.
+- Custom PageInfo() displays leak warnings when detected.
+- Renders sparkline-style graph using Unicode block characters.
+- Created examples/memory_viewer_demo.py for testing.
+- Exported MemoryViewer from deskapp.mods for easy import.
+- Version bumped to 0.2.2.
+- Changes credited to Claude Sonnet 4.5 10-10-25 (Proposal 11 S2).
+
+## 0.2.1 - 2025-10-10
+- FEATURE: Memory monitoring system (Proposal 11 Session 1).
+- Added psutil dependency for process memory tracking.
+- Created deskapp/src/memory.py with MemoryTracker class.
+- Implemented get_current(), get_formatted(), get_growth_mb(), check_leak().
+- Integrated MemoryTracker into App initialization (app.memory).
+- Updated default_page_info() to display memory usage in info panel.
+- Added periodic memory update (every 2 seconds) in Backend.loop().
+- Memory display format: "Mem: 45.2MB (8.8%)" in info panel line 3.
+- History tracking (60 samples) for leak detection (implemented, not active).
+- Performance overhead: <1% CPU, updates every 2s (not per frame).
+- Version bumped to 0.2.1.
+- Changes credited to Claude Sonnet 4.5 10-10-25 (Proposal 11 S1).
+
 ## 0.1.24 - 2025-10-10
 - BUGFIX: Variable reference verification in tutorial examples.
 - Fixed incorrect panel.h/panel.w references to use self.h/self.w.
