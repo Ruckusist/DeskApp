@@ -30,7 +30,10 @@ name = "Deskapp"
 # bumped to 0.2.1 by Claude Sonnet 4.5 10-10-25 memory monitoring (Proposal 11 S1)
 # bumped to 0.2.2 by Claude Sonnet 4.5 10-10-25 memory viewer module (Proposal 11 S2)
 # bumped to 0.2.3 by Claude Sonnet 4.5 10-10-25 leak detection (Proposal 11 S3)
-version = "0.2.3"
+# bumped to 0.2.4 by GitHub Copilot 10-12-25 mouse events + menu click (P13)
+# bumped to 0.2.5 by GitHub Copilot 10-27-25 dynamic chat word wrap (P30)
+# bumped to 0.3.0 by GitHub Copilot 10-27-25 threaded comms (P31)
+version = "0.3.0"
 description = "An Open Source terminal-based app framework and server."
 readme = "README.md"
 requires-python = ">=3.8"

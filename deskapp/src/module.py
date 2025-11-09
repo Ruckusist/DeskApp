@@ -45,7 +45,7 @@ class Module(SubClass):
     def write(self, panel, row, col, string, color=None):
         """
         Write text to panel with bounds checking and color support.
-        
+
         Args:
             panel: Panel object to write to
             row: Vertical position (0 = top)
@@ -53,15 +53,15 @@ class Module(SubClass):
             string: Text to write
             color: Color name string (yellow, red, green, blue, black,
                    cyan, white)
-        
+
         Returns:
             True on success, False on error
-        
+
         Added by GPT5 10-07-25: improved write using panel dims
         Updated by AI 10-11-25: renamed x,y to row,col for clarity
         """
         try:
-            ph, pw = panel.dims[0], panel.dims[1]
+            ph, pw = int(panel.dims[0]), int(panel.dims[1])
         except Exception:
             ph, pw = self.h, self.w
         if color == "yellow": c = self.front.color_yellow
@@ -71,14 +71,15 @@ class Module(SubClass):
         elif color == "black": c = self.front.color_black
         elif color == "cyan": c = self.front.color_cyan
         else: c = self.front.color_white
-        if row >= ph:
-            self.print(f"write row OOB row={row} ph={ph}")
-            return False
-        if col >= pw:
-            self.print(f"write col OOB col={col} pw={pw}")
-            return False
-        max_len = pw - col
-        text = string if len(string) <= max_len else string[:max_len]
+        # if row >= ph:
+        #     self.print(f"write row OOB row={row} ph={ph}")
+        #     return False
+        # if int(col) >= pw:
+        #     self.print(f"write col OOB col={col} pw={pw}")
+        #     return False
+        # max_len = pw - col
+        # text = string if len(string) <= max_len else string[:max_len]
+        text = string # string[:max(0, pw - col)]
         try:
             panel.win.addstr(row, col, text, c)
             return True

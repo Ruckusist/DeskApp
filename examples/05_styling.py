@@ -46,8 +46,8 @@ class StyleDemo(Module):
             ("cyan", self.front.color_cyan),
             ("yellow", self.front.color_yellow),
             ("magenta", self.front.color_magenta),
-            ("orange", self.front.color_orange),
-            ("purple", self.front.color_purple),
+            # ("orange", self.front.color_orange),
+            # ("purple", self.front.color_purple),
         ]
 
     def page(self, panel):

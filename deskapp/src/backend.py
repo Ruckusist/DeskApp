@@ -19,6 +19,15 @@ Updated by: Claude Sonnet 4.5 10-10-25
 - CRITICAL FIX: Moved floating panel .top() call to END of render cycle
 - Ensures floating panel is always on top of ALL other panels including
   main module panels
+
+Updated by: GitHub Copilot 10-12-25
+- Hooked mouse input into EventBus as 'input.mouse' with region data
+- Enabled menu selection via mouse click (menu item activation)
+
+Updated by: Claude Sonnet 4.5 10-12-25
+- BUGFIX: Fixed dims unpacking in mouse hit detection
+- Corrected top_y/top_x variable names (were swapped as top_x/top_y)
+- Panel dims are [h, w, begin_y, begin_x] per curses.newwin signature
 """
 
 import time
@@ -61,6 +70,191 @@ class Backend(SubClass):
                                   self.show_menu, self.show_messages,
                                   self.show_main, self.show_right_panel,
                                   self.show_info_panel, self.show_floating)
+
+    # Added by GitHub Copilot 10-12-25 (Proposal 13)
+    # Fixed by Claude Sonnet 4.5 10-12-25 - corrected dims unpacking
+    def _point_in_panel(self, col, row, panel) -> bool:
+        """Return True if screen (col,row) is inside panel bounds.
+
+        dims format: [h, w, top_y(row), top_x(col)]
+        curses.newwin(nlines, ncols, begin_y, begin_x)
+        """
+        try:
+            h, w, top_y, top_x = panel.dims
+        except Exception:
+            return False
+        if h < 1 or w < 1:
+            return False
+        in_rows = (row >= top_y) and (row < top_y + h)
+        in_cols = (col >= top_x) and (col < top_x + w)
+        return in_rows and in_cols
+
+    # Added by GitHub Copilot 10-12-25 (Proposal 13)
+    # Fixed by Claude Sonnet 4.5 10-12-25 - corrected dims unpacking
+    def _classify_click(self, col, row):
+        """Classify click region and compute local info.
+
+        Returns dict with keys:
+          region: str in [floating,right,info,header,footer,menu,
+                          messages,main,unknown]
+          local_row, local_col: coordinates relative to hit panel
+          menu_index: optional, if region==menu and on an item row
+        """
+        info = {
+            'region': 'unknown',
+            'local_row': None,
+            'local_col': None
+        }
+
+        # Check floating first (topmost), then side/info, header/footer,
+        # then menu/messages/main
+        try:
+            if self.show_floating and self._point_in_panel(
+                    col, row, self.floating_panel):
+                h, w, top_y, top_x = self.floating_panel.dims
+                info['region'] = 'floating'
+                info['local_row'] = row - top_y
+                info['local_col'] = col - top_x
+                return info
+        except Exception:
+            pass
+
+        try:
+            if self.show_right_panel and self._point_in_panel(
+                    col, row, self.right_panel):
+                h, w, top_y, top_x = self.right_panel.dims
+                info['region'] = 'right'
+                info['local_row'] = row - top_y
+                info['local_col'] = col - top_x
+                return info
+        except Exception:
+            pass
+
+        try:
+            if self.show_info_panel and self._point_in_panel(
+                    col, row, self.info_panel):
+                h, w, top_y, top_x = self.info_panel.dims
+                info['region'] = 'info'
+                info['local_row'] = row - top_y
+                info['local_col'] = col - top_x
+                return info
+        except Exception:
+            pass
+
+        try:
+            if self.show_header and self._point_in_panel(
+                    col, row, self.header_panel):
+                h, w, top_y, top_x = self.header_panel.dims
+                info['region'] = 'header'
+                info['local_row'] = row - top_y
+                info['local_col'] = col - top_x
+                return info
+        except Exception:
+            pass
+
+        try:
+            if self.show_footer and self._point_in_panel(
+                    col, row, self.footer_panel):
+                h, w, top_y, top_x = self.footer_panel.dims
+                info['region'] = 'footer'
+                info['local_row'] = row - top_y
+                info['local_col'] = col - top_x
+                return info
+        except Exception:
+            pass
+
+        try:
+            if self.show_menu and self._point_in_panel(
+                    col, row, self.menu_panel):
+                h, w, top_y, top_x = self.menu_panel.dims
+                lr = row - top_y
+                lc = col - top_x
+                info['region'] = 'menu'
+                info['local_row'] = lr
+                info['local_col'] = lc
+                # Ignore clicks on borders
+                if (
+                    h >= 3 and w >= 3 and lr > 0 and lr < h - 1 and
+                    lc > 0 and lc < w - 1
+                ):
+                    # Convert to item index (items drawn at row 1..)
+                    idx = lr - 1
+                    # Clamp to number of visible menu lines
+                    max_lines = getattr(self, 'menu_h', max(0, h - 2))
+                    if idx >= 0 and idx < max_lines:
+                        info['menu_index'] = idx
+                return info
+        except Exception:
+            pass
+
+        try:
+            if self.show_messages and self._point_in_panel(
+                    col, row, self.messages_panel):
+                h, w, top_y, top_x = self.messages_panel.dims
+                info['region'] = 'messages'
+                info['local_row'] = row - top_y
+                info['local_col'] = col - top_x
+                return info
+        except Exception:
+            pass
+
+        try:
+            if self.show_main:
+                main_panel = self.app.logic.current_panel()
+                if self._point_in_panel(col, row, main_panel):
+                    h, w, top_y, top_x = main_panel.dims
+                    info['region'] = 'main'
+                    info['local_row'] = row - top_y
+                    info['local_col'] = col - top_x
+                    return info
+        except Exception:
+            pass
+
+        return info
+
+    # Added by GitHub Copilot 10-12-25 (Proposal 13)
+    def _handle_mouse_input(self, mouse_tuple):
+        """Emit input.mouse event and handle menu click selection."""
+        try:
+            (col, row), btn = mouse_tuple
+        except Exception:
+            # Pass through to existing logic in case of odd tuple
+            self.app.logic.decider(mouse_tuple)
+            return
+
+        info = self._classify_click(col, row)
+        # Emit raw mouse input event with region classification
+        self.app.emit(
+            'input.mouse',
+            {
+                'col': col,
+                'row': row,
+                'button': btn,
+                'region': info.get('region', 'unknown'),
+                'local_row': info.get('local_row'),
+                'local_col': info.get('local_col')
+            },
+            source='system'
+        )
+
+        # Menu selection by click
+        if info.get('region') == 'menu' and 'menu_index' in info:
+            idx = info['menu_index']
+            # Translate visible index to absolute index (no scroll yet)
+            if idx >= 0 and idx < len(self.app.menu):
+                self.app.logic.current = idx
+                try:
+                    name = self.app.menu[idx].name
+                except Exception:
+                    name = str(idx)
+                self.app.emit(
+                    'ui.menu.select',
+                    {'index': idx, 'name': name},
+                    source='system'
+                )
+
+        # Preserve original behavior for modules
+        self.app.logic.decider(mouse_tuple)
 
     # Added compute_layout by GPT5 10-07-25 v0.1.9 plan
     def compute_layout(self):
@@ -645,7 +839,11 @@ class Backend(SubClass):
                 'height': self.front.h
             }, source='system')
         else:
-            self.app.logic.decider( key_mouse )
+            # Added mouse handling and event emission
+            if isinstance(key_mouse, tuple):
+                self._handle_mouse_input(key_mouse)
+            else:
+                self.app.logic.decider(key_mouse)
 
         # HANDLE PANEL RESIZE ->
         cur_panels_shown = (self.show_header, self.show_footer,

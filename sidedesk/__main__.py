@@ -49,8 +49,10 @@ def main() -> None:
         show_menu=False,
         show_box=False,
         disable_header=True,
+
         modules=[Login, Status],
         autostart=False,
+        use_mouse=False,
     )
 
     ConfigureModules(app)

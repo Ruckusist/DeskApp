@@ -258,7 +258,7 @@ class AsyncFetch(Module):
         fetch_id = self.next_fetch_id
         self.next_fetch_id += 1
 
-        worker = DataFetchWorker(self.app, fetch_id, duration=3.0)
+        worker = DataFetchWorker(self.app, fetch_id, duration=10.0)
         self.workers[fetch_id] = worker
         worker.start()
 

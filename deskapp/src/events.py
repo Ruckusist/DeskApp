@@ -29,6 +29,15 @@ System Events:
     'system.error'       - Error in event handler
                           data: {'error': str, 'handler': str, ...}
 
+Input/UI Events (added 10/12/25):
+    'input.mouse'        - Mouse input captured by backend
+                          data: {'col': int, 'row': int, 'button': int,
+                                 'region': str,
+                                 'local_row': Optional[int],
+                                 'local_col': Optional[int]}
+    'ui.menu.select'     - Menu item selected (via mouse or future UI)
+                          data: {'index': int, 'name': str}
+
 Usage:
     # In app initialization
     app.events = EventBus()
