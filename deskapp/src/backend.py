@@ -31,6 +31,7 @@ Updated by: Claude Sonnet 4.5 10-12-25
 """
 
 import time
+import textwrap
 from timeit import default_timer as timer
 from deskapp import SubClass, Keys
 
@@ -61,6 +62,7 @@ class Backend(SubClass):
         self.show_floating = getattr(app, 'show_floating', False)
 
         self.footer_buffer  = ""
+        self.footer_height = 3
         self.menu_w         = 15
         self.message_h      = 3
         self.messages_w     = 20
@@ -271,7 +273,7 @@ class Backend(SubClass):
         total_h = self.front.h
         total_w = self.front.w
         header_h = 3 if self.show_header else 0
-        footer_h = 3 if self.show_footer else 0
+        footer_h = self.footer_height if self.show_footer else 0
         info_h   = 5 if self.show_info_panel else 0
 
         vertical_available = total_h - header_h - footer_h - info_h
@@ -411,20 +413,14 @@ class Backend(SubClass):
         return panel
 
     def draw_footer(self):
-        height      = 3
+        height      = self.footer_height
         width       = self.front.w
-        top_left_x  = self.front.h - 3
+        top_left_x  = self.front.h - height
         top_left_y  = 0
         dims        = [height, width, top_left_x, top_left_y]
         panel       = self.front.make_panel(
             dims, "Input", box=self.app.show_box
         )
-        if not self.front.key_mode:
-            panel.win.addstr(
-                1, 2,
-                f"Press <tab> to enter text; <h> for help.",
-                self.front.color_green
-            )
         return panel
 
     def draw_menu(self):
@@ -596,14 +592,34 @@ class Backend(SubClass):
                 )
             # Draw content
             if self.front.key_mode:
-                maxw = max(0, self.front.w - 6)
-                buf = self.front.key_buffer[:maxw]
-                pad = " " * max(0, maxw - len(buf))
-                self.footer_panel.win.addstr(
-                    1, 2, f": {buf}{pad}",
-                    self.front.color_yellow
-                )
+                content_width = max(0, self.footer_panel.dims[1] - 4)
+                if content_width <= 0: return
+
+                lines = textwrap.wrap(f": {self.front.key_buffer}", width=content_width, replace_whitespace=False, drop_whitespace=False)
+                if not lines: lines = [": "]
+
+                num_lines = len(lines)
+                display_lines_count = min(num_lines, 3)
+                new_footer_height = display_lines_count + 2
+
+                if self.footer_height != new_footer_height:
+                    self.footer_height = new_footer_height
+                    self.front.has_resized_happened = True
+                    return
+
+                lines_to_show = lines[-display_lines_count:]
+                for i, line in enumerate(lines_to_show):
+                    pad = " " * max(0, content_width - len(line))
+                    self.footer_panel.win.addstr(
+                        i + 1, 2, f"{line}{pad}",
+                        self.front.color_yellow
+                    )
             else:
+                if self.footer_height != 3:
+                    self.footer_height = 3
+                    self.front.has_resized_happened = True
+                    return
+
                 text = "Press <tab> to enter text; <h> for help."
                 maxw = max(0, self.front.w - 4)
                 if len(text) > maxw:
