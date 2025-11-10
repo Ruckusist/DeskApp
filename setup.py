@@ -5,7 +5,7 @@ README = Path(__file__).with_name("README.md").read_text(encoding="utf-8")
 
 setup(
     name="Deskapp",
-    version="0.1.1",
+    version="0.3.0",
     description="An Open Source terminal-based app framework and server.",
     long_description=README,
     long_description_content_type="text/markdown",
@@ -34,9 +34,6 @@ setup(
     entry_points={
         "console_scripts": [
             "deskapp=deskapp.__main__:main",
-            "sidedesk=sidedesk.__main__:main",
-            "deskchat=deskapp.deskchat.__main__:main",
-            "deskapp-aws=deskapp.aws.__main__:main",
         ]
     },
 )

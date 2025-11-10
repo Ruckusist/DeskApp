@@ -1,1 +1,4 @@
 passlib
+boto3
+tomli
+psutil
