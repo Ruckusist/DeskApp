@@ -426,7 +426,7 @@ class Backend(SubClass):
     def draw_menu(self):
         height = self.front.h
         if self.show_footer:
-            height -= 3
+            height -= self.footer_height
         if self.show_header:
             height -= 3
         if self.show_info_panel:
@@ -487,7 +487,7 @@ class Backend(SubClass):
         total_h = self.front.h
         height = total_h
         if self.show_footer:
-            height -= 3
+            height -= self.footer_height
         if self.show_header:
             height -= 3
         if self.show_info_panel:
@@ -520,7 +520,7 @@ class Backend(SubClass):
         width = self.front.w  # full width
         # start from bottom of screen, move up by footer (if present)
         # and panel height
-        footer_offset = 3 if self.show_footer else 0
+        footer_offset = self.footer_height if self.show_footer else 0
         top_left_x = self.front.h - footer_offset - height
         top_left_y = 0
         dims = [height, width, top_left_x, top_left_y]
