@@ -36,3 +36,5 @@ users.data
 *.pid
 
 /.github/proposals/*
+
+*.bak
