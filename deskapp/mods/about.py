@@ -8,7 +8,7 @@ class About(Module):
         super().__init__(app, About_ID)
 
     def page(self, panel):
-        panel.win.addstr(1,1, f"This is working", self.front.color_yellow)
+        self.write(panel, 1, 1, "This is working", color="yellow")
 
     @callback(About_ID, Keys.ENTER)
     def on_enter(self, *args, **kwargs):

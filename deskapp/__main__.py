@@ -14,7 +14,11 @@ class Hello(deskapp.Module):
         self.write(panel, 2, 2, "Hello, World", 'cyan')
 
 def main():
-    deskapp.App(modules=[Hello], demo_mode=True)
+    deskapp.App(
+        modules=[Hello], demo_mode=True, show_box=False,
+        show_header=False, show_messages=False,
+        show_right_panel=False, show_menu=False,
+    )
 
 
 if __name__ == "__main__":

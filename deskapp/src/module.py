@@ -30,6 +30,11 @@ class Module(SubClass):
         # Generic per-module storage to reduce boilerplate in mods
         self.context = {}
 
+        # Horizontal action bar state (for h-scroller style UIs)
+        # Items are simple labels; selection + keys handled in modules.
+        self.action_bar_items = []
+        self.action_bar_index = 0
+
         # Event listeners registered by this module
         # Added by Claude Sonnet 4.5 10-10-25
         self._event_handlers = []
@@ -299,6 +304,132 @@ class Module(SubClass):
                 except:
                     pass
         return start_line + len(to_render)
+
+    def render_vertical_progress(self, panel, progress: float, label: str = None):
+        """Render a vertical progress bar in the given panel.
+
+        Uses the full height of the panel minus a small margin.
+        progress: 0.0 - 1.0
+        label: optional string shown near the middle as percentage.
+        """
+        try:
+            ph, pw = int(panel.dims[0]), int(panel.dims[1])
+        except Exception:
+            ph, pw = self.h, self.w
+
+        # One column wide bar, centered horizontally.
+        col = max(1, pw // 2)
+        top = 1
+        bottom = max(1, ph - 1)
+        height = max(1, bottom - top)
+
+        # Clamp progress.
+        if progress < 0.0:
+            progress = 0.0
+        if progress > 1.0:
+            progress = 1.0
+
+        filled = int(height * progress)
+        full_block = "\u2588"  # full block character
+
+        # Use a high-contrast color for the bar itself.
+        bar_color = getattr(self.front, "color_yellow", self.front.color_white)
+        text_color = getattr(self.front, "color_red", self.front.color_white)
+
+        for i in range(height):
+            y = bottom - i
+            char = full_block if i < filled else " "
+            try:
+                panel.win.addstr(y, col, char, bar_color)
+            except Exception:
+                continue
+
+        if label is not None:
+            try:
+                pct = int(progress * 100)
+                text = f"{label} {pct}%"
+                mid = top + height // 2
+                x = max(1, col - len(text) // 2)
+                panel.win.addstr(mid, x, text[: max(0, pw - 2)], text_color)
+            except Exception:
+                pass
+
+    def render_horizontal_progress(self, panel, progress: float,
+                                   label: str = None, row: int = 1):
+        """Render a left-to-right progress bar across the panel.
+
+        Intended for wide panels like the info panel or footer.
+        progress: 0.0 - 1.0
+        label: optional string centered over the bar.
+        row: vertical row inside the panel to draw the bar.
+        """
+        try:
+            ph, pw = int(panel.dims[0]), int(panel.dims[1])
+        except Exception:
+            ph, pw = self.h, self.w
+
+        if progress < 0.0:
+            progress = 0.0
+        if progress > 1.0:
+            progress = 1.0
+
+        # Leave one column padding inside borders.
+        start_x = 1
+        end_x = max(1, pw - 2)
+        width = max(1, end_x - start_x)
+        full_block = "\u2588"
+
+        filled = int(width * progress)
+        bar_color = getattr(self.front, "color_yellow", self.front.color_white)
+        empty_color = getattr(self.front, "color_black", self.front.color_white)
+
+        for x in range(width):
+            ch = full_block if x < filled else " "
+            try:
+                panel.win.addstr(row, start_x + x, ch,
+                                 bar_color if x < filled else empty_color)
+            except Exception:
+                continue
+
+        if label is not None:
+            try:
+                pct = int(progress * 100)
+                text = f"{label} {pct}%"
+                x = max(1, start_x + (width - len(text)) // 2)
+                panel.win.addstr(row, x,
+                                 text[: max(0, width)],
+                                 getattr(self.front, "color_red",
+                                         self.front.color_white))
+            except Exception:
+                pass
+
+    def render_action_bar(self, panel, row: int = 0):
+        """Render a horizontal action bar with a selected item.
+
+        - Uses self.action_bar_items as a flat list of labels.
+        - Highlights self.action_bar_index.
+        - Intended to be controlled via LEFT/RIGHT + ENTER in modules.
+        """
+        if not self.action_bar_items:
+            return
+        try:
+            _, pw = int(panel.dims[0]), int(panel.dims[1])
+        except Exception:
+            pw = self.w
+        maxw = max(0, pw - 2)
+
+        x = 1
+        for idx, label in enumerate(self.action_bar_items):
+            if x >= maxw:
+                break
+            text = f" {label} "
+            color = "yellow" if idx == self.action_bar_index else "cyan"
+            # Truncate if needed
+            visible = text[: max(0, maxw - x)]
+            if not visible:
+                break
+            self.write(panel, row, x, visible, color=color)
+            x += len(text) + 1
 
     @callback(0, keypress=Keys.UP)
     def on_up(self, *args, **kwargs):

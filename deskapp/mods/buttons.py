@@ -10,12 +10,12 @@ class Buttons(Module):
         self.index = 1
 
     def page(self, panel):
-        panel.win.addstr(2,2, "Button zone.")
+        self.write(panel, 2, 2, "Button zone.")
         self.index = 3
         h_index = 0
         for index, element in enumerate(self.elements):
             color = self.front.chess_white if index is not self.cur_el else self.front.chess_black
-            panel.win.addstr(self.index, 2+h_index, element, color)
+            self.write(panel, self.index, 2 + h_index, element)
             h_index += 1 + len(element)
         self.index += 1
         

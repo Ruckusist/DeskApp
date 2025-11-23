@@ -1,7 +1,7 @@
 """
-DeskApp Event System
+DeskApp Event + Worker System
 Provides thread-safe event bus for inter-module communication and
-background task coordination.
+background task coordination, plus standard background worker patterns.
 
 Architecture:
 - Queue-based event passing (thread-safe)
@@ -11,49 +11,20 @@ Architecture:
 
 Event Structure:
     {
-        'type': str,        # Event identifier (e.g., 'data.update')
-        'source': str,      # Originating module or 'system'
-        'data': dict,       # Arbitrary payload
-        'timestamp': float  # time.time() when emitted
+        'type': str,
+        'source': str,
+        'data': dict,
+        'timestamp': float
     }
 
-System Events:
-    'system.init'        - App initialization complete
-                          data: {'module_count': int, 'terminal_size': (w,h)}
-    'system.shutdown'    - App shutting down
-                          data: {}
-    'system.resize'      - Terminal resized
-                          data: {'width': int, 'height': int}
-    'system.fps_update'  - FPS stats updated (emitted every second)
-                          data: {'fps': float, 'frame_time': float}
-    'system.error'       - Error in event handler
-                          data: {'error': str, 'handler': str, ...}
-
-Input/UI Events (added 10/12/25):
-    'input.mouse'        - Mouse input captured by backend
-                          data: {'col': int, 'row': int, 'button': int,
-                                 'region': str,
-                                 'local_row': Optional[int],
-                                 'local_col': Optional[int]}
-    'ui.menu.select'     - Menu item selected (via mouse or future UI)
-                          data: {'index': int, 'name': str}
-
-Usage:
-    # In app initialization
-    app.events = EventBus()
-
-    # Emit an event
-    app.events.emit('data.update', {'value': 42}, source='MyModule')
-
-    # Register listener
-    def on_data_update(event):
-        print(f"Got data: {event['data']}")
-    app.events.on('data.update', on_data_update)
-
-    # Process events (in main loop)
-    app.events.process_events(max_events=10)
+Worker Patterns:
+- BaseWorker: lifecycle + event emission
+- CounterWorker: periodic counter events
+- TimerWorker: one-shot delayed events
+- PeriodicWorker: callback-based periodic work
 
 Created by: Claude Sonnet 4.5 on 10/10/25
+Workers merged by: GitHub Copilot 11-15-25
 """
 
 import queue
@@ -271,3 +242,157 @@ class EventBus:
         self.clear()
         with self.listener_lock:
             self.listeners.clear()
+
+
+class BaseWorker(threading.Thread):
+    """Base class for background worker threads.
+
+    Provides:
+    - Clean start/stop lifecycle
+    - Event emission to main thread
+    - Error handling and reporting
+    - Standard worker patterns
+    """
+
+    def __init__(self, app, name: str = "Worker"):
+        """Initialize worker.
+
+        Args:
+            app: DeskApp App instance
+            name: Worker name for identification
+        """
+        super().__init__(daemon=True)
+        self.app = app
+        self.worker_name = name
+        self.should_stop = False
+        self.is_running = False
+        self.error = None
+
+    def emit(self, event_type: str, data: Optional[Dict[str, Any]] = None
+             ) -> bool:
+        """Emit event from worker thread.
+
+        Thread-safe wrapper for app.emit().
+
+        Args:
+            event_type: Event identifier
+            data: Event payload
+
+        Returns:
+            True if queued, False if dropped
+        """
+        if data is None:
+            data = {}
+        return self.app.emit(event_type, data,
+                             source=f"worker.{self.worker_name}")
+
+    def run(self) -> None:
+        """Thread entry point.
+
+        DO NOT OVERRIDE - override work() instead.
+        """
+        self.is_running = True
+        self.emit('worker.started', {'name': self.worker_name})
+
+        try:
+            self.work()
+        except Exception as e:
+            self.error = str(e)
+            self.emit('worker.error', {
+                'name': self.worker_name,
+                'error': str(e)
+            })
+        finally:
+            self.is_running = False
+            self.emit('worker.stopped', {'name': self.worker_name})
+
+    def work(self) -> None:
+        """Worker main loop - OVERRIDE THIS.
+
+        Check self.should_stop periodically and return to exit cleanly.
+        """
+        raise NotImplementedError("Override work() in subclass")
+
+    def stop(self, timeout: float = 2.0) -> bool:
+        """Signal worker to stop and wait.
+
+        Args:
+            timeout: Max seconds to wait for clean shutdown
+
+        Returns:
+            True if stopped cleanly, False if timeout
+        """
+        self.should_stop = True
+        self.join(timeout)
+        return not self.is_alive()
+
+
+class CounterWorker(BaseWorker):
+    """Example worker that counts in background.
+
+    Demonstrates basic worker pattern with periodic events.
+    """
+
+    def __init__(self, app, interval: float = 1.0):
+        super().__init__(app, name="Counter")
+        self.interval = interval
+        self.count = 0
+
+    def work(self) -> None:
+        """Count and emit events periodically."""
+        while not self.should_stop:
+            self.count += 1
+            self.emit('counter.tick', {
+                'count': self.count,
+                'interval': self.interval
+            })
+            time.sleep(self.interval)
+
+
+class TimerWorker(BaseWorker):
+    """Worker that triggers event after delay.
+
+    One-shot timer that emits event when time expires.
+    """
+
+    def __init__(self, app, delay: float, event_type: str,
+                 event_data: Optional[Dict] = None):
+        super().__init__(app, name="Timer")
+        self.delay = delay
+        self.event_type = event_type
+        self.event_data = event_data or {}
+
+    def work(self) -> None:
+        """Wait for delay then emit event."""
+        start = time.time()
+        while not self.should_stop:
+            elapsed = time.time() - start
+            if elapsed >= self.delay:
+                self.emit(self.event_type, self.event_data)
+                break
+            time.sleep(0.1)
+
+
+class PeriodicWorker(BaseWorker):
+    """Worker that calls function periodically.
+
+    Useful for polling, monitoring, or periodic updates.
+    """
+
+    def __init__(self, app, interval: float, callback,
+                 name: str = "Periodic"):
+        super().__init__(app, name=name)
+        self.interval = interval
+        self.callback = callback
+
+    def work(self) -> None:
+        """Call callback periodically."""
+        while not self.should_stop:
+            try:
+                result = self.callback()
+                if result is not None:
+                    self.emit('periodic.result', {'result': result})
+            except Exception as e:
+                self.emit('periodic.error', {'error': str(e)})
+
+            time.sleep(self.interval)

@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "Deskapp"
-version = "0.3.0"
+version = "0.4.0"
 description = "An Open Source terminal-based app framework and server."
 readme = "README.md"
 requires-python = ">=3.8"
@@ -17,12 +17,6 @@ classifiers = [
   "Programming Language :: Python",
 ]
 dependencies = [
-    "bcrypt",
-    "boto3",
-    "flask",
-    "ollama",
-    "chromadb",
-    "mcp",
     "psutil"
 ]
 

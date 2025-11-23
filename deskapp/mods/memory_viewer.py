@@ -47,69 +47,71 @@ class MemoryViewer(Module):
         # Display header
         y = 1
         if y < h - 1:
-            panel.win.addstr(y, 2, "MEMORY USAGE",
-                            self.front.color_cyan)
+            self.write(panel, y, 2, "MEMORY USAGE", color="cyan")
         y += 2
 
         # Current memory
         if y < h - 1:
-            panel.win.addstr(y, 2, f"Current: {current_mb:.1f} MB",
-                            color)
+            self.write(panel, y, 2,
+                       f"Current: {current_mb:.1f} MB")
         y += 1
 
         # Baseline
         if y < h - 1:
-            panel.win.addstr(y, 2, f"Baseline: {baseline_mb:.1f} MB",
-                            self.front.color_white)
+            self.write(panel, y, 2,
+                       f"Baseline: {baseline_mb:.1f} MB")
         y += 1
 
         # Growth
         if y < h - 1:
-            growth_color = (self.front.color_green if growth < 5
-                           else self.front.color_yellow if growth < 20
-                           else self.front.color_red)
-            panel.win.addstr(y, 2, f"Growth: {growth:+.1f} MB",
-                            growth_color)
+            growth_color = "green" if growth < 5 else (
+                "yellow" if growth < 20 else "red"
+            )
+            self.write(panel, y, 2,
+                       f"Growth: {growth:+.1f} MB",
+                       color=growth_color)
         y += 1
 
         # Percentage
         if y < h - 1:
-            panel.win.addstr(y, 2, f"Percent: {mem['percent']:.1f}%",
-                            color)
+            self.write(panel, y, 2,
+                       f"Percent: {mem['percent']:.1f}%")
         y += 2
 
         # History graph (if available)
         if len(self.app.memory.history) > 1 and y < h - 2:
-            panel.win.addstr(y, 2, "History (last 60s):",
-                            self.front.color_cyan)
+            self.write(panel, y, 2,
+                       "History (last 60s):",
+                       color="cyan")
             y += 1
             self._render_graph(panel, y, 2, w - 4)
             y += 2
 
         # Additional stats
         if y < h - 1:
-            panel.win.addstr(y, 2, "VMS: "
-                            f"{mem['vms']/(1024*1024):.1f} MB",
-                            self.front.color_white)
+            self.write(panel, y, 2,
+                       "VMS: "
+                       f"{mem['vms']/(1024*1024):.1f} MB")
             y += 1
 
         # Samples collected
         if y < h - 1:
             samples = len(self.app.memory.history)
-            panel.win.addstr(y, 2, f"Samples: {samples}/60",
-                            self.front.color_white)
+            self.write(panel, y, 2,
+                       f"Samples: {samples}/60")
             y += 1
 
         # GC message if present
         if self.gc_message and y < h - 1:
-            panel.win.addstr(y, 2, self.gc_message,
-                            self.front.color_green)
+            self.write(panel, y, 2, self.gc_message,
+                       color="green")
             y += 1
 
         # Help text
         if y < h - 1:
-            panel.win.addstr(y, 2, "Press 'G' to force GC",
-                            self.front.color_cyan)
+            self.write(panel, y, 2,
+                       "Press 'G' to force GC",
+                       color="cyan")
 
     def _render_graph(self, panel, y, x, width):
         """Render ASCII graph of memory history."""
@@ -146,8 +148,8 @@ class MemoryViewer(Module):
                 graph_line += "▇"
 
         try:
-            panel.win.addstr(y, x, graph_line, self.front.color_cyan)
-        except:
+            self.write(panel, y, x, graph_line, color="cyan")
+        except Exception:
             pass
 
     def PageInfo(self, panel):
@@ -159,12 +161,12 @@ class MemoryViewer(Module):
 
         # Line 1: Current memory
         line1 = f"Mem: {mem['rss']/(1024*1024):.1f}MB"
-        panel.win.addstr(0, 1, line1[:w-2], self.front.color_white)
+        self.write(panel, 0, 1, line1[:w-2])
 
         # Line 2: Leak warning if detected
         if is_leak:
             line2 = f"LEAK: +{growth:.1f}MB/60s"
-            panel.win.addstr(1, 1, line2[:w-2], self.front.color_red)
+            self.write(panel, 1, 1, line2[:w-2], color="red")
 
     @callback(MemoryViewer_ID, Keys.G)
     def force_gc(self, *args, **kwargs):

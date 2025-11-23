@@ -11,7 +11,7 @@ Updated by: Claude Sonnet 4.5 10-10-25
 
 
 from deskapp import Curse, Logic, Backend, Module, Keys, callback, callbacks
-from deskapp.mods import About, Buttons, Fire
+from deskapp.mods import About, Buttons, Fire, APT
 from deskapp.src.events import EventBus
 from deskapp.src.memory import MemoryTracker  # Added Session 1 Step 3
 
@@ -51,9 +51,9 @@ class App:
                  r_split:             float = 0.16,
                  autostart:            bool = True,
                  # PERFORMANCE CONTROLS - Added Claude Sonnet 4.5 10-09-25
-                 fps_cap:               int = None,
+                 fps_cap:               int = 40,
                  # COMMAND CONTROLS
-                 use_mouse:            bool = False,
+                 use_mouse:            bool = True,
                  use_focus:            bool = False,
             ):
         # initialize the constructor.
@@ -114,7 +114,7 @@ class App:
 
         self.menu = self.user_modules
         if self.show_demo:
-            self.menu.extend([About, Buttons, Fire])  # , Deskhunter
+            self.menu.extend([About, Buttons, Fire, APT])  # , Deskhunter
 
         # CORE MODULES
         self.front = Curse(use_mouse=use_mouse, use_focus=use_focus)
