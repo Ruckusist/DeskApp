@@ -1,0 +1,15 @@
+# Deskapp Changelog
+
+---
+
+## 0.5.0 — Proposal 05 — README Rewrite — 053126
+Agent: Claude Sonnet 4.6
+
+README replaced in full. Removed inaccurate content: nonexistent CLI entry
+points (sidedesk, deskchat, deskapp-aws), multiplayer server claims that have
+no source implementation, Windows platform support (POSIX only), dead links to
+CONTRIBUTING.md and SECURITY.md. Removed fluff: 13-badge wall, time-estimate
+tutorial blurb, game roadmap list, 2022 historic changelog block, broken
+markdown code fence. Replaced with accurate description of what the framework
+actually is, correct single entry point (deskapp), working quickstart, and
+accurate Core API surface.
