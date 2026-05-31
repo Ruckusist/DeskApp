@@ -10,10 +10,12 @@ Updated by: Claude Sonnet 4.5 10-10-25
 """
 
 
+import pathlib
 from deskapp import Curse, Logic, Backend, Module, Keys, callback, callbacks
 from deskapp.mods import About, Buttons, Fire, APT
 from deskapp.src.events import EventBus
 from deskapp.src.memory import MemoryTracker  # Added Session 1 Step 3
+from deskapp.src.store import DataStore        # Added Proposal 08
 
 class App:
     def __init__(self,
@@ -105,6 +107,11 @@ class App:
         # EVENT SYSTEM - Added by Claude Sonnet 4.5 10-10-25
         self.events = EventBus()
 
+        # DATASTORE - Added Proposal 08
+        self.store = DataStore(
+            pathlib.Path.home() / ".config" / "deskapp" / "app.db"
+        )
+
         # MEMORY TRACKING - Added Session 1 Step 3
         self.memory = MemoryTracker()
         self.data['memory'] = {
@@ -132,6 +139,7 @@ class App:
 
     def close(self):
         self.back.should_stop = True
+        self.store.close()
 
     def exit(self):
         self.close()

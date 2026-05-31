@@ -2,6 +2,30 @@
 
 ---
 
+## 0.8.0 — Proposal 08 — DataStore — 053126
+Agent: Claude Sonnet 4.6
+
+Added a persistent, thread-safe SQLite core layer available to every mod
+as self.app.store. Database lives at ~/.config/deskapp/app.db; parent
+directory is created automatically. Falls back to a no-op mode if the
+file cannot be opened so the rest of the app continues.
+
+New file: deskapp/src/store.py — DataStore class with full API:
+ensure_table, execute, executemany, fetch, fetchone, table_exists, close.
+One sqlite3.Connection (check_same_thread=False) guarded by a single
+threading.Lock. sqlite3.Row row factory so all results are subscriptable
+by column name.
+
+deskapp/src/app.py — added import pathlib, DataStore import, self.store
+init in App.__init__, and self.store.close() in App.close().
+
+examples/ex_store.py — standalone StoreDemo module that exercises the
+full lifecycle: ensure_table, executemany (seed), fetch (list render),
+execute (insert/delete), fetchone (row count). Tab+Enter adds a note, D
+deletes the selected row, status bar reflects store health.
+
+---
+
 ## 0.7.0 — Proposal 07 — APT Pass 2 — 053126
 Agent: Claude Sonnet 4.6
 
