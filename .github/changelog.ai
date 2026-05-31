@@ -2,6 +2,52 @@
 
 ---
 
+## 0.7.0 — Proposal 07 — APT Pass 2 — 053126
+Agent: Claude Sonnet 4.6
+
+Second pass on deskapp/mods/apt.py (1039 lines). Three areas:
+
+Patient workers: AptWorker.Kill() now escalates SIGTERM → wait(2s) →
+SIGKILL. AptWorker.work() calls Process.kill() immediately on should_stop
+rather than waiting for the read loop to drain. PackageListWorker and
+UpgradableWorker check should_stop after the expensive Cache.open() call
+and before emitting results. OnCmdLine auto-scroll now only fires when the
+user is already near the bottom of the log — manual scroll position is
+preserved while a command runs.
+
+Floating log panel: LOG view now uses the backend's PageFloat / floating
+panel infrastructure. RunShellAction and the L key call _EnableFloat(),
+which sizes and enables the backend float panel. GoBack calls _DisableFloat().
+page() in LOG view renders the previous view as a background; PageFloat()
+draws the log as an overlay on top via the backend z-order system.
+
+Structured detail view: apt show output is accumulated in RawDetailLines.
+OnDetailDone parses it via ParseAptShow() (RFC 822 field parser with
+continuation-line and blank-marker support) then builds formatted display
+lines via BuildDetailLines(). Layout: Package/Version header, two-column
+Arch+Size and Section+Priority rows, full-width Maintainer and Homepage,
+unicode separator, word-wrapped Depends/Recommends/Suggests comma lists,
+word-wrapped Description paragraphs. RenderDetail colors field headers cyan,
+section headers yellow, separator blue, and content white.
+
+---
+
+## 0.6.0 — Proposal 06 — APT Module Rewrite — 053126
+Agent: Claude Sonnet 4.6
+
+Full rewrite of deskapp/mods/apt.py. Old scaffolding replaced with a
+view-based modal TUI (ACTIONS / LIST / DETAIL / LOG views). New workers:
+AptWorker (subprocess with Kill()), PackageListWorker (installed packages
+via python-apt or dpkg fallback), UpgradableWorker (upgradable packages via
+python-apt or apt list fallback). APT module now supports browsing installed
+and upgradable packages, text-filter search, package detail (apt show),
+install/remove/autoremove/upgrade with Y/N confirmation overlay, live log
+view with manual scroll, and worker cancellation via C key. All blocking
+apt calls moved to worker threads. 12 key callbacks registered.
+Version held at 0.5.0 pending user confirmation.
+
+---
+
 ## 0.5.0 — Proposal 05 — README Rewrite — 053126
 Agent: Claude Sonnet 4.6
 

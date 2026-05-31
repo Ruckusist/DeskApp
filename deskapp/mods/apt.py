@@ -1,636 +1,1040 @@
+"""
+APT Module for Deskapp
+Proposal 06 — AptModule — 053126
+
+Modal TUI frontend for the APT package manager.
+Views: ACTIONS, LIST, DETAIL, LOG
+"""
+
+import collections
 import random
-import threading
-import subprocess
 import shlex
-import time
+import subprocess
 
 try:
-    import apt  # type: ignore
-    import apt.progress.base as apt_progress
-    HAS_PYTHON_APT = True
-except Exception:
-    HAS_PYTHON_APT = False
+    import apt as apt_lib
+    HAS_APT = True
+except ImportError:
+    HAS_APT = False
+
 from deskapp import Module, callback, Keys
 from deskapp.src.events import BaseWorker
 
 
 APT_ID = random.random()
 
+VIEW_ACTIONS = "actions"
+VIEW_LIST    = "list"
+VIEW_DETAIL  = "detail"
+VIEW_LOG     = "log"
+
+LIST_INSTALLED  = "Installed"
+LIST_UPGRADABLE = "Upgradable"
+LIST_SEARCH     = "Search Results"
+
+LOG_MAX = 500
+
+
+# ------------------------------------------------------------------ #
+# Workers                                                              #
+# ------------------------------------------------------------------ #
 
 class AptWorker(BaseWorker):
-    """Worker to execute a single APT command and stream output.
+    """Stream a shell command line-by-line into the event bus.
 
-    Emits events:
-        apt.command.start
-        apt.command.output
-        apt.command.done
-        apt.command.error
+    Emits:
+        <prefix>.out.start  — command started
+        <prefix>.out.line   — one output line
+        <prefix>.out.done   — finished, includes rc
+        <prefix>.out.error  — error during setup or read
     """
 
-    def __init__(self, app, task_id, command):
+    def __init__(self, app, TaskId, Command, Prefix="apt"):
         super().__init__(app, name="APT")
-        self.task_id = task_id
-        self.command = command
-        self.process = None
+        self.TaskId = TaskId
+        self.Command = Command
+        self.Prefix = Prefix
+        self.Process = None
 
     def work(self):
         self.emit(
-            "apt.command.start",
-            {"id": self.task_id, "command": self.command},
+            f"{self.Prefix}.out.start",
+            {"id": self.TaskId, "command": self.Command},
         )
-
         try:
-            self.process = subprocess.Popen(
-                self.command,
+            self.Process = subprocess.Popen(
+                self.Command,
                 shell=True,
                 stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
                 text=True,
                 bufsize=1,
             )
-        except Exception as e:
+        except Exception as E:
             self.emit(
-                "apt.command.error",
-                {"id": self.task_id, "error": str(e)},
+                f"{self.Prefix}.out.error",
+                {"id": self.TaskId, "error": str(E)},
             )
             return
-
-        def reader(stream, stream_name):
-            try:
-                for line in stream:
-                    if self.should_stop:
-                        break
-                    self.emit(
-                        "apt.command.output",
-                        {
-                            "id": self.task_id,
-                            "stream": stream_name,
-                            "line": line.rstrip("\n"),
-                        },
-                    )
-            except Exception as e:
-                self.emit(
-                    "apt.command.error",
-                    {"id": self.task_id, "error": str(e)},
-                )
-
-        threads = []
-        if self.process.stdout is not None:
-            t_out = threading.Thread(
-                target=reader,
-                args=(self.process.stdout, "stdout"),
-                daemon=True,
-            )
-            t_out.start()
-            threads.append(t_out)
-        if self.process.stderr is not None:
-            t_err = threading.Thread(
-                target=reader,
-                args=(self.process.stderr, "stderr"),
-                daemon=True,
-            )
-            t_err.start()
-            threads.append(t_err)
-
-        rc = None
         try:
-            rc = self.process.wait()
-        except Exception as e:
+            for Line in self.Process.stdout:
+                if self.should_stop:
+                    try:
+                        self.Process.kill()
+                    except Exception:
+                        pass
+                    break
+                self.emit(
+                    f"{self.Prefix}.out.line",
+                    {"id": self.TaskId, "line": Line.rstrip("\n")},
+                )
+        except Exception as E:
             self.emit(
-                "apt.command.error",
-                {"id": self.task_id, "error": str(e)},
-            )
-
-        for t in threads:
-            t.join(timeout=0.2)
-
-        self.emit(
-            "apt.command.done",
-            {"id": self.task_id, "rc": rc},
-        )
-
-
-class AptApiWorker(BaseWorker):
-    """Worker that uses python-apt API for update/upgrade.
-
-    Emits:
-        apt.progress.update  (progress: 0.0-1.0)
-        apt.command.done     (rc: 0 on success, 1 on failure)
-    """
-
-    def __init__(self, app, task_id, action: str):
-        super().__init__(app, name="APTAPI")
-        self.task_id = task_id
-        self.action = action  # 'update' or 'upgrade'
-
-    def work(self):
-        if not HAS_PYTHON_APT:
-            # Fallback: nothing to do, signal error-like done.
-            self.emit(
-                "apt.command.done",
-                {"id": self.task_id, "rc": 1},
-            )
-            return
-
-        class Progress(apt_progress.OpProgress):
-            def __init__(self, outer):
-                super().__init__()
-                self.outer = outer
-
-            def update(self, percent=None):  # type: ignore[override]
-                try:
-                    if percent is None:
-                        return
-                    p = max(0.0, min(100.0, float(percent))) / 100.0
-                    self.outer.emit(
-                        "apt.progress.update",
-                        {"id": self.outer.task_id, "progress": p},
-                    )
-                except Exception:
-                    pass
-
-        cache = apt.Cache()
-        rc = 1
-        try:
-            if self.action == "update":
-                self.emit(
-                    "apt.command.output",
-                    {
-                        "id": self.task_id,
-                        "stream": "stdout",
-                        "line": "[APT] Updating package lists...",
-                    },
-                )
-                cache.update(Progress(self))
-                cache.open(None)
-            elif self.action == "upgrade":
-                self.emit(
-                    "apt.command.output",
-                    {
-                        "id": self.task_id,
-                        "stream": "stdout",
-                        "line": "[APT] Updating package lists before upgrade...",
-                    },
-                )
-                cache.update(Progress(self))
-                cache.open(None)
-                self.emit(
-                    "apt.command.output",
-                    {
-                        "id": self.task_id,
-                        "stream": "stdout",
-                        "line": "[APT] Marking upgradable packages...",
-                    },
-                )
-                cache.upgrade()
-                self.emit(
-                    "apt.command.output",
-                    {
-                        "id": self.task_id,
-                        "stream": "stdout",
-                        "line": "[APT] Committing upgrade; this may take a while...",
-                    },
-                )
-                cache.commit(Progress(self), None)
-                self.emit(
-                    "apt.progress.update",
-                    {"id": self.task_id, "progress": 1.0},
-                )
-                self.emit(
-                    "apt.command.output",
-                    {
-                        "id": self.task_id,
-                        "stream": "stdout",
-                        "line": "[APT] Upgrade finished.",
-                    },
-                )
-            rc = 0
-        except Exception as e:
-            self.emit(
-                "apt.command.error",
-                {"id": self.task_id, "error": str(e)},
+                f"{self.Prefix}.out.error",
+                {"id": self.TaskId, "error": str(E)},
             )
         finally:
+            Rc = None
+            try:
+                Rc = self.Process.wait(timeout=2)
+            except Exception:
+                pass
             self.emit(
-                "apt.command.done",
-                {"id": self.task_id, "rc": rc},
+                f"{self.Prefix}.out.done",
+                {"id": self.TaskId, "rc": Rc},
             )
 
+    def Kill(self):
+        """Signal stop and escalate: SIGTERM → wait → SIGKILL."""
+        self.should_stop = True
+        if self.Process is not None:
+            try:
+                self.Process.terminate()
+                try:
+                    self.Process.wait(timeout=2)
+                except subprocess.TimeoutExpired:
+                    self.Process.kill()
+            except Exception:
+                pass
+
+
+class PackageListWorker(BaseWorker):
+    """Load installed packages in the background.
+
+    Emits:
+        apt.packages.installed  — sorted list of package name strings
+    """
+
+    def __init__(self, app):
+        super().__init__(app, name="PkgList")
+
+    def work(self):
+        Packages = []
+        if HAS_APT:
+            try:
+                Cache = apt_lib.Cache()
+                Cache.open(None)
+                if self.should_stop:
+                    return
+                Packages = sorted(
+                    [P.name for P in Cache if P.is_installed],
+                    key=str.lower,
+                )
+            except Exception:
+                Packages = self.FallbackDpkg()
+        else:
+            Packages = self.FallbackDpkg()
+        if not self.should_stop:
+            self.emit("apt.packages.installed", {"packages": Packages})
+
+    def FallbackDpkg(self):
+        """Parse dpkg -l when python-apt is unavailable."""
+        try:
+            Result = subprocess.run(
+                ["dpkg", "-l"],
+                capture_output=True,
+                text=True,
+                timeout=10,
+            )
+            Names = []
+            for Line in Result.stdout.splitlines():
+                Parts = Line.split()
+                if len(Parts) >= 2 and Parts[0] == "ii":
+                    Names.append(Parts[1].split(":")[0])
+            return sorted(Names, key=str.lower)
+        except Exception:
+            return []
+
+
+class UpgradableWorker(BaseWorker):
+    """Load upgradable package list in the background.
+
+    Emits:
+        apt.packages.upgradable  — sorted list of package name strings
+    """
+
+    def __init__(self, app):
+        super().__init__(app, name="Upgradable")
+
+    def work(self):
+        Packages = []
+        if HAS_APT:
+            try:
+                Cache = apt_lib.Cache()
+                Cache.open(None)
+                if self.should_stop:
+                    return
+                Packages = sorted(
+                    [
+                        P.name for P in Cache
+                        if P.is_installed and P.is_upgradable
+                    ],
+                    key=str.lower,
+                )
+            except Exception:
+                Packages = self.FallbackApt()
+        else:
+            Packages = self.FallbackApt()
+        if not self.should_stop:
+            self.emit("apt.packages.upgradable", {"packages": Packages})
+
+    def FallbackApt(self):
+        """Parse apt list --upgradable output."""
+        try:
+            Result = subprocess.run(
+                ["apt", "list", "--upgradable"],
+                capture_output=True,
+                text=True,
+                timeout=15,
+            )
+            Names = []
+            for Line in Result.stdout.splitlines():
+                if "/" in Line:
+                    Names.append(Line.split("/")[0])
+            return sorted(Names, key=str.lower)
+        except Exception:
+            return []
+
+
+
+# ------------------------------------------------------------------ #
+# Module                                                               #
+# ------------------------------------------------------------------ #
 
 class APT(Module):
     name = "APT"
 
     def __init__(self, app):
         super().__init__(app, APT_ID)
-        self.tasks = []
-        self.next_task_id = 1
-        self.selected = 0
-        self.current_worker = None
 
-        # Update-specific state
-        self.update_output = []  # raw stdout lines from last APT task(s)
-        self.update_scroll = 0   # vertical scroll for 3-line window
-        self.update_packages = []  # full list of upgradable package names
-        self.filtered_packages = []  # current filtered view for scroller
-        self.pkg_index = 0       # selection in package list (including "Upgrade all")
-        self.update_progress = 0.0  # 0.0 - 1.0 for info-panel progress bar
-        self.update_last_time = 0.0  # last time we saw update activity
-        # Which scroller ENTER should apply to: 'actions' or 'packages'
-        self.focus = "actions"
+        # View state
+        self.CurrentView = VIEW_ACTIONS
+        self.PrevView    = VIEW_ACTIONS
+        self.ListContext = LIST_INSTALLED
 
-        self.actions = [
-            ("Update", "sudo apt update"),
-            ("Upgrade", "sudo apt upgrade -y"),
-            ("Search", "SEARCH"),
-            ("Install", "INSTALL"),
+        # Package data
+        self.InstalledPackages  = []
+        self.UpgradablePackages = []
+        self.SearchResults      = []
+
+        # List navigation
+        self.PkgIndex = 0
+
+        # Log (capped deque)
+        self.LogLines  = collections.deque(maxlen=LOG_MAX)
+        self.LogScroll = 0
+
+        # Detail view
+        self.RawDetailLines = []   # raw apt show output lines
+        self.DetailLines    = []   # formatted for display
+        self.DetailPkg      = ""
+        self.DetailScroll   = 0
+
+        # Worker tracking (command workers only)
+        self.CurrentWorker = None
+        self.CurrentTaskId = 0
+        self.ActiveCommand = ""
+
+        # Confirmation overlay
+        self.ConfirmMsg    = ""
+        self.ConfirmAction = None
+
+        # Status bar
+        self.StatusMsg   = "Loading installed packages..."
+        self.StatusColor = "cyan"
+
+        # Action bar
+        self.Actions = [
+            ("Update",    "sudo apt update"),
+            ("Upgrade",   "sudo apt upgrade -y"),
+            ("Installed", LIST_INSTALLED),
+            ("Upgradable",LIST_UPGRADABLE),
+            ("Remove",    "REMOVE"),
+            ("Autoremove","sudo apt autoremove -y"),
+            ("Install",   "INSTALL"),
+        ]
+        self.action_bar_items = [
+            Label for Label, _ in self.Actions
         ]
 
-        # Action bar shows high-level operations; selection is driven by
-        # LEFT/RIGHT and fired with ENTER.
-        self.action_bar_items = [label for (label, _cmd) in self.actions]
-
-        self.on_event("apt.command.start", self._on_cmd_start)
-        self.on_event("apt.command.output", self._on_cmd_output)
-        self.on_event("apt.command.done", self._on_cmd_done)
-        self.on_event("apt.command.error", self._on_cmd_error)
-        self.on_event("apt.progress.update", self._on_progress_update)
-
-    def end_safely(self):
-        if self.current_worker is not None:
-            self.current_worker.stop(timeout=1.0)
-        super().end_safely()
-
-    def _add_task(self, label, command):
-        task_id = self.next_task_id
-        self.next_task_id += 1
-        task = {
-            "id": task_id,
-            "label": label,
-            "command": command,
-            "status": "pending",
-            "rc": None,
-            "stdout": [],
-            "stderr": [],
-        }
-        self.tasks.append(task)
-        self.scroll_elements = [t["label"] for t in self.tasks]
-        if self.selected >= len(self.tasks):
-            self.selected = max(0, len(self.tasks) - 1)
-        return task
-
-    def _find_task(self, task_id):
-        for t in self.tasks:
-            if t["id"] == task_id:
-                return t
-        return None
-
-    def _start_task(self, task):
-        if self.current_worker is not None and self.current_worker.is_alive():
-            self.print("APT: A command is already running.")
-            return
-        task["status"] = "running"
-        # Use python-apt API only for 'update' so we can still
-        # get a clean package list without risking UI lockups.
-        if (
-            HAS_PYTHON_APT
-            and task["command"].startswith("sudo apt ")
-            and "update" in task["command"]
-        ):
-            self.current_worker = AptApiWorker(self.app, task["id"], "update")
-        else:
-            # All other commands (including Upgrade) run via subprocess.
-            self.current_worker = AptWorker(self.app, task["id"], task["command"])
-        self.current_worker.start()
-        self.print(f"APT: Started '{task['label']}'")
-
-    def _on_cmd_start(self, event):
-        task = self._find_task(event["data"].get("id"))
-        if task is not None:
-            task["status"] = "running"
-
-    def _on_cmd_output(self, event):
-        data = event["data"]
-        task = self._find_task(data.get("id"))
-        if task is None:
-            return
-        line = data.get("line", "")
-        if data.get("stream") == "stderr":
-            task["stderr"].append(line)
-        else:
-            task["stdout"].append(line)
-            # Track output for the most recent APT task in the page log.
-            # We treat any task with a label ending in "(apt)" or starting
-            # with "Install:" / "Upgrade all" as relevant to the log.
-            label = task.get("label", "")
-            if (
-                label.endswith("(apt)")
-                or label.startswith("Install:")
-                or label.startswith("Upgrade all")
-            ):
-                self.update_output.append(line)
-                # Always auto-scroll to the latest lines (5-line window
-                # in page(), but we keep this local window size small).
-                window = 5
-                filtered = [
-                    l for l in self.update_output
-                    if "tty" not in l.lower() and "cli" not in l.lower()
-                ]
-                max_scroll = max(0, len(filtered) - window)
-                self.update_scroll = max_scroll
-                self.update_last_time = time.time()
-                # Also mirror to messages area for full visibility.
-                self.print(f"APT: {label}: {line}")
-
-    def _on_cmd_done(self, event):
-        data = event["data"]
-        task = self._find_task(data.get("id"))
-        if task is not None:
-            task["status"] = "done"
-            task["rc"] = data.get("rc")
-            label = task.get("label", "")
-            # When an update task finishes, refresh derived package list
-            if label.startswith("Update (apt)"):
-                self._refresh_update_state(task)
-                self.update_progress = 1.0
-                self.update_last_time = time.time()
-            # For other APT tasks, just mark the bar as complete briefly
-            elif (
-                label.endswith("(apt)")
-                or label.startswith("Install:")
-                or label.startswith("Upgrade all")
-            ):
-                self.update_progress = 1.0
-                self.update_last_time = time.time()
-        self.current_worker = None
-
-    def _on_progress_update(self, event):
-        data = event["data"]
-        task = self._find_task(data.get("id"))
-        if task is None:
-            return
-        # Trust the real progress from python-apt
-        self.update_progress = float(data.get("progress", 0.0))
-        self.update_last_time = time.time()
-
-    def _refresh_update_state(self, task):
-        """Derive cleaned update output and package list from an update task."""
-        # Reset scroll when a new update completes
-        self.update_scroll = 0
-        self.pkg_index = 0
-
-        # Use stdout from the completed task as canonical update output
-        self.update_output = list(task.get("stdout", []))
-
-        # Prefer python-apt API to derive upgradable packages.
-        self.update_packages = []
-        if HAS_PYTHON_APT:
-            try:
-                cache = apt.Cache()
-                cache.update()  # ensure cache is current
-                cache.open(None)
-                upgradable = [
-                    pkg for pkg in cache
-                    if pkg.is_installed and pkg.is_upgradable
-                ]
-                names = {pkg.name for pkg in upgradable}
-                self.update_packages = sorted(names, key=str.lower)
-            except Exception as e:
-                self.print(f"APT python-apt error: {e}")
-        # Fallback: keep filtered list in sync
-        self.filtered_packages = list(self.update_packages)
-
-    def PageInfo(self, panel):
-        """Temporarily take over info panel to show update progress.
-
-        While an Update (apt) task is running, or for 5 seconds after it
-        completes, we draw a vertical progress bar and return a truthy
-        value so the backend does NOT call default_page_info(). Once the
-        5s window passes, we return None so the normal info content shows
-        again.
-        """
-        now = time.time()
-
-        # Determine if we are in an active "progress bar" window
-        active_window = False
-        running = any(
-            t["status"] == "running" and (
-                t["label"].endswith("(apt)")
-                or t["label"].startswith("Install:")
-                or t["label"].startswith("Upgrade all")
-            )
-            for t in self.tasks
+        # Wire events
+        self.on_event("apt.out.start",  self.OnCmdStart)
+        self.on_event("apt.out.line",   self.OnCmdLine)
+        self.on_event("apt.out.done",   self.OnCmdDone)
+        self.on_event("apt.out.error",  self.OnCmdError)
+        self.on_event(
+            "apt.detail.out.start", self.OnDetailStart
         )
-        if running:
-            active_window = True
-            # Cheap heuristic: map number of lines to a 0.0-1.0 range.
-            # Cap at 200 lines for now.
-            lines = len(self.update_output)
-            self.update_progress = min(1.0, lines / 200.0)
-        elif self.update_last_time and (now - self.update_last_time) <= 5.0:
-            # Recently finished; keep bar visible for a few seconds
-            active_window = True
+        self.on_event(
+            "apt.detail.out.line",  self.OnDetailLine
+        )
+        self.on_event(
+            "apt.detail.out.done",  self.OnDetailDone
+        )
+        self.on_event(
+            "apt.packages.installed",  self.OnInstalledLoaded
+        )
+        self.on_event(
+            "apt.packages.upgradable", self.OnUpgradableLoaded
+        )
 
-        if not active_window:
-            # Give control back to default info panel behavior
-            return None
+        # Load installed packages immediately in background
+        PackageListWorker(self.app).start()
 
-        # Clear inside of info panel, then draw bar
+    # -------------------------------------------------------------- #
+    # Worker helpers                                                   #
+    # -------------------------------------------------------------- #
+
+    def StartCmdWorker(self, Worker):
+        """Start a command worker, stopping any running one first."""
+        if (
+            self.CurrentWorker is not None
+            and self.CurrentWorker.is_alive()
+        ):
+            if hasattr(self.CurrentWorker, "Kill"):
+                self.CurrentWorker.Kill()
+            else:
+                self.CurrentWorker.should_stop = True
+        self.CurrentWorker = Worker
+        Worker.start()
+
+    def CancelWorker(self):
+        """Cancel the current running command worker."""
+        if self.CurrentWorker is None:
+            return
+        if hasattr(self.CurrentWorker, "Kill"):
+            self.CurrentWorker.Kill()
+        else:
+            self.CurrentWorker.should_stop = True
+        self.CurrentWorker = None
+        self.SetStatus("Cancelled", "yellow")
+
+    def NextTaskId(self):
+        self.CurrentTaskId += 1
+        return self.CurrentTaskId
+
+    # -------------------------------------------------------------- #
+    # Status                                                           #
+    # -------------------------------------------------------------- #
+
+    def SetStatus(self, Msg, Color="cyan"):
+        self.StatusMsg   = str(Msg)
+        self.StatusColor = Color
+
+    def _EnableFloat(self):
+        """Size and show the backend floating panel for LOG overlay."""
         try:
-            panel.win.erase()
-            if self.app.show_box:
-                panel.win.box()
+            self.app.floating_height = max(10, self.h - 4)
+            self.app.floating_width  = max(30, self.w - 6)
+            self.app.backend.show_floating = True
         except Exception:
             pass
 
-        # Use a horizontal left-to-right progress bar across the panel.
-        self.render_horizontal_progress(panel, self.update_progress,
-                                        label="Update", row=2)
-        # Non-None return tells backend that we handled the info panel.
-        return True
+    def _DisableFloat(self):
+        """Hide the backend floating panel."""
+        try:
+            self.app.backend.show_floating = False
+        except Exception:
+            pass
 
-    def _on_cmd_error(self, event):
-        data = event["data"]
-        task = self._find_task(data.get("id"))
-        if task is not None:
-            task["status"] = "error"
-            task["stderr"].append(data.get("error", ""))
-        self.current_worker = None
+    # -------------------------------------------------------------- #
+    # Event handlers                                                   #
+    # -------------------------------------------------------------- #
 
-    def page(self, panel):
-        h = self.h
-        w = self.w
+    def OnCmdStart(self, Event):
+        self.SetStatus(f"Running: {self.ActiveCommand}", "yellow")
 
-        self.write(panel, 1, 2, "APT Helper", color="cyan")
-        self.render_action_bar(panel, row=2)
-        # --- 5-line auto-scrolling update output ---
-        out_start = 4
-        # Header intentionally left blank per design
+    def OnCmdLine(self, Event):
+        Line = Event["data"].get("line", "")
+        self.LogLines.append(Line)
+        ViewH  = max(1, self.h - 3)
+        Bottom = max(0, len(self.LogLines) - ViewH)
+        # Auto-scroll only when the user is already at or near the bottom
+        if self.LogScroll >= Bottom - 1:
+            self.LogScroll = Bottom
 
-        # Filter out the CLI warning line (contains "This must be run as root"
-        # or similar no-tty text) and take a tail slice for scrolling.
-        filtered = [
-            line for line in self.update_output
-            if "tty" not in line.lower() and "cli" not in line.lower()
-        ]
-        window = 5
-        if filtered:
-            # Clamp scroll and render 3-line window
-            max_scroll = max(0, len(filtered) - window)
-            if self.update_scroll > max_scroll:
-                self.update_scroll = max_scroll
-            start = self.update_scroll
-            end = start + window
-            lines = filtered[start:end]
-            for i, line in enumerate(lines):
-                self.write(panel, out_start + i, 2, line[: w - 4])
+    def OnCmdDone(self, Event):
+        Rc = Event["data"].get("rc", -1)
+        Color = "green" if Rc == 0 else "red"
+        self.SetStatus(
+            f"Done (rc={Rc}): {self.ActiveCommand}", Color
+        )
+        self.CurrentWorker = None
+        if "update" in self.ActiveCommand.lower():
+            UpgradableWorker(self.app).start()
 
-        pkg_start = out_start + window + 1
+    def OnCmdError(self, Event):
+        Err = Event["data"].get("error", "unknown error")
+        self.LogLines.append(f"ERROR: {Err}")
+        self.SetStatus(f"Error: {Err[:55]}", "red")
+        self.CurrentWorker = None
 
-        # --- 5-line scrolling package list ---
-        self.write(panel, pkg_start, 2, "Packages:", color="blue")
-        pkg_start += 1
+    def OnDetailStart(self, Event):
+        self.RawDetailLines = []
+        self.DetailLines    = []
 
-        entries = ["Upgrade all"] + self.filtered_packages
-        if entries:
-            # Clamp selection
-            if self.pkg_index < 0:
-                self.pkg_index = 0
-            if self.pkg_index >= len(entries):
-                self.pkg_index = len(entries) - 1
+    def OnDetailLine(self, Event):
+        Line = Event["data"].get("line", "")
+        self.RawDetailLines.append(Line)
 
-            window = 5
-            # Center selection within 5-line window when possible
-            top = max(0, self.pkg_index - 2)
-            max_top = max(0, len(entries) - window)
-            if top > max_top:
-                top = max_top
-            visible = entries[top : top + window]
+    def OnDetailDone(self, Event):
+        Data = self.ParseAptShow(self.RawDetailLines)
+        self.DetailLines = self.BuildDetailLines(Data, self.w)
+        self.SetStatus(
+            f"Details loaded: {self.DetailPkg}", "green"
+        )
 
-            for idx, name in enumerate(visible):
-                y = pkg_start + idx
-                cursor_index = top + idx
-                cursor = ">> " if cursor_index == self.pkg_index else "   "
-                color = "yellow" if cursor_index == self.pkg_index else None
-                label = f"{cursor}{name}"
-                self.write(panel, y, 2, label[: w - 4], color=color)
+    def OnInstalledLoaded(self, Event):
+        self.InstalledPackages = Event["data"].get("packages", [])
+        Count = len(self.InstalledPackages)
+        self.SetStatus(f"{Count} installed packages", "green")
+        if self.ListContext == LIST_INSTALLED:
+            self.PkgIndex = 0
 
-    def _queue_preset_action(self, index):
-        if index < 0 or index >= len(self.actions):
-            return
-        label, command = self.actions[index]
-        label = f"{label} (apt)"
-        if command == "SEARCH":
-            self.print("Tab, type search term, Enter, then use results.")
-            return
-        if command == "INSTALL":
-            # Switch to text input mode so the user can type a package
-            # name in the footer; APT.handle_text() will consume it.
-            self.app.front.key_mode = True
-            self.print("Type package name, press Enter to install.")
-            return
-        task = self._add_task(label, command)
-        self._start_task(task)
+    def OnUpgradableLoaded(self, Event):
+        self.UpgradablePackages = Event["data"].get("packages", [])
+        Count = len(self.UpgradablePackages)
+        self.SetStatus(f"{Count} packages upgradable", "green")
 
-    @callback(APT_ID, Keys.ENTER)
-    def on_enter(self, *args, **kwargs):
-        # ENTER applies to whichever scroller was last moved.
-        if self.focus == "packages":
-            entries = ["Upgrade all"] + self.filtered_packages
-            if not entries:
-                return
-            if self.pkg_index < 0 or self.pkg_index >= len(entries):
-                return
-            name = entries[self.pkg_index]
-            if self.pkg_index == 0:
-                label = "Upgrade all (apt)"
-                cmd = "sudo apt upgrade"
-            else:
-                label = f"Install: {name}"
-                cmd = f"sudo apt install {shlex.quote(name)}"
-            task = self._add_task(label, cmd)
-            self._start_task(task)
+    # -------------------------------------------------------------- #
+    # List helpers                                                     #
+    # -------------------------------------------------------------- #
+
+    def CurrentList(self):
+        if self.ListContext == LIST_INSTALLED:
+            return self.InstalledPackages
+        if self.ListContext == LIST_UPGRADABLE:
+            return self.UpgradablePackages
+        return self.SearchResults
+
+    def SelectedPackage(self):
+        Lst = self.CurrentList()
+        if not Lst:
+            return None
+        return Lst[max(0, min(self.PkgIndex, len(Lst) - 1))]
+
+    def ClampPkgIndex(self):
+        Lst = self.CurrentList()
+        if not Lst:
+            self.PkgIndex = 0
         else:
-            # ENTER activates the highlighted action bar item (Update/Upgrade/...).
-            if self.action_bar_items:
-                self._queue_preset_action(self.action_bar_index)
+            self.PkgIndex = max(
+                0, min(self.PkgIndex, len(Lst) - 1)
+            )
+
+    def GoBack(self):
+        """Back out one view level."""
+        if self.CurrentView == VIEW_LOG:
+            self._DisableFloat()
+        if self.CurrentView in (VIEW_DETAIL, VIEW_LOG):
+            self.CurrentView = self.PrevView
+        elif self.CurrentView == VIEW_LIST:
+            self.CurrentView = VIEW_ACTIONS
+        self.ConfirmAction = None
+        self.ConfirmMsg    = ""
+
+    # -------------------------------------------------------------- #
+    # Actions                                                          #
+    # -------------------------------------------------------------- #
+
+    def RunShellAction(self, Label, Command):
+        """Launch an AptWorker and switch to LOG view."""
+        TaskId = self.NextTaskId()
+        self.ActiveCommand = Label
+        Worker = AptWorker(self.app, TaskId, Command)
+        self.StartCmdWorker(Worker)
+        self.PrevView    = self.CurrentView
+        self.CurrentView = VIEW_LOG
+        self.LogScroll   = 0
+        self._EnableFloat()
+
+    def RunDetailFetch(self, PkgName):
+        """Fetch package details and switch to DETAIL view."""
+        TaskId = self.NextTaskId()
+        self.DetailPkg      = PkgName
+        self.RawDetailLines = []
+        self.DetailLines    = []
+        self.DetailScroll   = 0
+        Worker = AptWorker(
+            self.app,
+            TaskId,
+            f"apt show {shlex.quote(PkgName)}",
+            Prefix="apt.detail",
+        )
+        self.StartCmdWorker(Worker)
+        self.PrevView    = self.CurrentView
+        self.CurrentView = VIEW_DETAIL
+
+    def SetConfirm(self, Msg, Action):
+        self.ConfirmMsg    = Msg
+        self.ConfirmAction = Action
+
+    def ActivateAction(self):
+        """Execute the selected action bar item."""
+        Idx = self.action_bar_index
+        if Idx < 0 or Idx >= len(self.Actions):
+            return
+        Label, Command = self.Actions[Idx]
+
+        if Command == LIST_INSTALLED:
+            self.ListContext = LIST_INSTALLED
+            self.CurrentView = VIEW_LIST
+            self.PkgIndex    = 0
+            self.SetStatus("Installed packages", "cyan")
+            return
+
+        if Command == LIST_UPGRADABLE:
+            self.ListContext = LIST_UPGRADABLE
+            self.CurrentView = VIEW_LIST
+            self.PkgIndex    = 0
+            self.SetStatus("Upgradable packages", "cyan")
+            return
+
+        if Command == "REMOVE":
+            Pkg = self.SelectedPackage()
+            if Pkg is None:
+                self.SetStatus(
+                    "Select a package first", "yellow"
+                )
+                return
+            self.SetConfirm(
+                f"Remove {Pkg}? (Y/N)",
+                lambda P=Pkg: self.RunShellAction(
+                    f"Remove {P}",
+                    f"sudo apt remove -y {shlex.quote(P)}",
+                ),
+            )
+            return
+
+        if Command == "INSTALL":
+            Pkg = self.SelectedPackage()
+            if Pkg is None:
+                self.SetStatus(
+                    "Select a package first", "yellow"
+                )
+                return
+            self.SetConfirm(
+                f"Install {Pkg}? (Y/N)",
+                lambda P=Pkg: self.RunShellAction(
+                    f"Install {P}",
+                    f"sudo apt install -y {shlex.quote(P)}",
+                ),
+            )
+            return
+
+        if Label == "Upgrade":
+            self.SetConfirm(
+                "Upgrade all packages? (Y/N)",
+                lambda: self.RunShellAction(Label, Command),
+            )
+            return
+
+        if Label == "Autoremove":
+            self.SetConfirm(
+                "Run autoremove? (Y/N)",
+                lambda: self.RunShellAction(Label, Command),
+            )
+            return
+
+        self.RunShellAction(Label, Command)
+
+    def ActivateListItem(self):
+        """Fetch details for the currently selected package."""
+        Pkg = self.SelectedPackage()
+        if Pkg:
+            self.RunDetailFetch(Pkg)
+
+    # -------------------------------------------------------------- #
+    # Detail parsing helpers                                           #
+    # -------------------------------------------------------------- #
+
+    def ParseAptShow(self, RawLines):
+        """Parse apt show RFC 822 output into an ordered dict.
+
+        Handles:
+          - Field: value lines
+          - Continuation lines (leading whitespace)
+          - Blank-line markers within a field (` .`)
+        """
+        Data = collections.OrderedDict()
+        Current = None
+        for Line in RawLines:
+            if not Line.strip():
+                Current = None
+                continue
+            if Line[0] in (" ", "\t") and Current is not None:
+                Cont = Line.strip()
+                if Cont == ".":
+                    Data[Current] = Data[Current] + "\n"
+                else:
+                    Prev = Data[Current]
+                    if Prev.endswith("\n"):
+                        Data[Current] = Prev + Cont
+                    else:
+                        Data[Current] = Prev + " " + Cont
+            elif ": " in Line or Line.endswith(":"):
+                Key, _, Val = Line.partition(": ")
+                Key = Key.strip()
+                Data[Key] = Val.strip()
+                Current = Key
+        return Data
+
+    def _WrapCommaList(self, Text, MaxW):
+        """Wrap a comma-separated dependency string into lines."""
+        Items = [I.strip() for I in Text.split(",")]
+        Lines = []
+        Row = ""
+        for Item in Items:
+            Candidate = (Row + ", " + Item) if Row else Item
+            if len(Candidate) > MaxW and Row:
+                Lines.append(Row)
+                Row = Item
+            else:
+                Row = Candidate
+        if Row:
+            Lines.append(Row)
+        return Lines
+
+    def BuildDetailLines(self, Data, W):
+        """Format a parsed apt show dict into display lines."""
+        MaxW   = max(1, W - 4)
+        Sep    = "\u2500" * min(MaxW, 60)
+        Pkg    = Data.get("Package",        self.DetailPkg)
+        Ver    = Data.get("Version",         "?")
+        Arch   = Data.get("Architecture",    "?")
+        Size   = Data.get("Installed-Size",  "?")
+        Sec    = Data.get("Section",         "?")
+        Prio   = Data.get("Priority",        "?")
+        Maint  = Data.get("Maintainer",      "")
+        Home   = Data.get("Homepage",        "")
+        Dep    = Data.get("Depends",         "")
+        Rec    = Data.get("Recommends",      "")
+        Sug    = Data.get("Suggests",        "")
+        Desc   = Data.get("Description",     "")
+
+        Lines = []
+        Lines.append(f"Package:   {Pkg}")
+        Lines.append(f"Version:   {Ver}")
+        Lines.append(
+            f"Arch:      {Arch:<18}  Size:      {Size}"
+        )
+        Lines.append(
+            f"Section:   {Sec:<18}  Priority:  {Prio}"
+        )
+        if Maint:
+            Lines.append("")
+            Lines.append(f"Maintainer:")
+            Lines.append(f"  {Maint[:MaxW - 2]}")
+        if Home:
+            Lines.append(f"Homepage:")
+            Lines.append(f"  {Home[:MaxW - 2]}")
+        Lines.append("")
+        Lines.append(Sep)
+
+        def AddList(Label, Text):
+            if not Text:
+                return
+            Lines.append(f"")
+            Lines.append(f"{Label}:")
+            for Chunk in self._WrapCommaList(Text, MaxW - 2):
+                Lines.append(f"  {Chunk}")
+
+        AddList("Depends",    Dep)
+        AddList("Recommends", Rec)
+        AddList("Suggests",   Sug)
+
+        if Desc:
+            Lines.append("")
+            Lines.append("Description:")
+            for Para in Desc.split("\n"):
+                Para = Para.strip()
+                if not Para:
+                    Lines.append("")
+                    continue
+                Words = Para.split()
+                Row = "  "
+                for Word in Words:
+                    if len(Row) + len(Word) + 1 > MaxW:
+                        Lines.append(Row.rstrip())
+                        Row = "  " + Word + " "
+                    else:
+                        Row += Word + " "
+                if Row.strip():
+                    Lines.append(Row.rstrip())
+
+        return Lines
+
+    # -------------------------------------------------------------- #
+    # Text input hook (search)                                         #
+    # -------------------------------------------------------------- #
+
+    def handle_text(self, InputString):
+        """Filter installed packages by search term."""
+        Text = InputString.strip()
+        if not Text:
+            return
+        Haystack = self.InstalledPackages or self.UpgradablePackages
+        self.SearchResults = [
+            N for N in Haystack if Text.lower() in N.lower()
+        ]
+        self.ListContext = LIST_SEARCH
+        self.CurrentView = VIEW_LIST
+        self.PkgIndex    = 0
+        self.SetStatus(
+            f"Search '{Text}': {len(self.SearchResults)} results",
+            "green",
+        )
+
+    # -------------------------------------------------------------- #
+    # Render entry point                                               #
+    # -------------------------------------------------------------- #
+
+    def page(self, Panel):
+        H = self.h
+        W = self.w
+        try:
+            Panel.win.erase()
+        except Exception:
+            pass
+
+        if self.CurrentView == VIEW_LOG:
+            # Show the previous view as a background; the float panel
+            # renders the log as an overlay via PageFloat().
+            if self.PrevView == VIEW_LIST:
+                self.RenderList(Panel, H, W)
+            else:
+                self.RenderActions(Panel, H, W)
+        elif self.CurrentView == VIEW_DETAIL:
+            self.RenderDetail(Panel, H, W)
+        elif self.CurrentView == VIEW_LIST:
+            self.RenderList(Panel, H, W)
+        else:
+            self.RenderActions(Panel, H, W)
+
+        if self.ConfirmAction is not None:
+            self.RenderConfirm(Panel, H, W)
+
+    # -------------------------------------------------------------- #
+    # Render: ACTIONS view                                             #
+    # -------------------------------------------------------------- #
+
+    def RenderActions(self, Panel, H, W):
+        self.write(Panel, 1, 2, "APT  Package Manager", color="cyan")
+        self.render_action_bar(Panel, row=2)
+        self.write(
+            Panel, 3, 2,
+            f"[ {self.ListContext} ]  "
+            f"{len(self.CurrentList())} packages",
+            color="blue",
+        )
+        ListH = max(0, H - 5)
+        self.RenderPackageList(Panel, 4, ListH, W)
+        self.RenderStatus(Panel, H, W)
+
+    # -------------------------------------------------------------- #
+    # Render: LIST view                                                #
+    # -------------------------------------------------------------- #
+
+    def RenderList(self, Panel, H, W):
+        Header = (
+            f"[ {self.ListContext} ]  "
+            f"{len(self.CurrentList())} packages  "
+            "(ENTER=detail  ESC=back)"
+        )
+        self.write(Panel, 1, 2, Header[:W - 2], color="cyan")
+        self.render_action_bar(Panel, row=2)
+        ListH = max(0, H - 4)
+        self.RenderPackageList(Panel, 3, ListH, W)
+        self.RenderStatus(Panel, H, W)
+
+    # -------------------------------------------------------------- #
+    # Render: shared package list                                      #
+    # -------------------------------------------------------------- #
+
+    def RenderPackageList(self, Panel, StartRow, ListH, W):
+        Lst = self.CurrentList()
+        if not Lst:
+            self.write(
+                Panel, StartRow, 2,
+                "(empty — run Update or select a list)",
+                color="yellow",
+            )
+            return
+        self.ClampPkgIndex()
+        Top    = max(0, self.PkgIndex - ListH // 2)
+        MaxTop = max(0, len(Lst) - ListH)
+        if Top > MaxTop:
+            Top = MaxTop
+        Visible = Lst[Top: Top + ListH]
+        for Offset, Name in enumerate(Visible):
+            Row = StartRow + Offset
+            if Row >= StartRow + ListH:
+                break
+            AbsIdx   = Top + Offset
+            Selected = (AbsIdx == self.PkgIndex)
+            Cursor   = ">> " if Selected else "   "
+            Color    = "yellow" if Selected else None
+            Label    = (Cursor + Name)[: W - 4]
+            self.write(Panel, Row, 2, Label, color=Color)
+
+    # -------------------------------------------------------------- #
+    # Render: status bar                                               #
+    # -------------------------------------------------------------- #
+
+    def RenderStatus(self, Panel, H, W):
+        Msg = self.StatusMsg[: W - 14]
+        self.write(Panel, H - 2, 2, Msg, color=self.StatusColor)
+        Running = (
+            self.CurrentWorker is not None
+            and self.CurrentWorker.is_alive()
+        )
+        if Running:
+            self.write(Panel, H - 2, W - 12, "[running]",
+                       color="yellow")
+
+    # -------------------------------------------------------------- #
+    # Floating panel hook — LOG overlay                               #
+    # -------------------------------------------------------------- #
+
+    def PageFloat(self, Panel):
+        """Render log content into the backend floating panel."""
+        H, W = Panel.dims[0], Panel.dims[1]
+        self.RenderLog(Panel, H, W)
+
+    # -------------------------------------------------------------- #
+    # Render: LOG view                                                 #
+    # -------------------------------------------------------------- #
+
+    def RenderLog(self, Panel, H, W):
+        self.write(
+            Panel, 1, 2,
+            "LOG  (ESC=back  HOME=top  END=bottom  C=cancel)",
+            color="cyan",
+        )
+        Lines = list(self.LogLines)
+        ViewH  = max(0, H - 3)
+        MaxScr = max(0, len(Lines) - ViewH)
+        if self.LogScroll > MaxScr:
+            self.LogScroll = MaxScr
+        Visible = Lines[self.LogScroll: self.LogScroll + ViewH]
+        for Offset, Line in enumerate(Visible):
+            Row = 2 + Offset
+            if Row >= H - 1:
+                break
+            Color = "red" if Line.startswith("ERROR") else None
+            self.write(Panel, Row, 1, Line[: W - 2], color=Color)
+        self.RenderStatus(Panel, H, W)
+
+    # -------------------------------------------------------------- #
+    # Render: DETAIL view                                              #
+    # -------------------------------------------------------------- #
+
+    def RenderDetail(self, Panel, H, W):
+        Header = (
+            f"DETAIL: {self.DetailPkg}"
+            "  (ESC=back  HOME/END=scroll)"
+        )
+        self.write(Panel, 1, 2, Header[:W - 2], color="cyan")
+        ViewH  = max(0, H - 3)
+        Lines  = self.DetailLines
+        MaxScr = max(0, len(Lines) - ViewH)
+        if self.DetailScroll > MaxScr:
+            self.DetailScroll = MaxScr
+        Visible = Lines[
+            self.DetailScroll: self.DetailScroll + ViewH
+        ]
+        FieldHeaders = (
+            "Package:", "Version:", "Arch:", "Section:",
+            "Maintainer:", "Homepage:",
+        )
+        SectionHeaders = (
+            "Depends:", "Recommends:", "Suggests:", "Description:",
+        )
+        for Offset, Line in enumerate(Visible):
+            Row = 2 + Offset
+            if Row >= H - 1:
+                break
+            Stripped = Line.lstrip()
+            if any(Stripped.startswith(F) for F in FieldHeaders):
+                Color = "cyan"
+            elif any(Stripped.startswith(S) for S in SectionHeaders):
+                Color = "yellow"
+            elif Stripped.startswith("\u2500"):
+                Color = "blue"
+            else:
+                Color = None
+            self.write(Panel, Row, 1, Line[:W - 2], color=Color)
+        self.RenderStatus(Panel, H, W)
+
+    # -------------------------------------------------------------- #
+    # Render: confirmation overlay                                     #
+    # -------------------------------------------------------------- #
+
+    def RenderConfirm(self, Panel, H, W):
+        Row  = H // 2
+        Box  = f"  {self.ConfirmMsg}  "[: W - 4]
+        Col  = max(2, (W - len(Box)) // 2)
+        self.write(Panel, Row, Col, Box, color="red")
+
+    # -------------------------------------------------------------- #
+    # Key callbacks                                                    #
+    # -------------------------------------------------------------- #
 
     @callback(APT_ID, Keys.UP)
-    def on_up(self, *args, **kwargs):
-        # Scroll within the 5-line package list.
-        self.focus = "packages"
-        if self.pkg_index > 0:
-            self.pkg_index -= 1
+    def OnUp(self, *args, **kwargs):
+        if self.ConfirmAction is not None:
+            return
+        if self.CurrentView == VIEW_LOG:
+            if self.LogScroll > 0:
+                self.LogScroll -= 1
+            return
+        if self.CurrentView == VIEW_DETAIL:
+            if self.DetailScroll > 0:
+                self.DetailScroll -= 1
+            return
+        if self.PkgIndex > 0:
+            self.PkgIndex -= 1
 
     @callback(APT_ID, Keys.DOWN)
-    def on_down(self, *args, **kwargs):
-        entries_len = 1 + len(self.filtered_packages)
-        if entries_len == 0:
+    def OnDown(self, *args, **kwargs):
+        if self.ConfirmAction is not None:
             return
-        self.focus = "packages"
-        if self.pkg_index < entries_len - 1:
-            self.pkg_index += 1
-
-    @callback(APT_ID, Keys.HOME)
-    def on_home(self, *args, **kwargs):
-        if not self.update_output:
+        if self.CurrentView == VIEW_LOG:
+            ViewH = max(1, self.h - 3)
+            MaxScr = max(0, len(self.LogLines) - ViewH)
+            if self.LogScroll < MaxScr:
+                self.LogScroll += 1
             return
-        # HOME no longer affects update_output auto-scroll; keep as no-op
-        return
-
-    @callback(APT_ID, Keys.END)
-    def on_end(self, *args, **kwargs):
-        if not self.update_output:
+        if self.CurrentView == VIEW_DETAIL:
+            ViewH = max(1, self.h - 3)
+            MaxScr = max(0, len(self.DetailLines) - ViewH)
+            if self.DetailScroll < MaxScr:
+                self.DetailScroll += 1
             return
-        # END no longer affects update_output auto-scroll; keep as no-op
-        return
-
-    def handle_text(self, input_string: str):
-        """Use text input for search/install depending on focused action.
-
-        - If action bar is on Search: filter update_packages by substring.
-        - If action bar is on Install: queue an install task for the name.
-        """
-        text = input_string.strip()
-        if not text:
-            return
-
-        action_label = None
-        if 0 <= self.action_bar_index < len(self.actions):
-            action_label = self.actions[self.action_bar_index][0]
-
-        if action_label == "Search":
-            # Simple case-insensitive substring match over update_packages
-            haystack = self.update_packages or []
-            self.filtered_packages = [
-                name for name in haystack
-                if text.lower() in name.lower()
-            ] or list(self.update_packages)
-            self.pkg_index = 0
-            self.focus = "packages"
-            self.print(f"APT search: filtered to {len(self.filtered_packages)} packages")
-        elif action_label == "Install":
-            label = f"Install: {text}"
-            cmd = f"sudo apt install {shlex.quote(text)}"
-            task = self._add_task(label, cmd)
-            self._start_task(task)
-        else:
-            # Fallback to base behavior
-            super().handle_text(input_string)
+        Lst = self.CurrentList()
+        if self.PkgIndex < len(Lst) - 1:
+            self.PkgIndex += 1
 
     @callback(APT_ID, Keys.LEFT)
-    def on_left(self, *args, **kwargs):
-        if not self.action_bar_items:
+    def OnLeft(self, *args, **kwargs):
+        if self.ConfirmAction is not None:
             return
-        self.focus = "actions"
+        if self.CurrentView in (VIEW_LOG, VIEW_DETAIL):
+            return
         self.action_bar_index -= 1
         if self.action_bar_index < 0:
             self.action_bar_index = len(self.action_bar_items) - 1
 
     @callback(APT_ID, Keys.RIGHT)
-    def on_right(self, *args, **kwargs):
-        if not self.action_bar_items:
+    def OnRight(self, *args, **kwargs):
+        if self.ConfirmAction is not None:
             return
-        self.focus = "actions"
+        if self.CurrentView in (VIEW_LOG, VIEW_DETAIL):
+            return
         self.action_bar_index += 1
         if self.action_bar_index >= len(self.action_bar_items):
             self.action_bar_index = 0
+
+    @callback(APT_ID, Keys.ENTER)
+    def OnEnter(self, *args, **kwargs):
+        if self.ConfirmAction is not None:
+            return
+        if self.CurrentView in (VIEW_LOG, VIEW_DETAIL):
+            return
+        if self.CurrentView == VIEW_LIST:
+            self.ActivateListItem()
+        else:
+            self.ActivateAction()
+
+    @callback(APT_ID, Keys.ESC)
+    def OnEsc(self, *args, **kwargs):
+        if self.ConfirmAction is not None:
+            self.ConfirmAction = None
+            self.ConfirmMsg    = ""
+            self.SetStatus("Cancelled", "yellow")
+            return
+        self.GoBack()
+
+    @callback(APT_ID, Keys.HOME)
+    def OnHome(self, *args, **kwargs):
+        if self.CurrentView == VIEW_LOG:
+            self.LogScroll = 0
+        elif self.CurrentView == VIEW_DETAIL:
+            self.DetailScroll = 0
+        else:
+            self.PkgIndex = 0
+
+    @callback(APT_ID, Keys.END)
+    def OnEnd(self, *args, **kwargs):
+        if self.CurrentView == VIEW_LOG:
+            ViewH = max(1, self.h - 3)
+            self.LogScroll = max(0, len(self.LogLines) - ViewH)
+        elif self.CurrentView == VIEW_DETAIL:
+            ViewH = max(1, self.h - 3)
+            self.DetailScroll = max(
+                0, len(self.DetailLines) - ViewH
+            )
+        else:
+            Lst = self.CurrentList()
+            if Lst:
+                self.PkgIndex = len(Lst) - 1
+
+    @callback(APT_ID, Keys.L)
+    def OnL(self, *args, **kwargs):
+        if self.ConfirmAction is not None:
+            return
+        if self.CurrentView != VIEW_LOG:
+            self.PrevView    = self.CurrentView
+            self.CurrentView = VIEW_LOG
+            self._EnableFloat()
+
+    @callback(APT_ID, Keys.C)
+    def OnC(self, *args, **kwargs):
+        if self.ConfirmAction is not None:
+            return
+        self.CancelWorker()
+
+    @callback(APT_ID, Keys.Y)
+    def OnY(self, *args, **kwargs):
+        if self.ConfirmAction is None:
+            return
+        Action = self.ConfirmAction
+        self.ConfirmAction = None
+        self.ConfirmMsg    = ""
+        Action()
+
+    @callback(APT_ID, Keys.N)
+    def OnN(self, *args, **kwargs):
+        if self.ConfirmAction is None:
+            return
+        self.ConfirmAction = None
+        self.ConfirmMsg    = ""
+        self.SetStatus("Cancelled", "yellow")
+
+    # -------------------------------------------------------------- #
+    # Cleanup                                                          #
+    # -------------------------------------------------------------- #
+
+    def end_safely(self):
+        self.CancelWorker()
+        super().end_safely()
