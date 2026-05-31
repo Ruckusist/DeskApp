@@ -21,3 +21,10 @@ from .src.backend import Backend
 from .src.logic import Logic
 
 from .src.app import App
+
+from .src.widgets import (           # Added Proposal 09
+    ScrollList,
+    ResultGrid,
+    ConfirmPrompt,
+    JsonRegistry,
+)

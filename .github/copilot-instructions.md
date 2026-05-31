@@ -18,9 +18,27 @@ before acting. There are 4 work types:
 
 # Proposals
 
+## TODO Pipeline
+
+New ideas that are not immediately executed enter as TODO files.
+TODOs have no proposal number and do not affect versioning.
+
+    - filename pattern: TODO_<Title>_<MMDDYY>.prop
+    - same format as a proposal (originating prompt, interpretation, body)
+    - NO checkboxes until the TODO is promoted to a numbered proposal
+    - TODOs live in .github/proposals/ alongside numbered proposals
+    - a TODO is promoted to a PROPOSAL when the user says to execute it:
+        1. assign the next sequential proposal number
+        2. rename: TODO_<Title>.prop → PROPOSAL_<NUM>_<Title>_<MMDDYY>.prop
+        3. add checkboxes to every actionable item
+        4. begin execution
+
+The proposal number is locked at promotion time, not at idea time.
+This ensures version numbers stay in sync with what was actually built.
+
 ## 1) Add a Feature
-    - create a proposal folder in .github/proposals/ if it does not exist
-    - create a proposal file in that folder
+    - if the feature is to be executed now: create a numbered proposal
+    - if the feature is a future idea: create a TODO file instead
     - proposals are numbered sequentially and globally; never reuse a number
     - proposal number must match the middle segment of the version number
     - filename pattern: PROPOSAL_<NUM>_<Title>_<MMDDYY>.prop

@@ -2,6 +2,40 @@
 
 ---
 
+## 0.9.0 — Proposal 09 — CoreWidgets — 053126
+Agent: Claude Sonnet 4.6
+
+Added four composable rendering helpers to deskapp/src/widgets.py,
+exported from the top-level deskapp package. No curses imports — all
+rendering routes through Module.write().
+
+ScrollList: stateful scrollable list. SetItems(), MoveUp/Down/JumpTop/
+JumpEnd(), Selected(), SelectedIndex(), Render(Mod, Panel, Row, Col,
+Height, Width, SelectedColor, NormalColor, Formatter). Windowing handled
+automatically via ScrollTop clamping.
+
+ResultGrid: column-auto-sized tabular grid. SetData(Cols, Rows), vertical
+and horizontal scroll (HScroll is a column-index offset, whole columns
+pan left/right). Header row in cyan, selected row in yellow, row-number
+gutter on the left. Works with tuples, lists, or sqlite3.Row.
+
+ConfirmPrompt: inline Y/N prompt. Ask(Message, OnYes, OnNo) arms it;
+Yes()/No() fire the stored callable and deactivate; Render() is a no-op
+when not Active. Zero curses references.
+
+JsonRegistry: atomic JSON load/save for path lists. Add() deduplicates,
+Remove() filters by resolved path, Save() writes via mkstemp+rename.
+
+deskapp/__init__.py — exports ScrollList, ResultGrid, ConfirmPrompt,
+JsonRegistry. examples/ex_widgets.py — standalone demo exercising all
+four widgets in a single module.
+
+Previously filed proposals 09 (DbBrowser) and 10 (FileBrowser) demoted
+to TODO_DbBrowser.prop and TODO_FileBrowser.prop; both will be promoted
+and numbered when executed so version stays in sync with built work.
+
+---
+
 ## 0.8.0 — Proposal 08 — DataStore — 053126
 Agent: Claude Sonnet 4.6
 
