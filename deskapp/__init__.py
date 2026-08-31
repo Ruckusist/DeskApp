@@ -28,3 +28,7 @@ from .src.widgets import (           # Added Proposal 09
     ConfirmPrompt,
     JsonRegistry,
 )
+
+from .src.character_motion import (  # Added Proposal 10
+    RainReveal,
+)

@@ -2,6 +2,34 @@
 
 ---
 
+## 0.10.0 — Proposal 10 — CharacterMotion (RainReveal) — 083126
+Agent: Claude Sonnet 4.6
+
+Implemented CharacterMotion, the half of Proposal 10 the user confirmed
+after reviewing the pivot away from a pixel-intensity model (see prior
+Proposal 10 entries below for the TerminalTextEffects link review and
+scope split). Added deskapp/src/character_motion.py with RainReveal: a
+dependency-free reimplementation of TTE's "rain" effect concept — each
+non-space character of a text block spawns above the canvas and falls at
+a constant rate (rows/second, wall-clock driven via Update()) until it
+reaches its home (row, col), landing and resolving to its final glyph/
+color; falling characters render as a randomized "drop" glyph in a
+secondary color. API: SetText(Lines), Start(), Update(), IsDone(),
+Render(Mod, Panel, Row, Col, Height, Width) — same calling convention as
+ScrollList/ResultGrid from Proposal 09. Exported RainReveal from
+deskapp/__init__.py. Added examples/ex_character_motion.py: a banner
+falls into place on load, R/ENTER replays it.
+
+Scope note: built RainReveal as one focused effect class rather than the
+fully generic Character/Path/Waypoint/Scene framework originally
+sketched in the proposal — that generalization is deferred until a
+second/third TTE-style effect is actually wanted (see PROPOSAL_10 review
+notes). PixelCanvas (the original fire.py-style grid idea) was not built
+and remains un-promoted for a possible future proposal. README Core API
+section not updated in this pass.
+
+---
+
 ## Proposal 10 (drafted, not yet implemented) — PixelCanvasEffect — 083126
 Agent: Claude Sonnet 4.6
 

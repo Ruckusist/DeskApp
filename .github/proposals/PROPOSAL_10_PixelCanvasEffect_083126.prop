@@ -66,11 +66,47 @@ fire.py.
 
 Proposal:
 
-- [ ] Confirm with the user whether both PixelCanvas and CharacterMotion
-      should be built now, or only one to start (recommend starting with
-      CharacterMotion since it more directly matches TTE and applies to
-      DeskApp's existing text/panels; treat PixelCanvas as a smaller,
-      separate follow-up reusing fire.py's proven pattern)
+- [x] User confirmed: pivot to CharacterMotion only, build one concrete
+      TTE-inspired effect end-to-end, plus a showcase example.
+      PixelCanvas is deferred — not part of this proposal's execution.
+- [x] CharacterMotion (deskapp/src/character_motion.py): implemented as
+      a single focused RainReveal class rather than the fully generic
+      Character/Path/Scene framework originally sketched below. This is
+      a deliberate scope reduction (see Review Notes) to keep the first
+      cut small, dependency-free, and directly usable:
+    - [x] per-character home (row, col) + falling state, built from a
+          list of text lines via SetText()
+    - [x] simple linear fall (rows/second) from a random above-canvas
+          start row down to the home row — no bezier/easing, matching
+          the "defer curves" note below
+    - [x] landed vs. falling rendering distinction (resolved glyph in
+          Color once landed; random "drop" glyph in DropColor while
+          falling), the closest equivalent to a Scene for this effect
+    - [x] Start()/Update()/IsDone()/Render(Mod, Panel, Row, Col, Height,
+          Width) tick/render API, Update() driven by wall-clock time so
+          it's frame-rate independent, called once per page() frame
+    - [ ] generic reusable Path/Waypoint/Scene types decoupled from a
+          single effect — not built; would be the natural next step if
+          more TTE-style effects (beams, wipe, slide) are wanted later
+- [x] One built-in effect: "rain" (TTE's own name for this effect) —
+      applied to a banner/logo text block in the new example module
+      below, as the proof of concept
+- [x] Add examples/ex_character_motion.py demonstrating RainReveal
+      end-to-end (banner falls into place, R/ENTER replays), consistent
+      with existing examples/ex_*.py conventions
+- [x] Export RainReveal from deskapp/__init__.py alongside CoreWidgets
+- [ ] Update README.md's Core API section — deferred; README not
+      touched in this pass, can follow in a small follow-up if desired
+- [x] No changes to deskapp/mods/apt.py, about.py, buttons.py,
+      hunter.py, memory_viewer.py, fire.py, or unrelated core modules
+- [x] Roll version to 0.10.0 and update .github/changelog.ai on
+      completion, crediting Proposal 10 and this project as inspiration
+      (TerminalTextEffects by ChrisBuilds, MIT licensed, no code copied —
+      only the conceptual model referenced)
+
+Original (pre-pivot) full sketch, kept for reference / possible future
+follow-up proposal:
+
 - [ ] PixelCanvas (deskapp/src/pixel_canvas.py):
     - [ ] width/height grid of numeric cell values (0-9 or 0-255
           intensity scale)
@@ -83,10 +119,8 @@ Proposal:
           convention in deskapp/src/widgets.py
     - [ ] refactor deskapp/mods/fire.py's Flames class onto it without
           changing fire's visible behavior
-- [ ] CharacterMotion (deskapp/src/character_motion.py), modeled after
-      TTE at a scope appropriate for a TUI framework (no bezier/easing
-      library dependency; keep it dependency-free like the rest of
-      deskapp):
+- [ ] Generic CharacterMotion Path/Waypoint/Scene framework (rather than
+      the single RainReveal effect actually built):
     - [ ] a Character type: symbol, home (row, col), current position,
           current color/attr
     - [ ] a Path type: ordered list of waypoints (row, col) a character
@@ -97,22 +131,6 @@ Proposal:
     - [ ] a small per-frame update/tick step that advances all
           characters' Paths and Scenes and renders them via
           Module.write()
-    - [ ] one built-in effect built on this (e.g. a simplified "beams"
-          or "slide-in" effect) applied to a panel title or the "about"
-          module text, as a proof of concept
-- [ ] Add a standalone examples/ex_pixel_canvas.py and/or
-      examples/ex_character_motion.py demonstrating whichever piece(s)
-      are built, consistent with existing examples/ex_*.py conventions
-- [ ] Update README.md's Core API section only for whichever symbols end
-      up exported at the top-level deskapp package (mirrors how
-      CoreWidgets were documented under Proposal 09)
-- [ ] No changes to deskapp/mods/apt.py, about.py, buttons.py,
-      hunter.py, memory_viewer.py, or unrelated core modules beyond the
-      fire.py refactor above
-- [ ] Roll version to 0.10.0 and update .github/changelog.ai on
-      completion, crediting Proposal 10 and this project as inspiration
-      (TerminalTextEffects by ChrisBuilds, MIT licensed, no code copied —
-      only the conceptual model referenced)
 
 Review Notes:
 083126 — Link reviewed (github.com/ChrisBuilds/terminaltexteffects).
@@ -121,3 +139,16 @@ Confirmed the reference project is a character-animation engine
 PixelCanvas (original fire.py-style idea) and CharacterMotion (new,
 TTE-inspired) so the user can choose scope. Awaiting user decision on
 which piece(s) to build before implementation begins.
+
+083126 (later same day) — User confirmed: pivot to CharacterMotion only,
+pick one particular TTE effect, and build a showcase example. Chose
+"rain" (TTE's own name) since it's the simplest clear demonstration of
+the home-coordinate + motion + reveal idea, and implemented it as a
+focused RainReveal class rather than the full generic Path/Scene
+framework sketched during proposal drafting — the generic framework adds
+real complexity (interpolation, per-character scene sequencing, waypoint
+lists) that isn't justified until a second/third effect is actually
+needed. Documented the reduced scope explicitly above rather than
+silently under-delivering against the original checklist. PixelCanvas
+remains untouched and un-promoted; it can become its own proposal later
+if wanted.
