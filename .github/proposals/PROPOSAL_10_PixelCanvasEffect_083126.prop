@@ -1,0 +1,67 @@
+PixelCanvasEffect_083126
+Last reviewed: 083126
+
+Originating Prompt: we are trying to integrate functionality similar to the
+app , desktop terminal effect in python on github. he is doing something
+about rendering each character space like a pixel space and its really
+cool. id like to have some functionality like that in deskapp
+
+Interpretation: The user has seen a GitHub project that renders terminal
+output by treating every character cell as an addressable "pixel"
+(mapping a numeric intensity or color value per cell to a glyph/color
+pair), used to build animated full-screen terminal effects. DeskApp
+already has a partial example of this pattern in deskapp/mods/fire.py
+(the Flames class keeps a flat intensity buffer `b` and a `gameboard`
+grid, then maps intensity to a glyph ramp each frame). The user wants
+this "pixel space" idea generalized into reusable DeskApp functionality
+rather than reimplemented ad hoc per module, so future effects (fire,
+plasma, matrix rain, image-to-ascii, etc.) can be built on a shared
+abstraction. The exact source project was not linked; a link would let
+us confirm the actual rendering technique (character ramp only, vs.
+character + 24-bit/256-color per cell, vs. half-block "upper pixel"
+tricks) instead of assuming it matches fire.py's approach.
+
+Promoted from .github/proposals/TODO_PixelCanvasEffect_083126.prop on
+083126 at the user's request ("please go ahead with adding a proposal
+document... then we can review what you have").
+
+Proposal:
+
+- [ ] Confirm/refine scope with the user, ideally after they share a link
+      to the reference project, to settle whether per-cell color is
+      in scope for v1 or a later iteration
+- [ ] Add a PixelCanvas class (new file, likely
+      deskapp/src/pixel_canvas.py, exported from deskapp/__init__.py
+      alongside existing core exports such as widgets) that owns:
+    - [ ] a width/height grid of numeric cell values (0-9 or 0-255
+          intensity scale)
+    - [ ] a configurable character ramp (list of glyphs, dark to
+          bright, generalized from Flames.chars / og_chars)
+    - [ ] an optional per-cell color/attr mapping hook, kept separate
+          from glyph selection so callers can opt in or skip it
+    - [ ] a Render(Mod, Panel, Row, Col, Height, Width) method that
+          writes the grid to the DeskApp backend via Module.write(),
+          matching the calling convention used by
+          deskapp/src/widgets.py's ScrollList/ResultGrid
+- [ ] Refactor deskapp/mods/fire.py's Flames class to build its buffer
+      on top of PixelCanvas instead of maintaining its own
+      buffer/gameboard/char-mapping logic, proving the abstraction
+      works for an existing effect without changing fire.py's visible
+      behavior
+- [ ] Add one new example effect module built on PixelCanvas (e.g. a
+      "plasma" or "matrix rain" mod under deskapp/mods/) to demonstrate
+      reuse beyond fire and give a second concrete reference point
+- [ ] Add a standalone examples/ex_pixel_canvas.py demonstrating
+      PixelCanvas usage outside of a full mod, consistent with existing
+      examples/ex_*.py conventions
+- [ ] Update README.md's Core API section only if PixelCanvas is
+      exported as a top-level deskapp symbol (mirrors how CoreWidgets
+      were documented under Proposal 09)
+- [ ] No changes to deskapp/mods/apt.py, about.py, buttons.py,
+      hunter.py, memory_viewer.py, or unrelated core modules
+- [ ] Roll version to 0.10.0 and update .github/changelog.ai on
+      completion, crediting Proposal 10
+
+Review Notes:
+(none yet — awaiting user review of this proposal before execution
+begins)

@@ -2,19 +2,21 @@
 
 ---
 
-## TODO — PixelCanvasEffect — 083126
+## Proposal 10 (drafted, not yet implemented) — PixelCanvasEffect — 083126
 Agent: Claude Sonnet 4.6
 
-Captured a new feature idea as a TODO (no proposal number, no version
-change) in .github/proposals/TODO_PixelCanvasEffect_083126.prop. User
-referenced a GitHub project that renders terminal output by treating each
-character cell as a "pixel" and asked for similar functionality in
-DeskApp. deskapp/mods/fire.py's Flames class already does an ad hoc
-version of this (flat intensity buffer + glyph ramp); the TODO proposes
-generalizing that pattern into a reusable PixelCanvas abstraction that
-fire.py and future effect modules (plasma, matrix rain, etc.) could share.
-Awaiting user confirmation to promote this to a numbered proposal before
-any code is written.
+Promoted .github/proposals/TODO_PixelCanvasEffect_083126.prop to
+.github/proposals/PROPOSAL_10_PixelCanvasEffect_083126.prop at the user's
+request, with checkboxes added. Proposal generalizes the "pixel space"
+buffer/glyph-ramp pattern already present in deskapp/mods/fire.py's Flames
+class into a shared PixelCanvas abstraction (deskapp/src/pixel_canvas.py),
+refactors fire.py onto it, and adds a second effect module plus an
+examples/ demo. Note: .gitignore excludes /.github/proposals/*, so the
+.prop file itself is not tracked in git — this changelog entry is the
+durable cross-session record; the .prop file must be regenerated or
+force-added (git add -f) if it needs to persist. Version not yet rolled —
+no code changed, awaiting user review of the proposal per the pipeline
+(execution starts only once the user confirms the plan).
 
 ---
 
