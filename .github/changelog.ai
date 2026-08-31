@@ -2,6 +2,29 @@
 
 ---
 
+## TODO — TutorialSeriesExamplesCleanup — 083126
+Agent: Claude Sonnet 4.6
+
+Captured a future-project idea as a TODO (no proposal number, no version
+change) in
+.github/proposals/TODO_TutorialSeriesExamplesCleanup_083126.prop. User
+wants to eventually clean up examples/ and reshape the numbered tutorial
+series (00_hello.py..09_multiline_input.py) into one continuously-built
+project suitable for a YouTube tutorial series, rather than today's
+disconnected standalone demos. Audited current examples/ state: three
+legacy files (ex_2.py, ex_3.py, ex_4.py) import a nonexistent `onefile`
+module and cannot run; 09_multiline_input.py and several other files
+(ex_widgets.py, ex_character_motion.py, ex_box_test.py,
+ex_mouse_events.py, ex_store.py, test_events.py, memory_test.py,
+memory_leak_demo.py, memory_viewer_demo.py, test_floating.md) are absent
+from README.md's Learning Path / Quick Reference Table / Additional
+Examples sections despite existing on disk. TODO sketches a 3-phase
+direction (cleanup, restructure into one continuous build, YouTube-
+readiness notes) for promotion to a numbered proposal once the user
+confirms scope. No code changed in this session.
+
+---
+
 ## 0.10.0 — Proposal 10 — CharacterMotion (RainReveal) — 083126
 Agent: Claude Sonnet 4.6
 

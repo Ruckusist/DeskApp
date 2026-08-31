@@ -1,0 +1,94 @@
+TutorialSeriesExamplesCleanup_083126
+Last reviewed: 083126
+
+Originating Prompt: isnt that just fantastic. the next project you could
+work on is cleaning up the examples folder. there was an original concept
+of using them as a tutorial code learning project, where each step would
+build up a deskapp project that a student could utilize all the features
+of the deskapp environment and through that learn some coding, python and
+logic along the way. i was hoping we might eventually work towards a
+whole tutorial series based on this for youtube.
+
+Interpretation: This is a future/eventual project, not something to
+execute immediately — the user frames it as "the next project you could
+work on" and "eventually work towards," so per the TODO Pipeline this
+stays a TODO until the user says to execute it. The ask has two layers:
+
+  1. Clean up the existing examples/ folder (remove/fix cruft, resolve
+     inconsistencies between what exists on disk and what README.md
+     documents).
+  2. Longer-term: reshape the numbered tutorial series (00_hello.py
+     through 09_multiline_input.py) so each step incrementally BUILDS UP
+     one single running project — not just a series of disconnected
+     standalone demos — such that a student ends the series with one
+     cohesive app that exercises the whole DeskApp feature set. This
+     structure is explicitly intended as the basis for a future YouTube
+     tutorial series, so clarity, pacing, and narrative flow across
+     steps matter as much as code correctness.
+
+Current State Audit (examples/ folder, reviewed 083126):
+
+  - A numbered tutorial series already exists: 00_hello.py, 01_panels.py,
+    02_module.py, 03_callbacks.py, 04_layouts.py, 05_styling.py,
+    06_data_sharing.py, 07_events.py, 08_complete_app.py. Each of these
+    is currently a SEPARATE standalone demo (its own Module subclass,
+    its own App() call) rather than incremental steps building one
+    project forward — this is the core gap versus the user's original
+    concept described above.
+  - 09_multiline_input.py exists on disk but is NOT listed in README.md's
+    "Learning Path" section or its "Quick Reference Table" — the series
+    numbering and the documented curriculum have already drifted apart.
+  - Three legacy files (ex_2.py, ex_3.py, ex_4.py) `import onefile`, a
+    module that does not exist anywhere in this repository — these are
+    dead code left from a prior package layout and cannot run
+    (confirmed: `import examples.ex_2` raises ModuleNotFoundError).
+    ex_1.py also references an old API style (Module(app, "Hworld")
+    with a string class_id, a commented-out `from login import
+    LoginModule`) and predates the current Module/callback conventions.
+  - ex_0.py is a 9-line sanity check with no tutorial value beyond
+    "does deskapp import."
+  - README.md's "Additional Examples" section is stale relative to
+    what's actually in the folder. Present on disk but unlisted in
+    README: ex_box_test.py, ex_mouse_events.py, ex_store.py,
+    ex_widgets.py (Proposal 09 demo), ex_character_motion.py
+    (Proposal 10 demo), test_events.py, memory_test.py,
+    memory_leak_demo.py, memory_viewer_demo.py, test_floating.md.
+  - Naming is inconsistent: numbered tutorial files (00_hello.py style)
+    coexist with two different unnumbered naming schemes (`ex_*.py` and
+    bare descriptive names like `deskhunter.py`, `memory_test.py`),
+    making it unclear at a glance which files are "the curriculum" vs.
+    "feature demos" vs. "dead legacy code."
+  - Proposal-driven demos (ex_widgets.py for Proposal 09,
+    ex_character_motion.py for Proposal 10) are being added ad hoc to
+    the same flat folder as the tutorial series, with no clear rule for
+    whether/when a proposal's demo should be folded into the numbered
+    curriculum vs. kept as a separate feature showcase.
+
+Proposed Direction (for future promotion to a numbered proposal — NOT
+executed now):
+
+  - Phase 1 — Cleanup: delete or clearly quarantine the dead `onefile`-
+    dependent legacy files (ex_2.py, ex_3.py, ex_4.py) and evaluate
+    ex_0.py/ex_1.py for removal or a rewrite against current
+    conventions; reconcile README.md's Learning Path, Quick Reference
+    Table, and Additional Examples list against what's actually on disk
+    (add 09_multiline_input.py, ex_widgets.py, ex_character_motion.py,
+    and the other undocumented files, or remove/relocate files that
+    shouldn't be part of the public curriculum).
+  - Phase 2 — Restructure numbered series into one continuous build:
+    redesign 00-09 (and beyond) so each script imports/extends the
+    previous step's module (or documents "copy this file forward and
+    add X"), ending at a single cohesive capstone app, matching the
+    user's original "build up a deskapp project" concept.
+  - Phase 3 — YouTube-readiness: once restructured, consider adding
+    per-step narration notes/talking points (could live in README.md or
+    a per-step comment block) suited to a video script, without
+    overengineering this into a separate docs project prematurely.
+  - Establish a going-forward convention for where new proposal demo
+    scripts (like ex_widgets.py, ex_character_motion.py) belong relative
+    to the numbered curriculum, so this drift doesn't recur.
+
+This TODO intentionally has no checkboxes per the TODO Pipeline format.
+Promote to PROPOSAL_<NUM>_TutorialSeriesExamplesCleanup_<date>.prop with
+checkboxes once the user confirms scope and says to execute (likely
+starting with Phase 1 cleanup alone, given its smaller footprint).
