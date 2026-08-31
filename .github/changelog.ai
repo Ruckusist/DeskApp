@@ -2,6 +2,22 @@
 
 ---
 
+## TODO — PixelCanvasEffect — 083126
+Agent: Claude Sonnet 4.6
+
+Captured a new feature idea as a TODO (no proposal number, no version
+change) in .github/proposals/TODO_PixelCanvasEffect_083126.prop. User
+referenced a GitHub project that renders terminal output by treating each
+character cell as a "pixel" and asked for similar functionality in
+DeskApp. deskapp/mods/fire.py's Flames class already does an ad hoc
+version of this (flat intensity buffer + glyph ramp); the TODO proposes
+generalizing that pattern into a reusable PixelCanvas abstraction that
+fire.py and future effect modules (plasma, matrix rain, etc.) could share.
+Awaiting user confirmation to promote this to a numbered proposal before
+any code is written.
+
+---
+
 ## 0.9.0 — Proposal 09 — CoreWidgets — 053126
 Agent: Claude Sonnet 4.6
 
