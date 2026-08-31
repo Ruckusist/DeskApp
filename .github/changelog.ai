@@ -18,6 +18,17 @@ force-added (git add -f) if it needs to persist. Version not yet rolled —
 no code changed, awaiting user review of the proposal per the pipeline
 (execution starts only once the user confirms the plan).
 
+Update 083126: user supplied the reference link,
+github.com/ChrisBuilds/terminaltexteffects (TTE). Reviewed TTE's README —
+it is a character-animation engine (per-character home coordinate, Paths/
+Waypoints for movement, Scenes for symbol/color keyframes over time),
+not a pixel-intensity grid like fire.py. Revised PROPOSAL_10 to split the
+work into two independent pieces: PixelCanvas (the original fire.py-style
+idea) and a new CharacterMotion abstraction modeled on TTE's Path/Scene
+concept, applied at a scope appropriate for a dependency-free TUI
+framework (no bezier/easing library, deferred to a later proposal).
+Awaiting user decision on which piece(s) to build before implementation.
+
 ---
 
 ## 0.9.0 — Proposal 09 — CoreWidgets — 053126

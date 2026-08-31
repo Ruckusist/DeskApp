@@ -6,62 +6,118 @@ app , desktop terminal effect in python on github. he is doing something
 about rendering each character space like a pixel space and its really
 cool. id like to have some functionality like that in deskapp
 
-Interpretation: The user has seen a GitHub project that renders terminal
-output by treating every character cell as an addressable "pixel"
-(mapping a numeric intensity or color value per cell to a glyph/color
-pair), used to build animated full-screen terminal effects. DeskApp
-already has a partial example of this pattern in deskapp/mods/fire.py
-(the Flames class keeps a flat intensity buffer `b` and a `gameboard`
-grid, then maps intensity to a glyph ramp each frame). The user wants
-this "pixel space" idea generalized into reusable DeskApp functionality
-rather than reimplemented ad hoc per module, so future effects (fire,
-plasma, matrix rain, image-to-ascii, etc.) can be built on a shared
-abstraction. The exact source project was not linked; a link would let
-us confirm the actual rendering technique (character ramp only, vs.
-character + 24-bit/256-color per cell, vs. half-block "upper pixel"
-tricks) instead of assuming it matches fire.py's approach.
+Follow-up Prompt: here is the link for the project im talking about
+https://github.com/ChrisBuilds/terminaltexteffects
 
-Promoted from .github/proposals/TODO_PixelCanvasEffect_083126.prop on
-083126 at the user's request ("please go ahead with adding a proposal
-document... then we can review what you have").
+Interpretation: The referenced project is TerminalTextEffects (TTE) by
+ChrisBuilds. Having reviewed its README, TTE is a text/character
+ANIMATION engine, not a pixel-intensity/cellular-automaton renderer like
+deskapp/mods/fire.py. This changes the shape of the work versus the
+original draft of this proposal, which had assumed a fire.py-style
+buffer. TTE's actual model:
+
+  - Input is real text (e.g. a banner/logo/log line), not a blank grid.
+  - Each input character becomes an EffectCharacter object with a home
+    coordinate (its final position in the text).
+  - Characters move via Paths made of Waypoints, with motion easing
+    (including bezier curves) — e.g. "characters fly in from off-canvas
+    and land in their home position."
+  - Characters animate symbol/color over time via Scenes (ordered frames
+    changing the glyph and/or color, with easing), independent of
+    motion.
+  - Full Xterm-256 / 24-bit RGB color and gradients are first-class, not
+    a side feature.
+  - A canvas abstraction handles sizing/anchoring text within the
+    terminal.
+  - Effects (beams, rain, matrix, fireworks, bouncyballs, burn, smoke,
+    etc.) are plugins composed from Paths + Scenes + a per-frame update
+    loop, run at a target frame rate.
+
+This is architecturally closer to a "characters as animated sprites with
+paths/keyframes" engine than to fire.py's "grid of intensity values
+mapped through a glyph ramp" approach. Both are valid interpretations of
+"treating each character space like a pixel," but they lead to different
+abstractions:
+
+  - fire.py's model (numeric grid -> glyph ramp) suits particle/field
+    simulations (fire, plasma, smoke-as-density).
+  - TTE's model (text characters as objects with Path + Scene) suits
+    taking DeskApp's actual on-screen text/UI content and animating it
+    (e.g. a panel title flying into place, a log line decrypting in,
+    text color sweeps) — arguably the more interesting fit for a UI
+    framework like DeskApp, since DeskApp already has real text content
+    to animate rather than fire needing invented pixels.
+
+Revising scope: rather than choosing one model, split the work into two
+independent, layerable pieces so both directions from the original
+discussion are covered:
+
+  1. PixelCanvas (grid/intensity-driven, generalizes fire.py) — kept
+     from the original draft, useful for fire/plasma/smoke-style effects.
+  2. CharacterMotion (TTE-inspired: home-coordinate + Path/Waypoint +
+     Scene model) — new, for animating existing DeskApp text/panel
+     content into place or through color changes.
+
+Given DeskApp's `render`/`Module.write()` model already deals in
+characters at (row, col) positions, CharacterMotion is likely the more
+directly reusable piece for DeskApp's own panels/widgets, while
+PixelCanvas remains valuable for full-screen background effects like
+fire.py.
 
 Proposal:
 
-- [ ] Confirm/refine scope with the user, ideally after they share a link
-      to the reference project, to settle whether per-cell color is
-      in scope for v1 or a later iteration
-- [ ] Add a PixelCanvas class (new file, likely
-      deskapp/src/pixel_canvas.py, exported from deskapp/__init__.py
-      alongside existing core exports such as widgets) that owns:
-    - [ ] a width/height grid of numeric cell values (0-9 or 0-255
+- [ ] Confirm with the user whether both PixelCanvas and CharacterMotion
+      should be built now, or only one to start (recommend starting with
+      CharacterMotion since it more directly matches TTE and applies to
+      DeskApp's existing text/panels; treat PixelCanvas as a smaller,
+      separate follow-up reusing fire.py's proven pattern)
+- [ ] PixelCanvas (deskapp/src/pixel_canvas.py):
+    - [ ] width/height grid of numeric cell values (0-9 or 0-255
           intensity scale)
-    - [ ] a configurable character ramp (list of glyphs, dark to
-          bright, generalized from Flames.chars / og_chars)
-    - [ ] an optional per-cell color/attr mapping hook, kept separate
-          from glyph selection so callers can opt in or skip it
-    - [ ] a Render(Mod, Panel, Row, Col, Height, Width) method that
-          writes the grid to the DeskApp backend via Module.write(),
-          matching the calling convention used by
-          deskapp/src/widgets.py's ScrollList/ResultGrid
-- [ ] Refactor deskapp/mods/fire.py's Flames class to build its buffer
-      on top of PixelCanvas instead of maintaining its own
-      buffer/gameboard/char-mapping logic, proving the abstraction
-      works for an existing effect without changing fire.py's visible
-      behavior
-- [ ] Add one new example effect module built on PixelCanvas (e.g. a
-      "plasma" or "matrix rain" mod under deskapp/mods/) to demonstrate
-      reuse beyond fire and give a second concrete reference point
-- [ ] Add a standalone examples/ex_pixel_canvas.py demonstrating
-      PixelCanvas usage outside of a full mod, consistent with existing
-      examples/ex_*.py conventions
-- [ ] Update README.md's Core API section only if PixelCanvas is
-      exported as a top-level deskapp symbol (mirrors how CoreWidgets
-      were documented under Proposal 09)
+    - [ ] configurable character ramp (glyphs dark to bright, generalized
+          from Flames.chars / og_chars)
+    - [ ] optional per-cell color/attr mapping, separate from glyph
+          selection
+    - [ ] Render(Mod, Panel, Row, Col, Height, Width) writing through
+          Module.write(), matching ScrollList/ResultGrid's calling
+          convention in deskapp/src/widgets.py
+    - [ ] refactor deskapp/mods/fire.py's Flames class onto it without
+          changing fire's visible behavior
+- [ ] CharacterMotion (deskapp/src/character_motion.py), modeled after
+      TTE at a scope appropriate for a TUI framework (no bezier/easing
+      library dependency; keep it dependency-free like the rest of
+      deskapp):
+    - [ ] a Character type: symbol, home (row, col), current position,
+          current color/attr
+    - [ ] a Path type: ordered list of waypoints (row, col) a character
+          moves through, with simple linear or step-based interpolation
+          per frame (defer bezier/easing curves to a later proposal)
+    - [ ] a Scene type: ordered list of (symbol, color, duration) frames
+          applied to a character over time, independent of its Path
+    - [ ] a small per-frame update/tick step that advances all
+          characters' Paths and Scenes and renders them via
+          Module.write()
+    - [ ] one built-in effect built on this (e.g. a simplified "beams"
+          or "slide-in" effect) applied to a panel title or the "about"
+          module text, as a proof of concept
+- [ ] Add a standalone examples/ex_pixel_canvas.py and/or
+      examples/ex_character_motion.py demonstrating whichever piece(s)
+      are built, consistent with existing examples/ex_*.py conventions
+- [ ] Update README.md's Core API section only for whichever symbols end
+      up exported at the top-level deskapp package (mirrors how
+      CoreWidgets were documented under Proposal 09)
 - [ ] No changes to deskapp/mods/apt.py, about.py, buttons.py,
-      hunter.py, memory_viewer.py, or unrelated core modules
+      hunter.py, memory_viewer.py, or unrelated core modules beyond the
+      fire.py refactor above
 - [ ] Roll version to 0.10.0 and update .github/changelog.ai on
-      completion, crediting Proposal 10
+      completion, crediting Proposal 10 and this project as inspiration
+      (TerminalTextEffects by ChrisBuilds, MIT licensed, no code copied —
+      only the conceptual model referenced)
 
 Review Notes:
-(none yet — awaiting user review of this proposal before execution
-begins)
+083126 — Link reviewed (github.com/ChrisBuilds/terminaltexteffects).
+Confirmed the reference project is a character-animation engine
+(Paths/Waypoints/Scenes), not a pixel-intensity grid. Split proposal into
+PixelCanvas (original fire.py-style idea) and CharacterMotion (new,
+TTE-inspired) so the user can choose scope. Awaiting user decision on
+which piece(s) to build before implementation begins.
