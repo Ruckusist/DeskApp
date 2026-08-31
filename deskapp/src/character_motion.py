@@ -31,8 +31,7 @@ class RainReveal:
     landed characters are drawn as themselves in Color.
 
     Usage:
-        self.Rain = RainReveal()
-        self.Rain.SetText(["HELLO WORLD", "DESKAPP"])
+        self.Rain = RainReveal(["HELLO WORLD", "DESKAPP"])
         self.Rain.Start()
 
         # in page(), every frame:
