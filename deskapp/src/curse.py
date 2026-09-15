@@ -101,7 +101,8 @@ class Curse:
         self.color_error = self.color_bold | self.color_blink | self.color_red
 
         try:
-            for i in range(0, curses.COLORS):
+            max_colors = min(curses.COLORS, curses.COLOR_PAIRS - 1)
+            for i in range(0, max_colors):
                 if i == 0: curses.init_pair(i+1, i, curses.COLOR_WHITE)
                 else: curses.init_pair(i+1, i, curses.COLOR_BLACK)
                 self.palette.append(curses.color_pair(i))

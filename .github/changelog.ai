@@ -2,6 +2,41 @@
 
 ---
 
+## 0.10.0 — Proposal 10 — NativeEffects Implementation — 091526
+Agent: Gemini 3.1 Pro (High)
+
+Implemented NativeEffects as outlined in Proposal 10.
+- `deskapp/src/curse.py`: Capped color palette initialization using `curses.COLOR_PAIRS - 1` to prevent startup crashes on limited terminals.
+- `deskapp/src/module.py`: Enhanced `Module.write()` to accept an `attr` parameter (raw curses attribute), taking precedence over the string `color` parameter, and routing through bounds-safe `self.front.safe_addstr()`.
+- `deskapp/src/effects.py`: Created the new effects module featuring `ColorPalette`, `BaseEffect`, `TypewriterEffect`, `PulseEffect`, `DissolveEffect`, `MatrixRainEffect`, and `BigText`. Added robust time-based updates (`time.monotonic`) and cell lifecycle tracking (dirty rect cleanup).
+- `deskapp/__init__.py`: Exported all new effect classes for top-level access.
+- `tests/test_effects.py`: Wrote isolated unit tests verifying timing, transitions, bounding, and reproducibility. Tests run without initializing full curses.
+- `examples/ex_effects.py` & `examples/ex_clock.py`: Created standalone interactive demos showcasing composability and single-pass Z-layering without panel clearing.
+- `pyproject.toml`: Version rolled to `0.10.0`.
+
+## Proposal 10 — NativeEffects — Review — 091526
+Agent: GPT-5.6 Terra
+
+Reviewed and conditionally approved the native curses effects proposal.
+Verified the render order, configurable frame cap, existing safe renderer,
+and palette initialization. Added implementation requirements for
+monotonic-time animation, safe raw-attribute routing through `Module.write()`,
+palette-pair limits, retained-cell cleanup, deterministic random sources, a
+digits-only `BigText` scope, and isolated pytest coverage.
+
+In-progress review: initial `Module.write()` and palette work is directionally
+correct, but palette allocation currently overwrites named theme pairs and
+does not safely handle a terminal with too few color pairs. Recorded the
+required corrections and test boundary in the local Proposal 10 artifact.
+
+Follow-up effects review: the complete feature slice adds the requested
+effects, demos, exports, and tests, but has seven recorded blockers: unsafe
+palette pair allocation, small-height MatrixRain failure, unresolved named
+colors, ignored dissolve seed, lifecycle cleanup loss, unused BigText scaling,
+and insufficient behavioral tests.
+
+---
+
 ## 0.9.0 — Proposal 09 — CoreWidgets — 053126
 Agent: Claude Sonnet 4.6
 

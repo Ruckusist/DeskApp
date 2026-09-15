@@ -28,3 +28,18 @@ from .src.widgets import (           # Added Proposal 09
     ConfirmPrompt,
     JsonRegistry,
 )
+
+from .src.effects import (
+    ColorPalette,
+    BaseEffect,
+    TypewriterEffect,
+    PulseEffect,
+    DissolveEffect,
+    MatrixRainEffect,
+    BigText,
+    HugeText,
+    GlitchEffect,
+    FireEffect,
+    SmokeEffect,
+    SpinText,
+)

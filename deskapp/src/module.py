@@ -47,7 +47,7 @@ class Module(SubClass):
     def w(self):
         return self.app.logic.current_dims()[1]
 
-    def write(self, panel, row, col, string, color=None):
+    def write(self, panel, row, col, string, color=None, attr=None):
         """
         Write text to panel with bounds checking and color support.
 
@@ -58,39 +58,23 @@ class Module(SubClass):
             string: Text to write
             color: Color name string (yellow, red, green, blue, black,
                    cyan, white)
+            attr: Raw curses attribute, takes precedence over color
 
         Returns:
             True on success, False on error
-
-        Added by GPT5 10-07-25: improved write using panel dims
-        Updated by AI 10-11-25: renamed x,y to row,col for clarity
         """
-        try:
-            ph, pw = int(panel.dims[0]), int(panel.dims[1])
-        except Exception:
-            ph, pw = self.h, self.w
-        if color == "yellow": c = self.front.color_yellow
-        elif color == "red": c = self.front.color_red
-        elif color == "green": c = self.front.color_green
-        elif color == "blue": c = self.front.color_blue
-        elif color == "black": c = self.front.color_black
-        elif color == "cyan": c = self.front.color_cyan
-        else: c = self.front.color_white
-        # if row >= ph:
-        #     self.print(f"write row OOB row={row} ph={ph}")
-        #     return False
-        # if int(col) >= pw:
-        #     self.print(f"write col OOB col={col} pw={pw}")
-        #     return False
-        # max_len = pw - col
-        # text = string if len(string) <= max_len else string[:max_len]
-        text = string # string[:max(0, pw - col)]
-        try:
-            panel.win.addstr(row, col, text, c)
-            return True
-        except Exception as e:
-            self.print(f"write err: {e}")
-            return False
+        if attr is not None:
+            c = attr
+        else:
+            if color == "yellow": c = self.front.color_yellow
+            elif color == "red": c = self.front.color_red
+            elif color == "green": c = self.front.color_green
+            elif color == "blue": c = self.front.color_blue
+            elif color == "black": c = self.front.color_black
+            elif color == "cyan": c = self.front.color_cyan
+            else: c = self.front.color_white
+            
+        return self.front.safe_addstr(panel.win, row, col, string, c)
 
     def element_scroller(self, panel):
         # self.index = 3
